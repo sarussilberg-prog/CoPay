@@ -28,7 +28,7 @@
         "profile": "Profile"
     },
     "auth": {
-        "appName": "Kupa",
+        "appName": "kupa",
         "signInWithGoogle": "Continue with Google",
         "subtitle": "Split expenses with friends",
         "signInError": "Sign in failed. Please try again.",
@@ -189,6 +189,15 @@
     },
     "activity": {
         "title": "Activity",
+        "search": "Search",
+        "searchPlaceholder": "Search by description, person, or amount",
+        "filter": "Filter",
+        "filterAll": "All",
+        "sort": "Sort",
+        "sortDateDesc": "Newest first",
+        "sortDateAsc": "Oldest first",
+        "sortAmountDesc": "Highest amount",
+        "sortAmountAsc": "Lowest amount",
         "noActivity": "No activity yet",
         "noActivityMessage": "Your recent expenses and settlements will appear here",
         "expense": "Expense",
@@ -205,5 +214,20 @@
         "amount": "Amount",
         "loadError": "Failed to load expenses",
         "createError": "Failed to create expense"
+    },
+    "dashboard": {
+        "appTitle": "Kupa",
+        "youOwe": "You owe",
+        "youAreOwed": "You're owed",
+        "viewBreakdown": "View per-currency breakdown",
+        "hideBreakdown": "Hide breakdown",
+        "closedGroups": "Closed groups",
+        "activeGroups": "Active groups",
+        "friends": "Friends",
+        "loadError": "Failed to load dashboard",
+        "settled": "Settled up",
+        "owesYou": "owes you",
+        "youOweFriend": "you owe",
+        "noFriendsYet": "No shared groups yet"
     }
 }

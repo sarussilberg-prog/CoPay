@@ -28,7 +28,7 @@
         "profile": "פרופיל"
     },
     "auth": {
-        "appName": "קופה",
+        "appName": "kupa",
         "signInWithGoogle": "המשך עם Google",
         "subtitle": "חלוקת הוצאות עם חברים",
         "signInError": "הכניסה נכשלה. אנא נסה שוב.",
@@ -189,6 +189,15 @@
     },
     "activity": {
         "title": "פעילות",
+        "search": "חיפוש",
+        "searchPlaceholder": "חיפוש לפי תיאור, אדם או סכום",
+        "filter": "סינון",
+        "filterAll": "הכל",
+        "sort": "מיון",
+        "sortDateDesc": "מהחדש לישן",
+        "sortDateAsc": "מהישן לחדש",
+        "sortAmountDesc": "סכום גבוה",
+        "sortAmountAsc": "סכום נמוך",
         "noActivity": "אין פעילות עדיין",
         "noActivityMessage": "הוצאות ותשלומים אחרונים יופיעו כאן",
         "expense": "הוצאה",
@@ -205,5 +214,20 @@
         "amount": "סכום",
         "loadError": "טעינת ההוצאות נכשלה",
         "createError": "יצירת ההוצאה נכשלה"
+    },
+    "dashboard": {
+        "appTitle": "כופה",
+        "youOwe": "אתה חייב",
+        "youAreOwed": "חייבים לך",
+        "viewBreakdown": "פירוט לפי מטבע",
+        "hideBreakdown": "הסתר פירוט",
+        "closedGroups": "קבוצות סגורות",
+        "activeGroups": "קבוצות פעילות",
+        "friends": "חברים",
+        "loadError": "טעינת לוח הבקרה נכשלה",
+        "settled": "מסולק",
+        "owesYou": "חייב לך",
+        "youOweFriend": "אתה חייב",
+        "noFriendsYet": "אין קבוצות משותפות"
     }
 }
