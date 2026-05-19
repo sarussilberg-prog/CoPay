@@ -49,19 +49,21 @@ export function SettingsScreen() {
         if (url) await Linking.openURL(url);
     }, []);
 
-    const handleWhatsApp = useCallback(() => {
+    const handleWhatsApp = useCallback(async () => {
+        const deepLink = `whatsapp://send?phone=${WHATSAPP_NUMBER}`;
         const webLink = `https://wa.me/${WHATSAPP_NUMBER}`;
-        Linking.openURL(webLink).catch(() => {
+        try {
+            const can = await Linking.canOpenURL(deepLink);
+            await Linking.openURL(can ? deepLink : webLink);
+        } catch {
             Alert.alert(t('common.error'), t('settings.whatsappOpenFailed'));
-        });
+        }
     }, [t]);
 
     const handleLogout = useCallback(async () => {
         setShowLogout(false);
         await signOut();
     }, []);
-
-    const version = Application.nativeApplicationVersion ?? '?';
 
     return (
         <ScrollView className="flex-1 bg-slate-50">
@@ -91,7 +93,7 @@ export function SettingsScreen() {
                 </SettingsSection>
 
                 <Text className="text-center text-xs text-gray-400 mb-8">
-                    {t('settings.version')} {version}
+                    {t('settings.version', { version: Application.nativeApplicationVersion ?? '?' })}
                 </Text>
             </View>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 
 jest.mock('expo-application', () => ({ nativeApplicationVersion: '1.2.3' }));
@@ -15,14 +15,17 @@ import { SettingsScreen } from '../../../screens/profile/SettingsScreen';
 import { useAppStore } from '../../../store';
 
 let mockOpenURL: jest.SpyInstance;
+let mockCanOpen: jest.SpyInstance;
 
 beforeEach(() => {
     mockOpenURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    mockCanOpen = jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
     useAppStore.setState({ language: 'en' });
 });
 
 afterEach(() => {
     mockOpenURL.mockRestore();
+    mockCanOpen.mockRestore();
 });
 
 describe('SettingsScreen (grouped, no notifications)', () => {
@@ -34,14 +37,24 @@ describe('SettingsScreen (grouped, no notifications)', () => {
         expect(getByText('settings.account')).toBeTruthy();
     });
 
-    it('opens WhatsApp link', () => {
+    it('opens WhatsApp deeplink when canOpenURL is true', async () => {
         const { getByText } = render(<SettingsScreen />);
         fireEvent.press(getByText('settings.contactWhatsApp'));
-        expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining('wa.me/972528616878'));
+        await waitFor(() => expect(mockOpenURL).toHaveBeenCalled());
+        expect(mockOpenURL).toHaveBeenCalledWith('whatsapp://send?phone=972528616878');
+    });
+
+    it('falls back to wa.me when WhatsApp not installed', async () => {
+        mockCanOpen.mockResolvedValueOnce(false);
+        const { getByText } = render(<SettingsScreen />);
+        fireEvent.press(getByText('settings.contactWhatsApp'));
+        await waitFor(() => expect(mockOpenURL).toHaveBeenCalled());
+        expect(mockOpenURL).toHaveBeenCalledWith('https://wa.me/972528616878');
     });
 
     it('renders version footer', () => {
-        const { getByText } = render(<SettingsScreen />);
-        expect(getByText(/1\.2\.3/)).toBeTruthy();
+        const { getByText, queryByText } = render(<SettingsScreen />);
+        expect(getByText('settings.version')).toBeTruthy();
+        expect(queryByText(/\{\{version\}\}/)).toBeNull();
     });
 });
