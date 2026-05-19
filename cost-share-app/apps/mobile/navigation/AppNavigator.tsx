@@ -121,7 +121,7 @@ function ActivityStack() {
             <Stack.Screen
                 name="ActivityFeed"
                 component={ActivityFeedScreen}
-                options={{ title: t('activity.title') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="ExpenseDetail"
@@ -140,7 +140,7 @@ function ProfileStack() {
             <Stack.Screen
                 name="ProfileMain"
                 component={ProfileScreen}
-                options={{ title: t('profile.title') }}
+                options={{ title: t('dashboard.appTitle'), headerTitleAlign: 'center' }}
             />
             <Stack.Screen
                 name="EditProfile"
