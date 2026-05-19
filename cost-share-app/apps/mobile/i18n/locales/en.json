@@ -163,7 +163,18 @@
     },
     "settings": {
         "title": "Settings",
-        "language": "Language"
+        "general": "General",
+        "language": "Language",
+        "support": "Support",
+        "rateUs": "Rate us",
+        "contactWhatsApp": "Contact us on WhatsApp",
+        "legal": "Legal",
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy",
+        "account": "Account",
+        "logout": "Log out",
+        "version": "Version {{version}}",
+        "whatsappOpenFailed": "Could not open WhatsApp"
     },
     "profile": {
         "title": "Profile",
@@ -229,5 +240,12 @@
         "owesYou": "owes you",
         "youOweFriend": "you owe",
         "noFriendsYet": "No shared groups yet"
+    },
+    "legal": {
+        "termsTitle": "Terms of Service",
+        "termsBody": "By using Kupa you agree to share expenses responsibly. We do not process payments — we only track balances between users.\n\nYour data is stored securely and is never sold to third parties. You may delete your account at any time by contacting support.\n\nKupa is provided as-is, without warranty.",
+        "privacyTitle": "Privacy Policy",
+        "privacyBody": "Kupa stores your profile (name, email, avatar) and the groups, expenses, and settlements you create. We use your email only for authentication.\n\nWe do not sell your data. We may share anonymous aggregate analytics. You can request deletion of your data at any time.\n\nContact: support via WhatsApp +972528616878.",
+        "close": "Close"
     }
 }
