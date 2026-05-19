@@ -4,8 +4,9 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useState } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { PaymentMethod, DEFAULT_CURRENCY } from '@cost-share/shared';

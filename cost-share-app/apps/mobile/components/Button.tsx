@@ -4,8 +4,9 @@
  * Uses NativeWind styling only, supports i18n
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, ActivityIndicator } from 'react-native';
 import { colors } from '../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger';

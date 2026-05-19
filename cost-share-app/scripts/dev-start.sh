@@ -8,6 +8,10 @@
 #   scripts/dev-start.sh --skip-tests
 #   scripts/dev-start.sh --skip-schema   # skip Supabase HTTP probe
 #   scripts/dev-start.sh --check-only
+#   scripts/dev-start.sh --no-open       # skip auto-open web + mobile simulators
+#
+# Full stack auto-opens: Next.js in browser, iOS + Android dev clients (after Metro).
+# First time on a new simulator: npm run mobile:ios && npm run mobile:android
 #
 # Env: WEB_PORT=3001 (Next.js). Data: Supabase via apps/mobile/.env
 
@@ -45,6 +49,7 @@ WEB_ONLY=false
 MOBILE_ONLY=false
 CHECK_ONLY=false
 FORCE_INSTALL=false
+DEV_AUTO_OPEN=1
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -74,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     --with-mobile)   WEB_ONLY=false ;; # legacy alias
     -h|--help)       usage; exit 0 ;;
     --install)       FORCE_INSTALL=true ;;
+    --no-open)       DEV_AUTO_OPEN=0 ;;
     *)               fail "Unknown option: $1 (try --help)" ;;
   esac
   shift
@@ -323,6 +329,45 @@ wait_for_port() {
   return 1
 }
 
+open_web_browser() {
+  [[ "$DEV_AUTO_OPEN" == "1" ]] || return 0
+  [[ "$WITH_WEB" == true ]] || return 0
+  local url="http://localhost:${WEB_PORT}"
+  if command -v open >/dev/null 2>&1; then
+    log "Opening web app in browser: ${url}"
+    open "$url" 2>/dev/null || warn "Could not open browser for ${url}"
+  else
+    log "Web app ready at ${url}"
+  fi
+}
+
+ios_dev_build_installed() {
+  xcrun simctl list devices booted 2>/dev/null | grep -q Booted \
+    && xcrun simctl get_app_container booted com.kupa.mobile data 2>/dev/null
+}
+
+warn_missing_mobile_builds() {
+  [[ "$WITH_MOBILE" == true ]] || return 0
+  if ! ios_dev_build_installed; then
+    warn "iOS dev client NOT installed on the booted simulator."
+    warn "In another terminal: npm run mobile:ios   (then restart dev:start or press i)"
+  fi
+  if command -v adb >/dev/null 2>&1 && ! adb devices 2>/dev/null | grep -qE '^emulator-[0-9]+\tdevice$'; then
+    warn "No Android emulator — skip Android or run: npm run mobile:android"
+  fi
+}
+
+prepare_mobile_simulators() {
+  [[ "$DEV_AUTO_OPEN" == "1" ]] || return 0
+  [[ "$WITH_MOBILE" == true ]] || return 0
+  local ensure="$MOBILE_DIR/scripts/ensure-simulators.sh"
+  if [[ -x "$ensure" ]] || [[ -f "$ensure" ]]; then
+    log "Ensuring iOS / Android simulators are running..."
+    bash "$ensure" || warn "Simulator prep incomplete — mobile auto-open may skip a platform"
+  fi
+  warn_missing_mobile_builds
+}
+
 start_background_stack() {
   free_dev_stack_ports
 
@@ -335,6 +380,7 @@ start_background_stack() {
     start_bg "web" npm run dev -w @cost-share/web -- -p "$WEB_PORT"
     log "Waiting for web..."
     wait_for_port "$WEB_PORT" "Web" "$LOG_DIR/web.log" || true
+    open_web_browser
   fi
 }
 
@@ -343,8 +389,9 @@ start_expo_foreground() {
   echo "══════════════════════════════════════════"
   echo "  Expo — interactive (this terminal)"
   echo "══════════════════════════════════════════"
-  echo "  w → web  |  a → Android  |  i → iOS simulator"
-  echo "  iOS blank after i? → npm run ios:open -w @cost-share/mobile"
+  echo "  Auto-open: web browser + iOS + Android (when dev builds are installed)"
+  echo "  w → Expo web  |  a → Android  |  i → iOS  (manual retry)"
+  echo "  First time on a simulator? npm run mobile:ios && npm run mobile:android"
   echo "  Metro: exp://127.0.0.1:8081"
   if [[ "$WITH_WEB" == true ]]; then
     echo "  Next.js: http://localhost:${WEB_PORT}"
@@ -355,6 +402,12 @@ start_expo_foreground() {
 
   unset CI
   export EXPO_METRO_PORT=8081
+  if [[ "$DEV_AUTO_OPEN" == "1" ]]; then
+    export EXPO_AUTO_OPEN_MOBILE=1
+  else
+    export EXPO_AUTO_OPEN_MOBILE=0
+  fi
+  prepare_mobile_simulators
   cd "$MOBILE_DIR"
   npm run start
 }

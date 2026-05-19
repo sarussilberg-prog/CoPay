@@ -4,14 +4,15 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Expense, ExpenseSplit, User } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { getExpenseWithSplits, deleteExpense } from '../../services/expenses.service';
-import { fetchUsers } from '../../services/users.service';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { Button } from '../../components/Button';
@@ -38,21 +39,17 @@ export function ExpenseDetailScreen() {
 
     const [expense, setExpense] = useState<Expense | null>(null);
     const [splits, setSplits] = useState<ExpenseSplit[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     useEffect(() => {
         const loadData = async () => {
             startLoading();
-            const [expenseData, usersData] = await Promise.all([
-                getExpenseWithSplits(expenseId),
-                fetchUsers(),
-            ]);
+            const expenseData = await getExpenseWithSplits(expenseId);
             if (expenseData) {
                 setExpense(expenseData.expense);
                 setSplits(expenseData.splits);
             }
-            setAllUsers(usersData);
             stopLoading();
         };
         void loadData();

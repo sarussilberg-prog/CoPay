@@ -1,8 +1,12 @@
 # Database Architecture - Splitwise-like Expense Sharing App
 
 **Technology:** PostgreSQL with Supabase  
-**Last Updated:** May 18, 2026  
-**Status:** MVP Design - Ready for Implementation
+**Last Updated:** 2026-05-19  
+**Status:** Implemented — Supabase-only (no NestJS API)  
+**Canonical schema (apply this):** [`cost-share-app/supabase/schema.sql`](cost-share-app/supabase/schema.sql)  
+**In-place RLS patch:** [`cost-share-app/supabase/fix-rls-group-members-recursion.sql`](cost-share-app/supabase/fix-rls-group-members-recursion.sql)
+
+> This document is a **reference**. When it disagrees with `schema.sql`, the SQL file wins.
 
 ---
 
@@ -624,12 +628,15 @@ CREATE INDEX idx_settlements_date ON settlements(settlement_date);
 
 -- Auto-update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -642,17 +649,25 @@ CREATE TRIGGER update_expenses_updated_at BEFORE UPDATE ON expenses
 
 -- Auto-create profile on user signup
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-    INSERT INTO profiles (id, name, avatar_url)
+    INSERT INTO public.profiles (id, name, email, avatar_url)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
+        NEW.email,
         NEW.raw_user_meta_data->>'avatar_url'
     );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- Trigger-only: block RPC exposure of the SECURITY DEFINER function.
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
 
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
@@ -668,64 +683,77 @@ CREATE TRIGGER on_auth_user_created
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================
+-- ⚠️ Inline subqueries on `group_members` cause infinite recursion (Postgres 42P17),
+-- which PostgREST surfaces as HTTP 500. Use SECURITY DEFINER helper functions
+-- so RLS does not re-trigger on `group_members` lookups.
 
--- Enable RLS on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
-ALTER TABLE group_members ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expense_splits ENABLE ROW LEVEL SECURITY;
-ALTER TABLE settlements ENABLE ROW LEVEL SECURITY;
-
--- Profiles: Users can read all profiles, update only their own
-CREATE POLICY "Profiles are viewable by everyone" ON profiles
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users can update own profile" ON profiles
-    FOR UPDATE USING (auth.uid() = id);
-
--- Groups: Users can see groups they're members of
-CREATE POLICY "Users can view their groups" ON groups
-    FOR SELECT USING (
-        id IN (
-            SELECT group_id FROM group_members 
-            WHERE user_id = auth.uid() AND is_active = TRUE
-        )
+CREATE OR REPLACE FUNCTION public.is_group_member(check_group_id uuid)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.group_members
+        WHERE group_id = check_group_id
+          AND user_id = auth.uid()
+          AND is_active = TRUE
     );
+$$;
 
-CREATE POLICY "Users can create groups" ON groups
-    FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE OR REPLACE FUNCTION public.is_group_creator(check_group_id uuid)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = public STABLE AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.groups
+        WHERE id = check_group_id AND created_by = auth.uid()
+    );
+$$;
 
-CREATE POLICY "Group creators can update their groups" ON groups
-    FOR UPDATE USING (auth.uid() = created_by);
+REVOKE EXECUTE ON FUNCTION public.is_group_member(uuid)  FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.is_group_creator(uuid) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.is_group_member(uuid)  TO anon, authenticated;
+GRANT  EXECUTE ON FUNCTION public.is_group_creator(uuid) TO anon, authenticated;
 
--- Group Members: Users can see members of their groups
+ALTER TABLE profiles        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE groups          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE group_members   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expense_splits  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settlements     ENABLE ROW LEVEL SECURITY;
+
+-- Profiles
+CREATE POLICY "Profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile"      ON profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Groups
+CREATE POLICY "Users can view their groups"           ON groups FOR SELECT USING (public.is_group_member(id));
+CREATE POLICY "Users can create groups"               ON groups FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Group creators can update their groups" ON groups FOR UPDATE USING (auth.uid() = created_by);
+
+-- Group Members (note: `user_id = auth.uid()` short-circuit avoids the helper for self-rows)
 CREATE POLICY "Users can view group members" ON group_members
-    FOR SELECT USING (
-        group_id IN (
-            SELECT group_id FROM group_members 
-            WHERE user_id = auth.uid() AND is_active = TRUE
-        )
-    );
-
--- Expenses: Users can see expenses in their groups
-CREATE POLICY "Users can view group expenses" ON expenses
-    FOR SELECT USING (
-        group_id IN (
-            SELECT group_id FROM group_members 
-            WHERE user_id = auth.uid() AND is_active = TRUE
-        )
-    );
-
-CREATE POLICY "Users can create expenses in their groups" ON expenses
+    FOR SELECT USING (user_id = auth.uid() OR public.is_group_member(group_id));
+CREATE POLICY "Users can insert group members" ON group_members
     FOR INSERT WITH CHECK (
-        group_id IN (
-            SELECT group_id FROM group_members 
-            WHERE user_id = auth.uid() AND is_active = TRUE
-        )
+        auth.uid() = user_id
+        OR public.is_group_creator(group_id)
+        OR public.is_group_member(group_id)
     );
+CREATE POLICY "Users can update group members" ON group_members
+    FOR UPDATE USING (public.is_group_member(group_id));
 
--- Similar policies for expense_splits and settlements...
+-- Expenses
+CREATE POLICY "Users can view group expenses"           ON expenses FOR SELECT USING (public.is_group_member(group_id));
+CREATE POLICY "Users can create expenses in their groups" ON expenses FOR INSERT WITH CHECK (public.is_group_member(group_id));
+CREATE POLICY "Users can update group expenses"         ON expenses FOR UPDATE USING (public.is_group_member(group_id));
+
+-- Expense Splits (gated by parent expense's group)
+CREATE POLICY "Users can view expense splits in their groups" ON expense_splits
+    FOR SELECT USING (expense_id IN (SELECT e.id FROM expenses e WHERE public.is_group_member(e.group_id)));
+CREATE POLICY "Users can insert expense splits" ON expense_splits
+    FOR INSERT WITH CHECK (expense_id IN (SELECT e.id FROM expenses e WHERE public.is_group_member(e.group_id)));
+CREATE POLICY "Users can delete expense splits" ON expense_splits
+    FOR DELETE USING (expense_id IN (SELECT e.id FROM expenses e WHERE public.is_group_member(e.group_id)));
+
+-- Settlements
+CREATE POLICY "Users can view settlements in their groups"   ON settlements FOR SELECT USING (public.is_group_member(group_id));
+CREATE POLICY "Users can create settlements in their groups" ON settlements FOR INSERT WITH CHECK (public.is_group_member(group_id));
 ```
 
 ---

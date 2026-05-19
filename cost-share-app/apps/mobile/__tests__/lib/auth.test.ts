@@ -3,12 +3,12 @@ const mockSignOut = jest.fn().mockResolvedValue({ error: null });
 const mockMaybeSingle = jest.fn();
 const mockEq = jest.fn(() => ({ maybeSingle: mockMaybeSingle }));
 const mockSelect = jest.fn(() => ({ eq: mockEq }));
-const mockFrom = jest.fn(() => ({ select: mockSelect }));
+const mockFrom = jest.fn((_table: string) => ({ select: mockSelect }));
 
 jest.mock('../../lib/supabase', () => ({
     supabase: {
         auth: { getUser: (...a: any[]) => mockGetUser(...a), signOut: (...a: any[]) => mockSignOut(...a) },
-        from: (...a: any[]) => mockFrom(...a),
+        from: (table: string) => mockFrom(table),
     },
 }));
 

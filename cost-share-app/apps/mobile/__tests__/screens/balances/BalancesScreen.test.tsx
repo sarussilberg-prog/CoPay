@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 
@@ -20,7 +21,7 @@ jest.mock('../../../services/groups.service', () => ({
 }));
 
 jest.mock('../../../services/users.service', () => ({
-    fetchUsers: jest.fn().mockResolvedValue([]),
+    fetchGroupUsers: jest.fn().mockResolvedValue([]),
 }));
 
 import { BalancesScreen } from '../../../screens/balances/BalancesScreen';
@@ -42,7 +43,7 @@ describe('BalancesScreen', () => {
     it('shows "all settled" message when there are no debts', async () => {
         mockBalances.mockResolvedValueOnce([]);
         mockDebts.mockResolvedValueOnce([]);
-        const { findByText } = render(<BalancesScreen />);
+        const { findByText } = renderWithQuery(<BalancesScreen />);
         expect(await findByText('balances.allSettled')).toBeTruthy();
     });
 
@@ -58,7 +59,7 @@ describe('BalancesScreen', () => {
                 currency: 'USD',
             } as any,
         ]);
-        const { findByText } = render(<BalancesScreen />);
+        const { findByText } = renderWithQuery(<BalancesScreen />);
         expect(await findByText('Alice')).toBeTruthy();
         expect(await findByText(/USD 25\.00/)).toBeTruthy();
     });
@@ -66,7 +67,7 @@ describe('BalancesScreen', () => {
     it('navigates to SettlementHistory when the history button is pressed', async () => {
         mockBalances.mockResolvedValueOnce([]);
         mockDebts.mockResolvedValueOnce([]);
-        const { findByText } = render(<BalancesScreen />);
+        const { findByText } = renderWithQuery(<BalancesScreen />);
         fireEvent.press(await findByText('balances.settlementHistory'));
         expect(mockNavigate).toHaveBeenCalledWith('SettlementHistory', {
             groupId: 'g1',

@@ -1,5 +1,6 @@
+import { Text } from '../AppText';
 import React from 'react';
-import { View, Text, Modal, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { View, Modal, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 interface Props {

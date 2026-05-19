@@ -4,8 +4,9 @@
  * Uses NativeWind styling only
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { AppIcon, AppIconName } from './AppIcon';
 import { Button } from './Button';
 import { colors } from '../theme';

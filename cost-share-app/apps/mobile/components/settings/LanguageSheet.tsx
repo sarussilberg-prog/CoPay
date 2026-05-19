@@ -1,5 +1,6 @@
+import { Text } from '../AppText';
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { View, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Language } from '@cost-share/shared';
 import { AppIcon } from '../AppIcon';

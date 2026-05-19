@@ -3,8 +3,9 @@
  * Reusable confirmation dialog for destructive actions
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, TouchableOpacity, Modal } from 'react-native';
 
 interface ConfirmDialogProps {
     visible: boolean;

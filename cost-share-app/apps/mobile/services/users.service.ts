@@ -19,6 +19,33 @@ export async function fetchUsers(): Promise<User[]> {
     return (data ?? []).map(profileFromRow);
 }
 
+/** Fetch profiles for active members of a specific group only. */
+export async function fetchGroupUsers(groupId: string): Promise<User[]> {
+    const { data: members, error: membersError } = await supabase
+        .from('group_members')
+        .select('user_id')
+        .eq('group_id', groupId)
+        .eq('is_active', true);
+    if (membersError) {
+        console.error('Failed to fetch group member ids:', membersError);
+        return [];
+    }
+
+    const userIds = (members ?? []).map((row) => row.user_id as string);
+    if (userIds.length === 0) return [];
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds)
+        .order('created_at', { ascending: true });
+    if (error) {
+        console.error('Failed to fetch group users:', error);
+        return [];
+    }
+    return (data ?? []).map(profileFromRow);
+}
+
 export async function getUserById(id: string): Promise<User | null> {
     const { data, error } = await supabase
         .from('profiles')

@@ -1,10 +1,11 @@
+import { Text } from '../AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { MemberAvatar } from '../MemberAvatar';
 import { AppIcon } from '../AppIcon';
 import { colors, shadows } from '../../theme';
-import { useRtlLayout, rtlRowStyle, rtlTextAlign } from '../../hooks/useRtlLayout';
+import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 
 interface Props {
     name: string;
@@ -26,7 +27,6 @@ export function ProfileHeaderRow({ name, avatarUrl, onEditPress }: Props) {
                 <View style={{ flex: 1, marginHorizontal: 16 }}>
                     <Text
                         className="text-xl font-semibold text-slate-900 tracking-tight"
-                        style={{ textAlign: rtlTextAlign(isRtl) }}
                         numberOfLines={1}
                     >
                         {name}

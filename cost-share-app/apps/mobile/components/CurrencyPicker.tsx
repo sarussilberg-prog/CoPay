@@ -3,9 +3,11 @@
  * Reusable currency selector with search
  */
 
+import { Text } from './AppText';
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
+import { View, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
 import currencyCodes from 'currency-codes';
+import { resolveAutoTextInputStyle, useRtlLayout } from '../hooks/useRtlLayout';
 
 interface CurrencyPickerProps {
     value: string;
@@ -14,6 +16,7 @@ interface CurrencyPickerProps {
 }
 
 export function CurrencyPicker({ value, onChange, label = 'Currency' }: CurrencyPickerProps) {
+    const isRtl = useRtlLayout();
     const [modalVisible, setModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -75,6 +78,7 @@ export function CurrencyPicker({ value, onChange, label = 'Currency' }: Currency
                             {/* Search */}
                             <TextInput
                                 className="bg-gray-100 rounded-lg p-3"
+                                style={resolveAutoTextInputStyle(isRtl)}
                                 placeholder="Search currencies..."
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}

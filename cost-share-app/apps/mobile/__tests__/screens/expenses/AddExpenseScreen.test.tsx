@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -26,7 +27,7 @@ jest.mock('../../../services/groups.service', () => ({
 }));
 
 jest.mock('../../../services/users.service', () => ({
-    fetchUsers: jest.fn().mockResolvedValue([
+    fetchGroupUsers: jest.fn().mockResolvedValue([
         { id: 'u1', name: 'Alice', email: 'a@x.com', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date() },
     ]),
 }));
@@ -58,14 +59,14 @@ beforeEach(() => {
 
 describe('AddExpenseScreen', () => {
     it('renders the description and amount inputs', async () => {
-        const { findByText } = render(<AddExpenseScreen />);
+        const { findByText } = renderWithQuery(<AddExpenseScreen />);
         await waitFor(() => expect(mockGetGroupMembers).toHaveBeenCalled());
         expect(await findByText('expenses.description')).toBeTruthy();
         expect(await findByText('expenses.amount')).toBeTruthy();
     });
 
     it('shows validation error for empty description', async () => {
-        const { findByText, findAllByText } = render(<AddExpenseScreen />);
+        const { findByText, findAllByText } = renderWithQuery(<AddExpenseScreen />);
         const addButtons = await findAllByText('expenses.addExpense');
         fireEvent.press(addButtons[addButtons.length - 1]);
         expect(await findByText('expenses.descriptionRequired')).toBeTruthy();
@@ -73,7 +74,7 @@ describe('AddExpenseScreen', () => {
     });
 
     it('shows validation error for invalid amount', async () => {
-        const { findByText, getByPlaceholderText, findAllByText } = render(<AddExpenseScreen />);
+        const { findByText, getByPlaceholderText, findAllByText } = renderWithQuery(<AddExpenseScreen />);
         await findByText('expenses.description');
         fireEvent.changeText(getByPlaceholderText('expenses.enterDescription'), 'Coffee');
         const addButtons = await findAllByText('expenses.addExpense');
@@ -83,7 +84,7 @@ describe('AddExpenseScreen', () => {
 
     it('calls createExpense with proper DTO', async () => {
         mockCreateExpense.mockResolvedValueOnce({ id: 'e1' } as any);
-        const { findByText, getByPlaceholderText, findAllByText } = render(<AddExpenseScreen />);
+        const { findByText, getByPlaceholderText, findAllByText } = renderWithQuery(<AddExpenseScreen />);
         await findByText('expenses.description');
         fireEvent.changeText(getByPlaceholderText('expenses.enterDescription'), 'Coffee');
         fireEvent.changeText(getByPlaceholderText('0.00'), '10');

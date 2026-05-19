@@ -1,5 +1,6 @@
+import { Text } from '../../../components/AppText';
 import React from 'react';
-import { Text } from 'react-native';
+
 import { render } from '@testing-library/react-native';
 import { SettingsSection } from '../../../components/settings/SettingsSection';
 

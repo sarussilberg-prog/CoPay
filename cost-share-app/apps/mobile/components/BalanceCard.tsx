@@ -4,8 +4,9 @@
  * Uses NativeWind styling only, supports i18n
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { MemberAvatar } from './MemberAvatar';
 import { AppIcon } from './AppIcon';

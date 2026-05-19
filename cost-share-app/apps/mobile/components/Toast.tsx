@@ -1,5 +1,6 @@
+import { Text } from './AppText';
 import React, { useEffect } from 'react';
-import { View, Text, Animated, TouchableOpacity } from 'react-native';
+import { View, Animated, TouchableOpacity } from 'react-native';
 import { colors } from '../theme';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
