@@ -1,50 +1,47 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
+import { Linking } from 'react-native';
 
-jest.mock('../../../i18n', () => ({
-    changeLanguage: jest.fn().mockResolvedValue(false),
+jest.mock('expo-application', () => ({ nativeApplicationVersion: '1.2.3' }));
+jest.mock('expo-store-review', () => ({
+    requestReview: jest.fn().mockResolvedValue(undefined),
+    isAvailableAsync: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('../../../services/auth.service', () => ({
-    signOut: jest.fn(),
-}));
+jest.mock('../../../services/auth.service', () => ({ signOut: jest.fn() }));
+jest.mock('../../../i18n', () => ({ changeLanguage: jest.fn().mockResolvedValue(false) }));
 
 import { SettingsScreen } from '../../../screens/profile/SettingsScreen';
 import { useAppStore } from '../../../store';
-import { changeLanguage } from '../../../i18n';
-import { signOut } from '../../../services/auth.service';
 
-const mockChangeLanguage = changeLanguage as jest.MockedFunction<typeof changeLanguage>;
-const mockSignOut = signOut as jest.MockedFunction<typeof signOut>;
+let mockOpenURL: jest.SpyInstance;
 
 beforeEach(() => {
-    mockChangeLanguage.mockClear();
-    mockSignOut.mockClear();
-    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockOpenURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     useAppStore.setState({ language: 'en' });
 });
 
 afterEach(() => {
-    jest.restoreAllMocks();
+    mockOpenURL.mockRestore();
 });
 
-describe('SettingsScreen', () => {
-    it('renders language section and logout button', () => {
+describe('SettingsScreen (grouped, no notifications)', () => {
+    it('renders all section titles', () => {
         const { getByText } = render(<SettingsScreen />);
-        expect(getByText('settings.language')).toBeTruthy();
-        expect(getByText('profile.logout')).toBeTruthy();
+        expect(getByText('settings.general')).toBeTruthy();
+        expect(getByText('settings.support')).toBeTruthy();
+        expect(getByText('settings.legal')).toBeTruthy();
+        expect(getByText('settings.account')).toBeTruthy();
     });
 
-    it('calls changeLanguage when a language button is pressed', () => {
+    it('opens WhatsApp link', () => {
         const { getByText } = render(<SettingsScreen />);
-        fireEvent.press(getByText('profile.hebrew'));
-        expect(mockChangeLanguage).toHaveBeenCalledWith('he');
+        fireEvent.press(getByText('settings.contactWhatsApp'));
+        expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining('wa.me/972528616878'));
     });
 
-    it('shows logout confirmation dialog when logout is pressed', () => {
+    it('renders version footer', () => {
         const { getByText } = render(<SettingsScreen />);
-        fireEvent.press(getByText('profile.logout'));
-        expect(getByText('profile.logoutConfirm')).toBeTruthy();
+        expect(getByText(/1\.2\.3/)).toBeTruthy();
     });
 });
