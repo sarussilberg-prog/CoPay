@@ -10,6 +10,9 @@ BEGIN;
 -- Returns a 10-char URL-safe slug. Uses pgcrypto for randomness.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- pgcrypto's gen_random_bytes lives in the `extensions` schema on Supabase,
+-- but the SECURITY DEFINER callers below pin search_path = public. Qualify
+-- the call explicitly so the function resolves regardless of search_path.
 CREATE OR REPLACE FUNCTION generate_invite_token() RETURNS TEXT
 LANGUAGE plpgsql VOLATILE AS $$
 DECLARE
@@ -20,7 +23,7 @@ DECLARE
     i          INT;
 BEGIN
     FOR i IN 1..10 LOOP
-        v_byte := get_byte(gen_random_bytes(1), 0);
+        v_byte := get_byte(extensions.gen_random_bytes(1), 0);
         v_token := v_token || substr(v_alphabet, (v_byte % v_len) + 1, 1);
     END LOOP;
     RETURN v_token;
