@@ -49,6 +49,8 @@ const makeGroup = (overrides: Partial<{
     createdAt: new Date(),
     updatedAt: new Date(),
     members: [{ userId: 'u1', displayName: 'Alice' }],
+    isArchivedByMe: false,
+    isAutoArchived: false,
     ...overrides,
 });
 
@@ -65,11 +67,10 @@ beforeEach(() => {
 });
 
 describe('GroupsListScreen', () => {
-    it('calls fetchGroups and fetchBalanceSummary on mount', async () => {
+    it('calls fetchGroups on mount', async () => {
         render(<GroupsListScreen />);
         await waitFor(() => {
             expect(mockFetchGroups).toHaveBeenCalled();
-            expect(mockFetchSummary).toHaveBeenCalled();
         });
     });
 

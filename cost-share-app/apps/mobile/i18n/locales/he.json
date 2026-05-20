@@ -51,6 +51,8 @@
         "noMembers": "אין חברים עדיין",
         "removeMember": "הסר חבר",
         "removeMemberConfirm": "האם אתה בטוח שברצונך להסיר את החבר הזה?",
+        "cannotRemoveMember": "לא ניתן להסיר את החבר",
+        "cannotRemoveMemberReason": "לחבר זה יש יתרה פתוחה בקבוצה. יש לסלק חובות לפני ההסרה.",
         "balances": "יתרות",
         "expenses": "הוצאות",
         "settleUp": "סגור חשבון",
@@ -60,7 +62,19 @@
         "createError": "יצירת הקבוצה נכשלה",
         "updateError": "עדכון הקבוצה נכשל",
         "deleteGroup": "מחק קבוצה",
+        "deleteForEveryone": "מחק קבוצה לכולם",
         "deleteGroupConfirm": "האם אתה בטוח שברצונך למחוק את הקבוצה הזו? לא ניתן לבטל פעולה זו.",
+        "archive": {
+            "archiveCta": "העבר לארכיון",
+            "unarchiveCta": "החזר מארכיון",
+            "disabledReason": "יש לך יתרה פתוחה בקבוצה — סלק חובות לפני העברה לארכיון או יציאה.",
+            "archivedToast": "הקבוצה הועברה לארכיון",
+            "unarchivedToast": "הקבוצה הוחזרה מהארכיון",
+            "errorHasBalance": "סגור את היתרה בקבוצה לפני העברה לארכיון",
+            "errorGeneric": "עדכון מצב הארכיון נכשל",
+            "badge": "ארכיון",
+            "noArchived": "אין קבוצות בארכיון"
+        },
         "groupCreated": "הקבוצה נוצרה בהצלחה",
         "groupUpdated": "הקבוצה עודכנה בהצלחה",
         "groupDeleted": "הקבוצה נמחקה בהצלחה",
@@ -107,6 +121,7 @@
                 "all": "הכל",
                 "owe": "אני חייב",
                 "owed": "חייבים לי",
+                "unsettled": "עם יתרה",
                 "settled": "מסודר"
             },
             "type": {
@@ -115,7 +130,7 @@
             },
             "status": {
                 "label": "סטטוס",
-                "includeArchived": "הצג קבוצות בארכיון"
+                "showArchived": "הצג קבוצות בארכיון"
             },
             "currency": {
                 "label": "מטבע"
@@ -456,8 +471,8 @@
         "convertedLabel": "שקלול כל המטבעות",
         "convertedFootnote": "מומר ל-{{currency}} · שער לפי {{date}}",
         "conversionFailed": "לא ניתן לטעון שערי מטבע — ראה פירוט לפי מטבע למטה",
-        "closedGroups": "קבוצות סגורות",
-        "activeGroups": "קבוצות פעילות",
+        "closedGroups": "קופות ללא יתרה",
+        "activeGroups": "קופות עם יתרה",
         "friends": "חברים",
         "loadError": "טעינת לוח הבקרה נכשלה",
         "settled": "מסולק",

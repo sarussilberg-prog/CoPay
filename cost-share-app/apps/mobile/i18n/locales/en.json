@@ -51,6 +51,8 @@
         "noMembers": "No members yet",
         "removeMember": "Remove Member",
         "removeMemberConfirm": "Are you sure you want to remove this member?",
+        "cannotRemoveMember": "Can't remove member",
+        "cannotRemoveMemberReason": "This member has an open balance in this group. Settle up before removing them.",
         "balances": "Balances",
         "expenses": "Expenses",
         "settleUp": "Settle Up",
@@ -60,7 +62,19 @@
         "createError": "Failed to create group",
         "updateError": "Failed to update group",
         "deleteGroup": "Delete Group",
+        "deleteForEveryone": "Delete group for everyone",
         "deleteGroupConfirm": "Are you sure you want to delete this group? This action cannot be undone.",
+        "archive": {
+            "archiveCta": "Move to archive",
+            "unarchiveCta": "Restore from archive",
+            "disabledReason": "You have an open balance in this group — settle up before archiving or leaving.",
+            "archivedToast": "Group archived",
+            "unarchivedToast": "Group restored from archive",
+            "errorHasBalance": "Settle your balance in this group before archiving",
+            "errorGeneric": "Couldn't update archive state",
+            "badge": "ARCHIVED",
+            "noArchived": "No archived groups"
+        },
         "groupCreated": "Group created successfully",
         "groupUpdated": "Group updated successfully",
         "groupDeleted": "Group deleted successfully",
@@ -107,6 +121,7 @@
                 "all": "All",
                 "owe": "I owe",
                 "owed": "I'm owed",
+                "unsettled": "Unsettled",
                 "settled": "Settled"
             },
             "type": {
@@ -115,7 +130,7 @@
             },
             "status": {
                 "label": "Status",
-                "includeArchived": "Show archived"
+                "showArchived": "Show archived groups"
             },
             "currency": {
                 "label": "Currency"
@@ -454,8 +469,8 @@
         "convertedLabel": "All currencies combined",
         "convertedFootnote": "Converted to {{currency}} · rates as of {{date}}",
         "conversionFailed": "Could not load exchange rates — see per-currency breakdown below",
-        "closedGroups": "Closed groups",
-        "activeGroups": "Active groups",
+        "closedGroups": "Settled groups",
+        "activeGroups": "Unsettled groups",
         "friends": "Friends",
         "loadError": "Failed to load dashboard",
         "settled": "Settled up",

@@ -113,12 +113,12 @@ function HeroChrome({
                     <TouchableOpacity
                         onPress={onSettings}
                         accessibilityRole="button"
-                        accessibilityLabel="Settings"
+                        accessibilityLabel="Group menu"
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
                         testID="hero-settings-btn"
                     >
-                        <AppIcon name="settings-outline" size={20} color="#fff" />
+                        <AppIcon name="ellipsis-vertical" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>

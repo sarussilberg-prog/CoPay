@@ -117,9 +117,10 @@ describe('GroupDetailScreen', () => {
         expect(mockGoBack).toHaveBeenCalled();
     });
 
-    it('navigates to EditGroup when the settings gear is tapped', async () => {
-        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
+    it('navigates to EditGroup via the kebab menu', async () => {
+        const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('hero-settings-btn'));
+        fireEvent.press(await findByText('groups.editGroup'));
         expect(mockNavigate).toHaveBeenCalledWith('EditGroup', { groupId: 'g1' });
     });
 

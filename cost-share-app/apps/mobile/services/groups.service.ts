@@ -93,18 +93,38 @@ export async function fetchGroups(): Promise<GroupWithMembers[]> {
             return [];
         }
 
-        const { data, error } = await supabase
-            .from('groups')
-            .select(
-                '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url))',
-            )
-            .in('id', groupIds)
-            .eq('is_active', true)
-            .eq('group_members.is_active', true)
-            .order('created_at', { ascending: false });
-        if (error) throw error;
+        const [groupsRes, archiveRes] = await Promise.all([
+            supabase
+                .from('groups')
+                .select(
+                    '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url))',
+                )
+                .in('id', groupIds)
+                .eq('is_active', true)
+                .eq('group_members.is_active', true)
+                .order('created_at', { ascending: false }),
+            supabase.rpc('get_user_groups_archive_state'),
+        ]);
+        if (groupsRes.error) throw groupsRes.error;
+        if (archiveRes.error) throw archiveRes.error;
 
-        const groups = (data ?? []).map(groupWithMembersFromRow);
+        const archiveByGroup = new Map<string, { mine: boolean; auto: boolean }>();
+        for (const row of archiveRes.data ?? []) {
+            archiveByGroup.set(row.group_id as string, {
+                mine: Boolean(row.is_archived_by_me),
+                auto: Boolean(row.is_auto_archived),
+            });
+        }
+
+        const groups = (groupsRes.data ?? []).map(row => {
+            const base = groupWithMembersFromRow(row);
+            const state = archiveByGroup.get(base.id);
+            return {
+                ...base,
+                isArchivedByMe: state?.mine ?? false,
+                isAutoArchived: state?.auto ?? false,
+            };
+        });
         useAppStore.getState().setGroups(groups);
         return groups;
     } catch (error) {
@@ -116,6 +136,54 @@ export async function fetchGroups(): Promise<GroupWithMembers[]> {
         });
         return [];
     }
+}
+
+export type ArchiveGroupError = 'has_balance' | 'not_a_member' | 'unknown';
+
+export async function archiveGroup(groupId: string): Promise<ArchiveGroupError | null> {
+    const { error } = await supabase.rpc('archive_group', { p_group_id: groupId });
+    if (error) {
+        const code: ArchiveGroupError = error.message?.includes('has_balance')
+            ? 'has_balance'
+            : error.message?.includes('not_a_member')
+                ? 'not_a_member'
+                : 'unknown';
+        Toast.show({
+            type: 'error',
+            text1: i18n.t(
+                code === 'has_balance'
+                    ? 'groups.archive.errorHasBalance'
+                    : 'groups.archive.errorGeneric',
+            ),
+        });
+        return code;
+    }
+
+    const existing = useAppStore.getState().groups.find(g => g.id === groupId);
+    if (existing) {
+        useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: true });
+    }
+    Toast.show({ type: 'success', text1: i18n.t('groups.archive.archivedToast') });
+    return null;
+}
+
+export async function unarchiveGroup(groupId: string): Promise<boolean> {
+    const { error } = await supabase.rpc('unarchive_group', { p_group_id: groupId });
+    if (error) {
+        Toast.show({
+            type: 'error',
+            text1: i18n.t('groups.archive.errorGeneric'),
+            text2: i18n.t('common.networkError'),
+        });
+        return false;
+    }
+
+    const existing = useAppStore.getState().groups.find(g => g.id === groupId);
+    if (existing) {
+        useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: false });
+    }
+    Toast.show({ type: 'success', text1: i18n.t('groups.archive.unarchivedToast') });
+    return true;
 }
 
 export async function getGroupById(id: string): Promise<Group | null> {
@@ -157,7 +225,12 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
         if (membersErr) throw membersErr;
 
         const base = groupFromRow(groupRow);
-        const group: GroupWithMembers = { ...base, members: [] };
+        const group: GroupWithMembers = {
+            ...base,
+            members: [],
+            isArchivedByMe: false,
+            isAutoArchived: false,
+        };
         useAppStore.getState().addGroup(group);
         Toast.show({
             type: 'success',
@@ -204,7 +277,12 @@ export async function updateGroup(id: string, dto: UpdateGroupDto): Promise<Grou
 
     const base = groupFromRow(data);
     const existing = useAppStore.getState().groups.find(g => g.id === id);
-    const group: GroupWithMembers = { ...base, members: existing?.members ?? [] };
+    const group: GroupWithMembers = {
+        ...base,
+        members: existing?.members ?? [],
+        isArchivedByMe: existing?.isArchivedByMe ?? false,
+        isAutoArchived: existing?.isAutoArchived ?? false,
+    };
     useAppStore.getState().updateGroup(group);
     Toast.show({ type: 'success', text1: i18n.t('common.success'), text2: 'Group updated' });
     return group;

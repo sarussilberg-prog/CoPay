@@ -13,6 +13,8 @@ import {
     Alert,
     ActionSheetIOS,
     Platform,
+    Modal,
+    Pressable,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -30,6 +32,10 @@ import { useLoading } from '../../hooks/useLoading';
 import {
     getGroupById,
     getGroupMembers,
+    archiveGroup,
+    unarchiveGroup,
+    deleteGroup,
+    removeGroupMember,
 } from '../../services/groups.service';
 import { fetchExpenses } from '../../services/expenses.service';
 import {
@@ -48,7 +54,7 @@ import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupHero } from '../../components/GroupHero';
 import { QuickActionsRow } from '../../components/QuickActionsRow';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FeedItemRow } from '../../components/FeedItemRow';
 import { SearchExpandable } from '../../components/SearchExpandable';
 import { MessageComposerSheet } from '../../components/MessageComposerSheet';
@@ -103,6 +109,9 @@ export function GroupDetailScreen() {
     const [group, setGroup] = useState<Group | null>(null);
     const storeGroup = useAppStore(s => s.groups.find(g => g.id === groupId));
     const displayGroup = storeGroup ?? group;
+    const isArchivedByMe = storeGroup?.isArchivedByMe ?? false;
+    const hasOpenBalance = useAppStore(s => Boolean(s.groupBalances[groupId]));
+    const insets = useSafeAreaInsets();
     const [memberLites, setMemberLites] = useState<GroupMemberLite[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
@@ -113,6 +122,8 @@ export function GroupDetailScreen() {
     const [composer, setComposer] = useState<ComposerState>({ open: false });
     const [addMembersOpen, setAddMembersOpen] = useState(false);
     const [editingSettlement, setEditingSettlement] = useState<Settlement | null>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [archiveBusy, setArchiveBusy] = useState(false);
 
     const { data: settlements = [], refetch: refetchSettlements } =
         useGroupSettlementsQuery(groupId);
@@ -245,10 +256,57 @@ export function GroupDetailScreen() {
     }, [feed, filters, trimmedQuery, memberMap]);
 
     const handleBack = useCallback(() => navigation.goBack(), [navigation]);
-    const handleSettings = useCallback(
-        () => navigation.navigate('EditGroup', { groupId }),
-        [navigation, groupId],
-    );
+    const handleSettings = useCallback(() => setMenuOpen(true), []);
+    const handleEditGroup = useCallback(() => {
+        setMenuOpen(false);
+        navigation.navigate('EditGroup', { groupId });
+    }, [navigation, groupId]);
+    const handleArchiveToggle = useCallback(async () => {
+        setMenuOpen(false);
+        setArchiveBusy(true);
+        try {
+            if (isArchivedByMe) {
+                await unarchiveGroup(groupId);
+            } else {
+                await archiveGroup(groupId);
+            }
+        } finally {
+            setArchiveBusy(false);
+        }
+    }, [isArchivedByMe, groupId]);
+    const handleLeaveGroup = useCallback(() => {
+        setMenuOpen(false);
+        Alert.alert(t('groups.leaveGroup'), t('groups.leaveGroupConfirm'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('groups.leaveGroup'),
+                style: 'destructive',
+                onPress: () => {
+                    void (async () => {
+                        if (!currentUserId) return;
+                        const ok = await removeGroupMember(groupId, currentUserId);
+                        if (ok) navigation.popToTop?.() ?? navigation.goBack();
+                    })();
+                },
+            },
+        ]);
+    }, [groupId, currentUserId, navigation, t]);
+    const handleDeleteGroup = useCallback(() => {
+        setMenuOpen(false);
+        Alert.alert(t('groups.deleteGroup'), t('groups.deleteGroupConfirm'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('common.delete'),
+                style: 'destructive',
+                onPress: () => {
+                    void (async () => {
+                        const ok = await deleteGroup(groupId);
+                        if (ok) navigation.popToTop?.() ?? navigation.goBack();
+                    })();
+                },
+            },
+        ]);
+    }, [groupId, navigation, t]);
     const handleSettleUp = useCallback(
         () => navigation.navigate('SettleUpList', { groupId }),
         [navigation, groupId],
@@ -604,6 +662,91 @@ export function GroupDetailScreen() {
                     onClose={() => setEditingSettlement(null)}
                 />
             )}
+
+            <Modal
+                visible={menuOpen}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setMenuOpen(false)}
+            >
+                <Pressable className="flex-1" onPress={() => setMenuOpen(false)}>
+                    <View
+                        className="absolute right-2 bg-white rounded-2xl border border-gray-200 py-1"
+                        style={{
+                            top: insets.top + 52,
+                            minWidth: 260,
+                            maxWidth: 320,
+                            shadowColor: '#000',
+                            shadowOpacity: 0.15,
+                            shadowRadius: 12,
+                            shadowOffset: { width: 0, height: 4 },
+                            elevation: 6,
+                        }}
+                    >
+                        {hasOpenBalance && !isArchivedByMe && (
+                            <View className="px-4 py-2 border-b border-gray-100">
+                                <Text className="text-xs text-amber-700">
+                                    {t('groups.archive.disabledReason')}
+                                </Text>
+                            </View>
+                        )}
+                        <DetailMenuRow
+                            label={t('groups.editGroup')}
+                            onPress={handleEditGroup}
+                        />
+                        <DetailMenuRow
+                            label={
+                                isArchivedByMe
+                                    ? t('groups.archive.unarchiveCta')
+                                    : t('groups.archive.archiveCta')
+                            }
+                            onPress={handleArchiveToggle}
+                            disabled={archiveBusy || (!isArchivedByMe && hasOpenBalance)}
+                        />
+                        <DetailMenuRow
+                            label={t('groups.leaveGroup')}
+                            onPress={handleLeaveGroup}
+                            disabled={hasOpenBalance}
+                        />
+                        <View className="h-px bg-gray-100 my-1" />
+                        <DetailMenuRow
+                            label={t('groups.deleteGroup')}
+                            onPress={handleDeleteGroup}
+                            destructive
+                        />
+                    </View>
+                </Pressable>
+            </Modal>
         </View>
+    );
+}
+
+interface DetailMenuRowProps {
+    label: string;
+    onPress: () => void;
+    disabled?: boolean;
+    destructive?: boolean;
+}
+
+function DetailMenuRow({ label, onPress, disabled, destructive }: DetailMenuRowProps) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={disabled}
+            activeOpacity={0.6}
+            className="px-4 py-3"
+        >
+            <Text
+                className={
+                    disabled
+                        ? 'text-sm font-medium text-gray-400'
+                        : destructive
+                            ? 'text-sm font-medium text-red-600'
+                            : 'text-sm font-medium text-gray-900'
+                }
+            >
+                {label}
+            </Text>
+        </TouchableOpacity>
     );
 }

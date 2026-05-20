@@ -4,7 +4,7 @@
 
 import { GroupType, GroupWithMembers } from '@cost-share/shared';
 
-export type BalanceState = 'all' | 'owe' | 'owed' | 'settled';
+export type BalanceState = 'all' | 'owe' | 'owed' | 'settled' | 'unsettled';
 
 export type GroupSortOption =
     | 'recentDesc'
@@ -18,7 +18,7 @@ export interface GroupListFilters {
     sortBy: GroupSortOption;
     balanceState: BalanceState;
     types: GroupType[];
-    includeArchived: boolean;
+    showArchived: boolean;
     currencies: string[];
 }
 
@@ -26,7 +26,7 @@ export const DEFAULT_GROUP_LIST_FILTERS: GroupListFilters = {
     sortBy: 'recentDesc',
     balanceState: 'all',
     types: [],
-    includeArchived: false,
+    showArchived: false,
     currencies: [],
 };
 
@@ -35,9 +35,13 @@ export function isAnyGroupListFilterActive(f: GroupListFilters): boolean {
         f.sortBy !== 'recentDesc' ||
         f.balanceState !== 'all' ||
         f.types.length > 0 ||
-        f.includeArchived ||
+        f.showArchived ||
         f.currencies.length > 0
     );
+}
+
+export function isGroupArchived(group: GroupWithMembers): boolean {
+    return group.isArchivedByMe || group.isAutoArchived;
 }
 
 export function passesGroupFilters(
@@ -54,7 +58,7 @@ export function passesGroupFilters(
     ) {
         return false;
     }
-    if (!filters.includeArchived && !group.isActive) {
+    if (!filters.showArchived && isGroupArchived(group)) {
         return false;
     }
     if (filters.balanceState !== 'all') {
@@ -62,6 +66,7 @@ export function passesGroupFilters(
         if (filters.balanceState === 'owed' && net <= 0.01) return false;
         if (filters.balanceState === 'owe' && net >= -0.01) return false;
         if (filters.balanceState === 'settled' && Math.abs(net) >= 0.01) return false;
+        if (filters.balanceState === 'unsettled' && Math.abs(net) < 0.01) return false;
     }
     return true;
 }
@@ -77,6 +82,10 @@ export function sortGroups(
         : (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' });
 
     return [...groups].sort((a, b) => {
+        const aArchived = isGroupArchived(a);
+        const bArchived = isGroupArchived(b);
+        if (aArchived !== bArchived) return aArchived ? 1 : -1;
+
         switch (sortBy) {
             case 'nameAsc':
                 return collator(a.name, b.name);

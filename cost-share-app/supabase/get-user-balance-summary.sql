@@ -54,8 +54,12 @@ BEGIN
         SELECT
             ug.group_id,
             ug.default_currency AS currency,
+            -- Net positive = user is owed money in this group.
+            -- Expenses paid increase the credit; splits owed decrease it.
+            -- A settlement received means the user collected on a credit (decrease net),
+            -- a settlement paid means the user paid down a debt (increase net).
             COALESCE(up.amount, 0) - COALESCE(uo.amount, 0)
-              + COALESCE(usr.amount, 0) - COALESCE(usp.amount, 0) AS net_balance
+              - COALESCE(usr.amount, 0) + COALESCE(usp.amount, 0) AS net_balance
         FROM user_groups ug
         LEFT JOIN user_paid up ON up.group_id = ug.group_id
         LEFT JOIN user_owed uo ON uo.group_id = ug.group_id

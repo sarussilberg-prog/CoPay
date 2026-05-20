@@ -446,6 +446,10 @@ export interface GroupMemberLite {
 /** Group enriched with its active members. */
 export interface GroupWithMembers extends Group {
     members: GroupMemberLite[];
+    /** True when the caller has manually archived this group (Type 2). */
+    isArchivedByMe: boolean;
+    /** True when the group is auto-archived for everyone (Type 1). */
+    isAutoArchived: boolean;
 }
 
 /** One row of the per-currency balance summary for the current user. */

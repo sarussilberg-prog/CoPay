@@ -17,6 +17,8 @@ const baseGroup = (overrides: Partial<GroupWithMembers> = {}): GroupWithMembers 
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-05-01'),
     members: [],
+    isArchivedByMe: false,
+    isAutoArchived: false,
     ...overrides,
 });
 

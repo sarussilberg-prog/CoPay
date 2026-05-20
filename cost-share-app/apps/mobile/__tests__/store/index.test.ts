@@ -13,6 +13,8 @@ const makeGroup = (id: string, name = `Group ${id}`): GroupWithMembers => ({
     createdAt: new Date(),
     updatedAt: new Date(),
     members: [],
+    isArchivedByMe: false,
+    isAutoArchived: false,
 });
 
 const makeExpense = (id: string, amount = 10): ExpenseWithSplits => ({
