@@ -1,69 +1,63 @@
 /**
- * CSV export for a group's expenses, shared via the OS share sheet.
+ * Group report export as a styled HTML file (tables, RTL, no native modules).
  */
 
 import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import {
-    Group,
-    ExpenseWithSplits,
-    GroupMemberLite,
-} from '@cost-share/shared';
+import { Group, FeedItem, GroupMemberLite, PairwiseDebt } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
+import { buildGroupExportHtml } from '../lib/groupExport';
 
-function csvEscape(value: string): string {
-    if (/[",\n\r]/.test(value)) {
-        return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
+export interface GroupExportPayload {
+    feed: FeedItem[];
+    debts: PairwiseDebt[];
+    members: GroupMemberLite[];
 }
 
-function todayIso(): string {
-    return new Date().toISOString().slice(0, 10);
+
+/** Filesystem-safe export basename that keeps the group name (incl. Hebrew). */
+export function buildGroupExportFilename(group: Group, exportedAt = new Date()): string {
+    const trimmed = group.name.trim();
+    const base =
+        trimmed
+            .replace(/[/\\:*?"<>|]+/g, '_')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 60) || 'group';
+    return `${base}-${todayIsoFrom(exportedAt)}.html`;
 }
 
-function buildCsv(
-    group: Group,
-    expenses: ExpenseWithSplits[],
-    members: GroupMemberLite[],
-): string {
-    const nameById = new Map(members.map(m => [m.userId, m.displayName]));
-    const header = ['Date', 'Description', 'Amount', 'Currency', 'Paid By', 'Splits'];
-    const rows = expenses.map(e => {
-        const date = new Date(e.expenseDate).toISOString().slice(0, 10);
-        const payer = nameById.get(e.paidBy) ?? e.paidBy;
-        const splits = e.splits
-            .map(s => `${nameById.get(s.userId) ?? s.userId}=${s.amount.toFixed(2)}`)
-            .join(';');
-        return [
-            date,
-            e.description,
-            e.amount.toFixed(2),
-            e.currency,
-            payer,
-            splits,
-        ].map(csvEscape).join(',');
-    });
-    return [header.join(','), ...rows].join('\n');
+function todayIsoFrom(date: Date): string {
+    return date.toISOString().slice(0, 10);
 }
 
-function safeName(name: string): string {
-    return name.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 60) || 'group';
+async function writeHtmlReport(group: Group, html: string): Promise<string> {
+    const filename = buildGroupExportFilename(group);
+    const file = new File(Paths.cache, filename);
+    file.create({ overwrite: true });
+    file.write(html);
+    return file.uri;
 }
 
 export async function exportGroupCsv(
     group: Group,
-    expenses: ExpenseWithSplits[],
-    members: GroupMemberLite[],
+    payload: GroupExportPayload,
 ): Promise<boolean> {
     try {
-        const csv = buildCsv(group, expenses, members);
-        const filename = `${safeName(group.name)}-${todayIso()}.csv`;
-        const file = new File(Paths.cache, filename);
-        file.create({ overwrite: true });
-        file.write(csv);
+        const language = i18n.language === 'he' ? 'he' : 'en';
+        const html = buildGroupExportHtml({
+            group,
+            feed: payload.feed,
+            debts: payload.debts,
+            members: payload.members,
+            exportedAt: new Date(),
+            language,
+            t: i18n.t.bind(i18n),
+        });
 
+        const uri = await writeHtmlReport(group, html);
+
+        const Sharing = await import('expo-sharing');
         const available = await Sharing.isAvailableAsync();
         if (!available) {
             Toast.show({
@@ -72,14 +66,14 @@ export async function exportGroupCsv(
             });
             return false;
         }
-        await Sharing.shareAsync(file.uri, {
-            mimeType: 'text/csv',
-            dialogTitle: i18n.t('groups.share.exportTitle'),
-            UTI: 'public.comma-separated-values-text',
+        await Sharing.shareAsync(uri, {
+            mimeType: 'text/html',
+            dialogTitle: i18n.t('groups.share.exportTitleHtml'),
+            UTI: 'public.html',
         });
         return true;
     } catch (error) {
-        console.error('Failed to export CSV:', error);
+        console.error('Failed to export group report:', error);
         Toast.show({
             type: 'error',
             text1: i18n.t('groups.share.exportError'),

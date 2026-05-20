@@ -66,11 +66,14 @@ export function FilterBottomSheet<T>({
             animationType="slide"
             onRequestClose={onClose}
         >
-            <Pressable onPress={onClose} style={styles.backdrop}>
+            <View style={styles.backdrop}>
                 <Pressable
-                    onPress={() => {}}
-                    style={[styles.sheet, shadows.lg]}
-                >
+                    onPress={onClose}
+                    style={StyleSheet.absoluteFillObject}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('groups.filters.close')}
+                />
+                <View style={[styles.sheet, shadows.lg]}>
                     <View className="px-5 pt-4 pb-3">
                         <View className="self-center w-12 h-1 rounded-full bg-gray-200 mb-3" />
 
@@ -108,17 +111,20 @@ export function FilterBottomSheet<T>({
                     </View>
 
                     <ScrollView
+                        style={styles.scroll}
                         className="px-5"
                         contentContainerStyle={[
                             styles.scrollContent,
                             { paddingBottom: insets.bottom + 20 },
                         ]}
-                        showsVerticalScrollIndicator={false}
+                        showsVerticalScrollIndicator
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
                     >
                         {children({ filters, patch, replace })}
                     </ScrollView>
-                </Pressable>
-            </Pressable>
+                </View>
+            </View>
         </Modal>
     );
 }
@@ -134,6 +140,11 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         maxHeight: '88%',
+        overflow: 'hidden',
+    },
+    scroll: {
+        flexGrow: 0,
+        flexShrink: 1,
     },
     headerTop: {
         position: 'relative',

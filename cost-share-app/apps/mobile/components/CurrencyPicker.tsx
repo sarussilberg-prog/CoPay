@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Modal, FlatList, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import currencyCodes from 'currency-codes';
-import { resolveAutoTextInputStyle, useRtlLayout } from '../hooks/useRtlLayout';
+import { resolveAutoTextInputStyle, useAppLanguage, useRtlLayout } from '../hooks/useRtlLayout';
 import {
     getCurrencyDisplayName,
     matchesCurrencySearch,
@@ -33,15 +33,14 @@ export function CurrencyPicker({
     onClose,
     compact = false,
 }: CurrencyPickerProps) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const isRtl = useRtlLayout();
+    const language = useAppLanguage();
     const [internalVisible, setInternalVisible] = useState(false);
     const isControlled = visible !== undefined;
     const modalVisible = isControlled ? visible : internalVisible;
     const [searchQuery, setSearchQuery] = useState('');
     const searchInputRef = useRef<TextInput | null>(null);
-    const language = i18n.language;
-
     useEffect(() => {
         if (!modalVisible) return;
         const id = setTimeout(() => searchInputRef.current?.focus(), 80);

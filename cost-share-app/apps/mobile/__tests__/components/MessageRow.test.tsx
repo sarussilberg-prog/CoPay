@@ -16,7 +16,22 @@ const base: GroupMessage = {
 
 describe('MessageRow', () => {
     it('renders the sender name and body', () => {
-        const { getByText } = render(
+        const { getByText, getByTestId } = render(
+            <MessageRow
+                message={base}
+                senderName="Avi"
+                isMine={false}
+                onEdit={() => {}}
+                onDelete={() => {}}
+            />,
+        );
+        expect(getByText('Avi')).toBeTruthy();
+        expect(getByText('Hello world')).toBeTruthy();
+        expect(getByTestId('message-timestamp')).toBeTruthy();
+    });
+
+    it('shows timestamp for own messages without sender label', () => {
+        const { getByTestId, queryByText } = render(
             <MessageRow
                 message={base}
                 senderName="Avi"
@@ -25,8 +40,8 @@ describe('MessageRow', () => {
                 onDelete={() => {}}
             />,
         );
-        expect(getByText('Avi')).toBeTruthy();
-        expect(getByText('Hello world')).toBeTruthy();
+        expect(getByTestId('message-timestamp')).toBeTruthy();
+        expect(queryByText('Avi')).toBeNull();
     });
 
     it('shows the edited tag when editedAt is set', () => {

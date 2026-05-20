@@ -77,7 +77,7 @@ if [[ -t 0 && -t 1 ]] && command -v script >/dev/null 2>&1; then
   start_mobile_auto_open
   WEB_FLAG=()
   [[ "${EXPO_START_WEB:-0}" == "1" ]] && WEB_FLAG=(--web)
-  if script -q "$LOG" npx expo start --dev-client --localhost --port "$PORT" "${WEB_FLAG[@]}"; then
+  if script -q "$LOG" npx expo start --dev-client --localhost --port "$PORT" ${WEB_FLAG[@]+"${WEB_FLAG[@]}"}; then
     :
   else
     kill "$WATCHER_PID" 2>/dev/null || true

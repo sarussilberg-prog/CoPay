@@ -47,12 +47,31 @@ export default function App() {
   const { session, setSession } = useAppStore();
   const incomingUrl = Linking.useURL();
 
+  // Web: OAuth returns in the same browser tab via useURL (ignored on native — see below).
   useEffect(() => {
-    if (!incomingUrl || session || !isAuthCallbackUrl(incomingUrl)) return;
+    if (Platform.OS !== 'web' || !incomingUrl || session || !isAuthCallbackUrl(incomingUrl)) return;
     void handleAuthRedirectUrl(incomingUrl).then(({ error }) => {
       if (error) console.error('Deep link auth error:', error.message);
     });
   }, [incomingUrl, session]);
+
+  // Native: in-app OAuth is completed in signInWithGoogle (WebBrowser result).
+  // Only handle cold-start deep links so we do not exchange the same code twice.
+  useEffect(() => {
+    if (Platform.OS === 'web' || session) return;
+
+    let cancelled = false;
+    void Linking.getInitialURL().then((url) => {
+      if (cancelled || !url || !isAuthCallbackUrl(url)) return;
+      void handleAuthRedirectUrl(url).then(({ error }) => {
+        if (error) console.error('Deep link auth error:', error.message);
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   const guardSession = useCallback(async () => {
     const status = await assertProfileActive();
@@ -88,7 +107,7 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')) {
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
         void hydrateCurrentUserProfile(session.user.id);
         void guardSession();
       }

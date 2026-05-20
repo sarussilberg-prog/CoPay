@@ -70,7 +70,12 @@ export const groupWithMembersFromRow = (
             avatarUrl: (m.profiles?.avatar_url as string | undefined) ?? undefined,
         }))
         .filter(m => m.userId.length > 0);
-    return { ...groupFromRow(r), members };
+    return {
+        ...groupFromRow(r),
+        members,
+        isArchivedByMe: false,
+        isAutoArchived: false,
+    };
 };
 
 export const expenseFromRow = (r: Row): Expense => ({

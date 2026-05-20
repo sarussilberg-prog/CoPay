@@ -24,6 +24,7 @@ const CURRENCY_SYMBOL_OVERRIDES: Record<string, string> = {
     CHF: 'Fr',
     CAD: 'C$',
     AUD: 'A$',
+    AMD: '֏',
 };
 
 function symbolFromIntl(code: string): string | null {
@@ -61,17 +62,22 @@ export function resolveCurrencyLocale(language: string): string {
     return 'en';
 }
 
+export function normalizeCurrencyCode(code: string): string {
+    return code.trim().toUpperCase();
+}
+
 export function getLocalizedCurrencyName(code: string, language: string): string | undefined {
+    const normalizedCode = normalizeCurrencyCode(code);
     const locale = resolveCurrencyLocale(language) as keyof typeof CURRENCY_LOCALE_NAMES;
-    const fromStatic = CURRENCY_LOCALE_NAMES[locale]?.[code];
+    const fromStatic = CURRENCY_LOCALE_NAMES[locale]?.[normalizedCode];
     if (fromStatic) return fromStatic;
 
     const displayNames = getDisplayNames(locale);
     if (!displayNames) return undefined;
 
     try {
-        const name = displayNames.of(code);
-        return name && name !== code ? name : undefined;
+        const name = displayNames.of(normalizedCode);
+        return name && name !== normalizedCode ? name : undefined;
     } catch {
         return undefined;
     }
@@ -94,7 +100,7 @@ export function matchesCurrencySearch(
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return true;
 
-    if (code.toLowerCase().includes(normalizedQuery)) return true;
+    if (normalizeCurrencyCode(code).toLowerCase().includes(normalizedQuery)) return true;
     if (englishName.toLowerCase().includes(normalizedQuery)) return true;
 
     const localizedName = getLocalizedCurrencyName(code, language);

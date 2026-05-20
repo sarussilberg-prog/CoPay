@@ -11,20 +11,24 @@ import {
     FlatList,
     RefreshControl,
     TouchableOpacity,
+    TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { GroupWithMembers } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import { fetchGroups } from '../../services/groups.service';
 import { fetchBalanceSummary } from '../../services/users.service';
+import { prefetchActivityFeed } from '../../hooks/queries/useActivityQuery';
+import { prefetchGroupDetail } from '../../hooks/queries/prefetchGroupDetail';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupCard } from '../../components/GroupCard';
-import { SearchExpandable } from '../../components/SearchExpandable';
+import { resolveAutoTextInputStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 import {
+    BalanceState,
     DEFAULT_FILTERS,
     Filters,
     FiltersSheet,
@@ -51,20 +55,40 @@ function memberMatches(group: GroupWithMembers, q: string): string[] {
 
 export function GroupsListScreen() {
     const { t, i18n } = useTranslation();
+    const isRtl = useRtlLayout();
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const { isLoading, startLoading, stopLoading } = useLoading();
     const groups = useAppStore(s => s.groups);
     const groupBalances = useAppStore(s => s.groupBalances);
 
     const [refreshing, setRefreshing] = useState(false);
+    const [loadError, setLoadError] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchExpanded, setSearchExpanded] = useState(false);
     const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
     const [filtersOpen, setFiltersOpen] = useState(false);
 
+    const incomingBalanceState = route.params?.balanceState as BalanceState | undefined;
+    const incomingShowArchived = route.params?.showArchived as boolean | undefined;
+    useEffect(() => {
+        if (incomingBalanceState === undefined && incomingShowArchived === undefined) return;
+        setFilters(f => ({
+            ...f,
+            ...(incomingBalanceState !== undefined && { balanceState: incomingBalanceState }),
+            ...(incomingShowArchived !== undefined && { showArchived: incomingShowArchived }),
+        }));
+        navigation.setParams({ balanceState: undefined, showArchived: undefined });
+    }, [incomingBalanceState, incomingShowArchived, navigation]);
+
     const loadAll = useCallback(async () => {
-        await Promise.all([fetchGroups(), fetchBalanceSummary()]);
+        try {
+            await Promise.all([fetchGroups(), fetchBalanceSummary()]);
+            void prefetchActivityFeed();
+            setLoadError(false);
+        } catch {
+            setLoadError(true);
+        }
     }, []);
 
     useEffect(() => {
@@ -79,7 +103,10 @@ export function GroupsListScreen() {
     }, [loadAll]);
 
     const handleGroupPress = useCallback(
-        (groupId: string) => navigation.navigate('GroupDetail', { groupId }),
+        (groupId: string) => {
+            prefetchGroupDetail(groupId);
+            navigation.navigate('GroupDetail', { groupId });
+        },
         [navigation],
     );
     const handleCreateGroup = useCallback(
@@ -131,43 +158,64 @@ export function GroupsListScreen() {
     return (
         <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
             <View className="flex-row items-center px-4 py-2">
-                <SearchExpandable
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    expanded={searchExpanded}
-                    onExpandedChange={setSearchExpanded}
-                    testID="groups-search"
-                />
-                {!searchExpanded && (
-                    <>
+                <View className="flex-1 flex-row items-center rounded-full bg-gray-100 px-3 h-9">
+                    <AppIcon name="search" size={18} color={colors.gray500} />
+                    <TextInput
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        placeholder={t('groups.search.placeholder')}
+                        placeholderTextColor={colors.gray400}
+                        className={[
+                            'flex-1 text-sm text-gray-900 mx-2',
+                            rtlTextClassName(isRtl),
+                        ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        returnKeyType="search"
+                        style={resolveAutoTextInputStyle(isRtl)}
+                        testID="groups-search-input"
+                    />
+                    {searchQuery.length > 0 && (
                         <TouchableOpacity
-                            onPress={() => setFiltersOpen(true)}
+                            onPress={() => setSearchQuery('')}
                             accessibilityRole="button"
-                            accessibilityLabel={t('groups.filters.title')}
-                            className="ml-1 h-9 w-9 items-center justify-center relative"
-                            testID="groups-filter-btn"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                             <AppIcon
-                                name="options-outline"
-                                size={22}
-                                color={colors.gray500}
+                                name="close-circle"
+                                size={18}
+                                color={colors.gray400}
                             />
-                            {filterActive && (
-                                <View className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
-                            )}
                         </TouchableOpacity>
-                        <View className="flex-1" />
-                        <TouchableOpacity
-                            onPress={handleCreateGroup}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('groups.createGroup')}
-                            className="h-9 w-9 items-center justify-center rounded-full bg-primary"
-                            testID="groups-create-btn"
-                        >
-                            <AppIcon name="add" size={22} color={colors.white} />
-                        </TouchableOpacity>
-                    </>
-                )}
+                    )}
+                </View>
+                <TouchableOpacity
+                    onPress={() => setFiltersOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('groups.filters.title')}
+                    className="ml-2 h-9 w-9 items-center justify-center relative"
+                    testID="groups-filter-btn"
+                >
+                    <AppIcon
+                        name="options-outline"
+                        size={22}
+                        color={colors.gray500}
+                    />
+                    {filterActive && (
+                        <View className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={handleCreateGroup}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('groups.createGroup')}
+                    className="ml-1 h-9 w-9 items-center justify-center rounded-full bg-primary"
+                    testID="groups-create-btn"
+                >
+                    <AppIcon name="add" size={22} color={colors.white} />
+                </TouchableOpacity>
             </View>
 
             <View className="flex-1">
@@ -198,13 +246,29 @@ export function GroupsListScreen() {
                         />
                     }
                     ListEmptyComponent={
-                        <EmptyState
-                            iconName="people-outline"
-                            title={t('groups.noGroups')}
-                            message={t('groups.noGroupsMessage')}
-                            actionTitle={t('groups.createGroup')}
-                            onAction={handleCreateGroup}
-                        />
+                        loadError && groups.length === 0 ? (
+                            <EmptyState
+                                iconName="alert-circle-outline"
+                                title={t('groups.loadError')}
+                                message={t('common.networkError')}
+                                actionTitle={t('common.retry')}
+                                onAction={handleRefresh}
+                            />
+                        ) : filters.showArchived ? (
+                            <View className="px-4 py-10 items-center">
+                                <Text className="text-sm text-gray-500">
+                                    {t('groups.archive.noArchived')}
+                                </Text>
+                            </View>
+                        ) : (
+                            <EmptyState
+                                iconName="people-outline"
+                                title={t('groups.noGroups')}
+                                message={t('groups.noGroupsMessage')}
+                                actionTitle={t('groups.createGroup')}
+                                onAction={handleCreateGroup}
+                            />
+                        )
                     }
                 />
 

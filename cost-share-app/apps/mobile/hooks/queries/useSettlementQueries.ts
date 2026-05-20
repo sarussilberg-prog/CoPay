@@ -15,13 +15,17 @@ import {
     fetchSettlements,
     updateSettlement,
 } from '../../services/settlements.service';
+import { fetchBalanceSummary } from '../../services/users.service';
 import { queryKeys } from './keys';
 
-export function useGroupPairwiseDebtsQuery(groupId: string) {
+export function useGroupPairwiseDebtsQuery(
+    groupId: string,
+    options?: { enabled?: boolean },
+) {
     return useQuery({
         queryKey: queryKeys.groupPairwiseDebts(groupId),
         queryFn: () => fetchGroupPairwiseDebts(groupId),
-        enabled: Boolean(groupId),
+        enabled: Boolean(groupId) && (options?.enabled ?? true),
     });
 }
 
@@ -44,6 +48,7 @@ function useInvalidateAfterSettlementChange(groupId: string) {
         });
         void queryClient.invalidateQueries({ queryKey: queryKeys.activity });
         void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+        void fetchBalanceSummary();
     };
 }
 

@@ -36,10 +36,8 @@ export function BalancesScreen() {
 
     const loadData = useCallback(async () => {
         startLoading();
-        const [balancesData, debtsData] = await Promise.all([
-            getGroupBalances(groupId),
-            getGroupDebts(groupId),
-        ]);
+        const balancesData = await getGroupBalances(groupId);
+        const debtsData = await getGroupDebts(groupId, balancesData);
         setBalances(balancesData);
         setDebtsResult(debtsData);
         stopLoading();

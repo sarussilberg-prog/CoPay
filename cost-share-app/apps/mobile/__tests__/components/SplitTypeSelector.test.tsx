@@ -13,19 +13,19 @@ describe('SplitTypeSelector', () => {
 
     it('invokes onChange when switching to equal', () => {
         const onChange = jest.fn();
-        const { getByText } = render(
+        const { getByTestId } = render(
             <SplitTypeSelector value="unequal" onChange={onChange} />
         );
-        fireEvent.press(getByText('expenses.equalSplit'));
+        fireEvent.press(getByTestId('split-type-equal'));
         expect(onChange).toHaveBeenCalledWith('equal');
     });
 
     it('invokes onChange when switching to unequal', () => {
         const onChange = jest.fn();
-        const { getByText } = render(
+        const { getByTestId } = render(
             <SplitTypeSelector value="equal" onChange={onChange} />
         );
-        fireEvent.press(getByText('expenses.unequalSplit'));
+        fireEvent.press(getByTestId('split-type-unequal'));
         expect(onChange).toHaveBeenCalledWith('unequal');
     });
 });

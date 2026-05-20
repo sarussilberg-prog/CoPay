@@ -49,7 +49,7 @@ export function CategoryPicker({ value, onChange, label }: CategoryPickerProps) 
                 </Text>
             )}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View className="flex-row gap-2">
+                <View className="flex-row" style={{ gap: 8 }}>
                     {categories.map((cat) => (
                         <TouchableOpacity
                             key={cat}

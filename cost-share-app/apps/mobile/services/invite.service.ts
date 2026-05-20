@@ -4,8 +4,7 @@
  * writes via SECURITY DEFINER RPCs.
  */
 
-import * as Sharing from 'expo-sharing';
-import { Platform, Share } from 'react-native';
+import { Share } from 'react-native';
 import i18n from '../i18n';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
@@ -76,5 +75,3 @@ export async function rotateGroupInvite(groupId: string): Promise<string> {
     return newToken;
 }
 
-// Re-exported for completeness; not used by callers other than the share/rotate flows.
-export const __exportedForTests = { Sharing, Platform };

@@ -5,6 +5,15 @@ import { useAppStore } from '../store';
 
 const RtlLayoutContext = createContext<boolean | null>(null);
 
+/** App UI language — prefers Zustand store over i18n (kept in sync on language change). */
+export function useAppLanguage(): 'en' | 'he' {
+    const language = useAppStore((s) => s.language);
+    if (language === 'he' || language === 'en') return language;
+
+    const { i18n } = useTranslation();
+    return i18n.language.startsWith('he') ? 'he' : 'en';
+}
+
 /** True when UI should mirror for Hebrew — driven by app language, not device locale. */
 export function useRtlLayout(): boolean {
     const fromContext = useContext(RtlLayoutContext);
@@ -42,6 +51,14 @@ export function rtlWritingDirection(isRtl: boolean): 'rtl' | 'ltr' {
 
 export function rtlTrailingAlign(isRtl: boolean): 'flex-start' | 'flex-end' {
     return isRtl ? 'flex-start' : 'flex-end';
+}
+
+/** Feed actor label — edge-aligned by app language, not by name script. */
+export function feedActorNameStyle(isRtl: boolean): TextStyle {
+    return {
+        textAlign: rtlTextAlign(isRtl),
+        alignSelf: 'stretch',
+    };
 }
 
 function hasExplicitTextAlign(className?: string, style?: StyleProp<TextStyle>): boolean {

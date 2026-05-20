@@ -22,7 +22,7 @@
         "done": "סיום"
     },
     "tabs": {
-        "groups": "קבוצות",
+        "groups": "קופות",
         "activity": "פעילות",
         "history": "היסטוריה",
         "profile": "פרופיל"
@@ -35,44 +35,58 @@
         "signingIn": "מתחבר..."
     },
     "groups": {
-        "title": "קבוצות",
-        "createGroup": "צור קבוצה",
-        "editGroup": "ערוך קבוצה",
-        "noGroups": "אין קבוצות עדיין",
-        "noGroupsMessage": "צור את הקבוצה הראשונה שלך כדי להתחיל לשתף הוצאות",
-        "groupName": "שם הקבוצה",
-        "enterGroupName": "הזן שם קבוצה",
+        "title": "קופות",
+        "createGroup": "פתח קופה",
+        "editGroup": "ערוך קופה",
+        "noGroups": "אין קופות עדיין",
+        "noGroupsMessage": "פתח את הקופה הראשונה שלך כדי להתחיל לשתף הוצאות",
+        "groupName": "שם הקופה",
+        "enterGroupName": "הזן שם קופה",
         "description": "תיאור",
         "enterDescription": "הזן תיאור (אופציונלי)",
-        "groupType": "סוג קבוצה",
+        "groupType": "סוג קופה",
         "currency": "מטבע",
         "selectMembers": "בחר חברים",
         "addMember": "הוסף חבר",
         "noMembers": "אין חברים עדיין",
         "removeMember": "הסר חבר",
         "removeMemberConfirm": "האם אתה בטוח שברצונך להסיר את החבר הזה?",
+        "cannotRemoveMember": "לא ניתן להסיר את החבר",
+        "cannotRemoveMemberReason": "לחבר זה יש יתרה פתוחה בקבוצה. יש לסלק חובות לפני ההסרה.",
         "balances": "יתרות",
         "expenses": "הוצאות",
         "settleUp": "סגור חשבון",
         "totalSpent": "סך הוצאות",
-        "loadingGroups": "טוען קבוצות...",
-        "loadError": "טעינת הקבוצות נכשלה",
-        "createError": "יצירת הקבוצה נכשלה",
-        "updateError": "עדכון הקבוצה נכשל",
-        "deleteGroup": "מחק קבוצה",
-        "deleteGroupConfirm": "האם אתה בטוח שברצונך למחוק את הקבוצה הזו? לא ניתן לבטל פעולה זו.",
-        "groupCreated": "הקבוצה נוצרה בהצלחה",
-        "groupUpdated": "הקבוצה עודכנה בהצלחה",
-        "groupDeleted": "הקבוצה נמחקה בהצלחה",
+        "loadingGroups": "טוען קופות...",
+        "loadError": "טעינת הקופות נכשלה",
+        "createError": "פתיחת הקופה נכשלה",
+        "updateError": "עדכון הקופה נכשל",
+        "deleteGroup": "מחק קופה",
+        "deleteForEveryone": "מחק קופה לכולם",
+        "deleteGroupConfirm": "האם אתה בטוח שברצונך למחוק את הקופה הזו? לא ניתן לבטל פעולה זו.",
+        "archive": {
+            "archiveCta": "העבר לארכיון",
+            "unarchiveCta": "החזר מארכיון",
+            "disabledReason": "יש לך יתרה פתוחה בקופה — סלק חובות לפני העברה לארכיון או יציאה.",
+            "archivedToast": "הקופה הועברה לארכיון",
+            "unarchivedToast": "הקופה הוחזרה מהארכיון",
+            "errorHasBalance": "סגור את היתרה בקופה לפני העברה לארכיון",
+            "errorGeneric": "עדכון מצב הארכיון נכשל",
+            "badge": "ארכיון",
+            "noArchived": "אין קופות בארכיון"
+        },
+        "groupCreated": "הקופה נפתחה בהצלחה",
+        "groupUpdated": "הקופה עודכנה בהצלחה",
+        "groupDeleted": "הקופה נמחקה בהצלחה",
         "memberAdded": "חבר נוסף",
         "memberRemoved": "חבר הוסר",
-        "nameRequired": "שם הקבוצה נדרש",
-        "groupImage": "תמונת קבוצה",
+        "nameRequired": "שם הקופה נדרש",
+        "groupImage": "תמונת קופה",
         "tapToChangeImage": "הקש כדי לבחור או להחליף תמונה",
         "removeImage": "הסר תמונה",
         "imageUploadError": "העלאת התמונה נכשלה",
         "imagePermissionTitle": "נדרשת גישה לתמונות",
-        "imagePermissionMessage": "אפשר גישה לגלריה כדי לבחור תמונה לקבוצה",
+        "imagePermissionMessage": "אפשר גישה לגלריה כדי לבחור תמונה לקופה",
         "types": {
             "trip": "טיול",
             "home": "בית",
@@ -84,12 +98,18 @@
             "other": "אחר"
         },
         "search": {
-            "placeholder": "חיפוש קבוצות או חברים",
+            "placeholder": "חיפוש קופות או חברים",
+            "feedPlaceholder": "חיפוש בהוצאות והודעות",
             "cancel": "ביטול"
         },
         "filters": {
             "title": "סינון ומיון",
-            "subtitle": "צמצום הרשימה או שינוי סדר הקבוצות",
+            "subtitle": "צמצום הרשימה או שינוי סדר הקופות",
+            "feedSubtitle": "צמצום הפיד או שינוי סדר התצוגה",
+            "feedTypes": {
+                "label": "הצג",
+                "hint": "אפשר לבחור אחד או יותר — ריק = הכל"
+            },
             "apply": "החל",
             "clearAll": "נקה הכל",
             "close": "סגור",
@@ -107,15 +127,16 @@
                 "all": "הכל",
                 "owe": "אני חייב",
                 "owed": "חייבים לי",
-                "settled": "מסודר"
+                "unsettled": "עם יתרה",
+                "settled": "ללא יתרה"
             },
             "type": {
-                "label": "סוג קבוצה",
+                "label": "סוג קופה",
                 "hint": "אפשר לבחור אחד או יותר — ריק = כל הסוגים"
             },
             "status": {
                 "label": "סטטוס",
-                "includeArchived": "הצג קבוצות בארכיון"
+                "showArchived": "הצג קופות בארכיון"
             },
             "currency": {
                 "label": "מטבע"
@@ -140,11 +161,14 @@
             "matchedMembers": "כולל {{names}}",
             "settled": "מסודר"
         },
-        "bigCreateCta": "צור קופה",
-        "settings": "הגדרות קבוצה",
+        "bigCreateCta": "פתח קופה",
+        "settings": "הגדרות קופה",
+        "menu": {
+            "title": "אפשרויות קופה"
+        },
         "dangerZone": "אזור מסוכן",
-        "leaveGroup": "עזוב קבוצה",
-        "leaveGroupConfirm": "לעזוב את הקבוצה? תאבד גישה להוצאות ולהודעות שלה.",
+        "leaveGroup": "עזוב קופה",
+        "leaveGroupConfirm": "לעזוב את הקופה? תאבד גישה להוצאות ולהודעות שלה.",
         "actions": {
             "settleUp": "סגירת חשבון",
             "balances": "יתרות",
@@ -152,13 +176,39 @@
             "export": "ייצוא"
         },
         "share": {
-            "exportTitle": "ייצוא הוצאות",
-            "exportError": "לא ניתן ליצור את הקובץ"
+            "exportTitle": "שיתוף דוח קופה (PDF)",
+            "exportTitleHtml": "שיתוף דוח קופה",
+            "exportError": "לא ניתן ליצור את הקובץ",
+            "exporting": "מכין ייצוא…",
+            "exportedAt": "יוצא בתאריך",
+            "members": "חברים",
+            "defaultCurrency": "מטבע ברירת מחדל",
+            "sectionBalances": "יתרות מפושטות (מי חייב למי)",
+            "sectionHistory": "היסטוריית פעילות",
+            "allSettled": "כולם מאוזנים — אין חובות פתוחים",
+            "emptyHistory": "אין פעילות עדיין",
+            "colDate": "תאריך",
+            "colTime": "שעה",
+            "colType": "סוג",
+            "colDescription": "תיאור",
+            "colAmount": "סכום",
+            "colCurrency": "מטבע",
+            "colParty": "שילם / כותב",
+            "colDetails": "פרטים",
+            "typeExpense": "הוצאה",
+            "typeMessage": "הודעה",
+            "typeSettlement": "סגירת חשבון",
+            "footer": "נוצר על ידי Kupa"
         },
         "expense": {
             "youLent": "הלוויתָ {{amount}}",
             "youBorrowed": "לוויתָ {{amount}}",
             "settled": "מסודר"
+        },
+        "feedDetail": {
+            "expenseTitle": "פרטי הוצאה",
+            "settlementTitle": "פרטי סגירת חשבון",
+            "yourShare": "החלק שלך"
         },
         "message": {
             "composerPlaceholder": "כתוב הודעה…",
@@ -175,14 +225,16 @@
             "title": "אין כאן כלום עדיין",
             "message": "הוסף את ההוצאה הראשונה או שלח את ההודעה הראשונה.",
             "action": "הוסף הוצאה ראשונה",
-            "addMembers": "הוסף חברים"
+            "addMembers": "הוסף חברים",
+            "noResultsTitle": "לא נמצאו תוצאות",
+            "noResultsMessage": "נסה לשנות את החיפוש או הסינון."
         },
         "members": {
-            "title": "חברים בקבוצה",
+            "title": "חברים בקופה",
             "seeAll": "ראה הכל",
             "add": "הוסף",
             "addMembers": "הוסף חברים",
-            "allFriendsAdded": "כל החברים שלך כבר בקבוצה.",
+            "allFriendsAdded": "כל החברים שלך כבר בקופה.",
             "searchPlaceholder": "חיפוש חברים",
             "noSearchResults": "אין חברים התואמים לחיפוש.",
             "mutualHint": "מוצגים רק חברים שאתם הוספתם זה את זה.",
@@ -208,6 +260,16 @@
         "splitType": "סוג חלוקה",
         "equalSplit": "שווה",
         "unequalSplit": "לא שווה",
+        "unequalSplitTitle": "חלוקה מותאמת",
+        "configureUnequalSplit": "הגדר את החלוקה",
+        "editUnequalSplit": "ערוך חלוקה מותאמת",
+        "splitNotConfigured": "יש להגדיר את החלוקה לפני השמירה",
+        "splitComplete": "{{total}} / {{target}} {{unit}} — הושלם",
+        "splitRemaining": "נותרו {{remaining}} {{unit}}",
+        "splitMode": {
+            "percent": "לפי אחוזים",
+            "amount": "לפי סכומים"
+        },
         "eachPays": "כל אחד משלם",
         "noExpenses": "אין הוצאות עדיין",
         "noExpensesMessage": "הוסף את ההוצאה הראשונה שלך כדי להתחיל לעקוב",
@@ -220,6 +282,7 @@
         "descriptionRequired": "תיאור נדרש",
         "invalidAmount": "אנא הזן סכום תקין",
         "splitMismatch": "סכום החלוקות חייב להיות שווה לסכום הכולל",
+        "noMembersSelected": "יש לבחור לפחות חבר אחד לחלוקה",
         "loadError": "טעינת ההוצאות נכשלה",
         "createError": "יצירת ההוצאה נכשלה",
         "updateError": "עדכון ההוצאה נכשל",
@@ -248,7 +311,7 @@
         "paymentsToSettle_other": "{{count}} תשלומים לסגירת כל החובות",
         "minimumBadge": "מינימום",
         "allSettled": "הכל מסודר!",
-        "noDebts": "אין חובות בקבוצה זו",
+        "noDebts": "אין חובות בקופה זו",
         "noBalances": "אין יתרות להצגה",
         "settleUp": "סגור חשבון",
         "recordPayment": "רשום תשלום",
@@ -353,13 +416,13 @@
                 "label": "מטבע"
             },
             "group": {
-                "label": "קבוצה"
+                "label": "קופה"
             },
             "onlyMine": "רק הפעילות שלי",
             "onlyMineHint": "הוצאות שהוספתי ותשלומים ששלחתי"
         },
         "noActivity": "אין פעילות עדיין",
-        "noActivityMessage": "הוצאות, תשלומים והודעות מקבוצות יופיעו כאן",
+        "noActivityMessage": "הוצאות, תשלומים והודעות מקופות יופיעו כאן",
         "expense": "הוצאה",
         "settlement": "תשלום",
         "message": "הודעה",
@@ -368,7 +431,7 @@
         "loadError": "טעינת הפעילות נכשלה",
         "youPaid": "שילמת ל-{{name}} {{amount}}",
         "paidYou": "{{name}} שילם/ה לך {{amount}}",
-        "inGroup": "בקבוצה {{group}}"
+        "inGroup": "בקופה {{group}}"
     },
     "settleUp": {
         "title": "סגירת חשבון",
@@ -438,7 +501,7 @@
         }
     },
     "dashboard": {
-        "appTitle": "כופה",
+        "appTitle": "Kupa",
         "youOwe": "אתה חייב",
         "youAreOwed": "חייבים לך",
         "balanceOverview": "סיכום יתרות",
@@ -450,14 +513,14 @@
         "notOwedToYou": "לא חייבים לך",
         "nothingOwedShort": "אין חוב",
         "notOwedToYouShort": "אין חוב",
-        "yourGroups": "הקבוצות שלך",
+        "yourGroups": "הקופות שלך",
         "viewBreakdown": "פירוט לפי מטבע",
         "hideBreakdown": "הסתר פירוט",
         "convertedLabel": "שקלול כל המטבעות",
         "convertedFootnote": "מומר ל-{{currency}} · שער לפי {{date}}",
         "conversionFailed": "לא ניתן לטעון שערי מטבע — ראה פירוט לפי מטבע למטה",
-        "closedGroups": "קבוצות סגורות",
-        "activeGroups": "קבוצות פעילות",
+        "closedGroups": "קופות ללא יתרה",
+        "activeGroups": "קופות עם יתרה",
         "friends": "חברים",
         "loadError": "טעינת לוח הבקרה נכשלה",
         "settled": "מסולק",
@@ -465,13 +528,13 @@
         "youOweFriend": "אתה חייב",
         "friendConverted": "שקלול מטבעות",
         "friendConversionFailed": "שערים לא זמינים",
-        "noFriendsYet": "אין קבוצות משותפות"
+        "noFriendsYet": "אין קופות משותפות"
     },
     "legal": {
         "termsTitle": "תנאי שירות",
         "termsBody": "השימוש בכופה מהווה הסכמה לחלוקת הוצאות באחריות. אנחנו לא מעבדים תשלומים — רק מחשבים יתרות בין משתמשים.\n\nהנתונים שלך נשמרים בצורה מאובטחת ולעולם לא יימכרו לצדדים שלישיים. ניתן למחוק את החשבון בכל עת באמצעות פנייה לתמיכה.\n\nהשירות ניתן כפי שהוא, ללא אחריות.",
         "privacyTitle": "מדיניות פרטיות",
-        "privacyBody": "כופה שומרת את הפרופיל שלך (שם, אימייל, תמונה) ואת הקבוצות, ההוצאות והסליקות שיצרת. אנחנו משתמשים באימייל רק לצרכי אימות.\n\nאנחנו לא מוכרים את הנתונים שלך. ייתכן שנשתף נתונים אנונימיים מצטברים. ניתן לבקש מחיקת נתונים בכל עת.\n\nיצירת קשר: תמיכה בוואטסאפ +972528616878.",
+        "privacyBody": "כופה שומרת את הפרופיל שלך (שם, אימייל, תמונה) ואת הקופות, ההוצאות והסליקות שיצרת. אנחנו משתמשים באימייל רק לצרכי אימות.\n\nאנחנו לא מוכרים את הנתונים שלך. ייתכן שנשתף נתונים אנונימיים מצטברים. ניתן לבקש מחיקת נתונים בכל עת.\n\nיצירת קשר: תמיכה בוואטסאפ +972528616878.",
         "close": "סגור"
     },
     "friends": {
@@ -508,7 +571,7 @@
     "deleteAccount": {
         "warningTitle": "למחוק את החשבון?",
         "warningBullet1": "לא תוכל להתחבר יותר.",
-        "warningBullet2": "השם וההיסטוריה שלך ימשיכו להופיע לחברים בקבוצות המשותפות.",
+        "warningBullet2": "השם וההיסטוריה שלך ימשיכו להופיע לחברים בקופות המשותפות.",
         "warningBullet3": "יתרות פתוחות יישארו פתוחות — סלוק אותן קודם אם אתה לא רוצה שיישארו.",
         "warningBullet4": "פעולה זו אינה הפיכה. פנה לתמיכה דרך WhatsApp כדי לשחזר.",
         "continueBtn": "המשך",

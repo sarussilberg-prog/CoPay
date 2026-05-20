@@ -49,6 +49,8 @@ const makeGroup = (overrides: Partial<{
     createdAt: new Date(),
     updatedAt: new Date(),
     members: [{ userId: 'u1', displayName: 'Alice' }],
+    isArchivedByMe: false,
+    isAutoArchived: false,
     ...overrides,
 });
 
@@ -65,17 +67,24 @@ beforeEach(() => {
 });
 
 describe('GroupsListScreen', () => {
-    it('calls fetchGroups and fetchBalanceSummary on mount', async () => {
+    it('calls fetchGroups on mount', async () => {
         render(<GroupsListScreen />);
         await waitFor(() => {
             expect(mockFetchGroups).toHaveBeenCalled();
-            expect(mockFetchSummary).toHaveBeenCalled();
         });
     });
 
     it('shows EmptyState when no groups exist', async () => {
         const { findByText } = render(<GroupsListScreen />);
         expect(await findByText('groups.noGroups')).toBeTruthy();
+    });
+
+    it('shows network error state when fetch fails', async () => {
+        mockFetchGroups.mockRejectedValue(new Error('Network error'));
+        const { findByText } = render(<GroupsListScreen />);
+        expect(await findByText('groups.loadError')).toBeTruthy();
+        expect(await findByText('common.networkError')).toBeTruthy();
+        expect(await findByText('common.retry')).toBeTruthy();
     });
 
     it('renders groups from store', async () => {
@@ -119,8 +128,6 @@ describe('GroupsListScreen', () => {
             ],
         });
         const { findByTestId, queryByText, getByText } = render(<GroupsListScreen />);
-        // Expand the search input.
-        fireEvent.press(await findByTestId('groups-search'));
         const input = await findByTestId('groups-search-input');
         fireEvent.changeText(input, 'bob');
         await waitFor(() => {

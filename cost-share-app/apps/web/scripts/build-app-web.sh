@@ -4,6 +4,21 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Committed defaults for CI/Vercel when dashboard env is unset (public anon key only).
+# Note: .env.production is excluded by .vercelignore (.env*); use supabase-public.defaults.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+for defaults_file in \
+  "$SCRIPT_DIR/supabase-public.defaults" \
+  "$WEB_DIR/.env.production"; do
+  if [[ -f "$defaults_file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$defaults_file"
+    set +a
+  fi
+done
 
 # Expo build; also accepts Next.js and Vercel Supabase integration variable names
 export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-${SUPABASE_URL:-}}}"

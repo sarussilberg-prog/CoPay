@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
+import { APP_BRAND_TITLE, appBrandTitleStyle } from '@/lib/brand';
 
 async function handleSignOut() {
   'use server';
@@ -18,8 +19,8 @@ export default async function Page() {
 
   return (
     <main style={{ padding: '48px 32px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3B82F6', marginBottom: '8px' }}>
-        Kupa
+      <h1 style={appBrandTitleStyle}>
+        {APP_BRAND_TITLE}
       </h1>
       <p style={{ color: '#6B7280', marginBottom: '32px' }}>
         Welcome, {displayName}

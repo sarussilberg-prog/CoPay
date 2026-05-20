@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useRtlLayout } from '../hooks/useRtlLayout';
 import { AppIcon, AppIconName } from '../components/AppIcon';
-import { APP_BRAND_TITLE, colors } from '../theme';
+import { colors } from '../theme';
 import { useInviteRedemption } from '../hooks/useInviteRedemption';
 
 function HeaderBackButton({ onPress }: { onPress: () => void }) {
@@ -50,7 +50,6 @@ import { EditGroupScreen } from '../screens/groups/EditGroupScreen';
 import { GroupMembersScreen } from '../screens/groups/GroupMembersScreen';
 import { ExpenseListScreen } from '../screens/expenses/ExpenseListScreen';
 import { AddExpenseScreen } from '../screens/expenses/AddExpenseScreen';
-import { EditExpenseScreen } from '../screens/expenses/EditExpenseScreen';
 import { ExpenseDetailScreen } from '../screens/expenses/ExpenseDetailScreen';
 import { BalancesScreen } from '../screens/balances/BalancesScreen';
 import { SettleUpListScreen } from '../screens/balances/SettleUpListScreen';
@@ -127,7 +126,7 @@ function GroupsStack() {
             />
             <Stack.Screen
                 name="EditExpense"
-                component={EditExpenseScreen}
+                component={AddExpenseScreen}
                 options={{ title: t('expenses.editExpense') }}
             />
             <Stack.Screen
@@ -170,6 +169,16 @@ function ActivityStack() {
                 component={ExpenseDetailScreen}
                 options={{ title: t('expenses.expenseDetail') }}
             />
+            <Stack.Screen
+                name="AddExpense"
+                component={AddExpenseScreen}
+                options={{ title: t('expenses.addExpense') }}
+            />
+            <Stack.Screen
+                name="EditExpense"
+                component={AddExpenseScreen}
+                options={{ title: t('expenses.editExpense') }}
+            />
         </Stack.Navigator>
     );
 }
@@ -183,7 +192,7 @@ function ProfileStack() {
             <Stack.Screen
                 name="ProfileMain"
                 component={ProfileScreen}
-                options={{ title: APP_BRAND_TITLE, headerTitleAlign: 'center' }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="EditProfile"

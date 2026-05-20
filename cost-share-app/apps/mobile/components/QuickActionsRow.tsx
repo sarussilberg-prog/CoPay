@@ -1,5 +1,5 @@
 /**
- * QuickActionsRow — 4 chips that float over the bottom edge of the hero.
+ * QuickActionsRow — chips that float over the bottom edge of the hero.
  */
 
 import React from 'react';
@@ -11,7 +11,6 @@ import { colors } from '../theme';
 interface QuickActionsRowProps {
     onSettleUp: () => void;
     onBalances: () => void;
-    onExport: () => void;
     settleUpDisabled?: boolean;
 }
 
@@ -51,7 +50,6 @@ function ActionChip({ label, icon, onPress, disabled, testID }: ChipProps) {
 export function QuickActionsRow({
     onSettleUp,
     onBalances,
-    onExport,
     settleUpDisabled,
 }: QuickActionsRowProps) {
     const { t } = useTranslation();
@@ -76,12 +74,6 @@ export function QuickActionsRow({
                 icon="bar-chart-outline"
                 onPress={onBalances}
                 testID="qa-balances"
-            />
-            <ActionChip
-                label={t('groups.actions.export')}
-                icon="share-outline"
-                onPress={onExport}
-                testID="qa-export"
             />
         </View>
     );

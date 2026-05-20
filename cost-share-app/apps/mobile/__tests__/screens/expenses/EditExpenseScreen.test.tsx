@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -8,26 +9,45 @@ jest.mock('@react-navigation/native', () => {
     const actual = jest.requireActual('@react-navigation/native');
     return {
         ...actual,
-        useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
-        useRoute: () => ({ params: { expenseId: 'e1' } }),
+        useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack, setOptions: jest.fn() }),
+        useRoute: () => ({ params: { expenseId: 'e1', groupId: 'g1' } }),
         useFocusEffect: (cb: () => void) => cb(),
         useIsFocused: () => true,
     };
 });
 
-jest.mock('../../../services/expenses.service', () => ({
-    getExpenseById: jest.fn(),
-    updateExpense: jest.fn(),
-    deleteExpense: jest.fn(),
+jest.mock('../../../services/groups.service', () => ({
+    getGroupMembers: jest.fn().mockResolvedValue([
+        { id: 'm1', groupId: 'g1', userId: 'u1', role: 'member', isActive: true, joinedAt: new Date() },
+    ]),
+    getGroupById: jest.fn().mockResolvedValue({
+        id: 'g1',
+        name: 'Test Group',
+        defaultCurrency: 'USD',
+    }),
 }));
 
-import { EditExpenseScreen } from '../../../screens/expenses/EditExpenseScreen';
+jest.mock('../../../services/users.service', () => ({
+    fetchGroupUsers: jest.fn().mockResolvedValue([
+        { id: 'u1', name: 'Alice', email: 'a@x.com', inviteToken: 'alice123456', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date() },
+    ]),
+}));
+
+jest.mock('../../../services/expenses.service', () => ({
+    getExpenseWithSplits: jest.fn(),
+    updateExpense: jest.fn(),
+    deleteExpense: jest.fn(),
+    createExpense: jest.fn(),
+}));
+
+import { AddExpenseScreen } from '../../../screens/expenses/AddExpenseScreen';
 import {
-    getExpenseById,
+    getExpenseWithSplits,
     updateExpense,
 } from '../../../services/expenses.service';
+import { useAppStore } from '../../../store';
 
-const mockGet = getExpenseById as jest.MockedFunction<typeof getExpenseById>;
+const mockGet = getExpenseWithSplits as jest.MockedFunction<typeof getExpenseWithSplits>;
 const mockUpdate = updateExpense as jest.MockedFunction<typeof updateExpense>;
 
 const expense = {
@@ -50,19 +70,34 @@ beforeEach(() => {
     mockGoBack.mockClear();
     mockGet.mockReset();
     mockUpdate.mockReset();
-    mockGet.mockResolvedValue(expense);
+    mockGet.mockResolvedValue({
+        expense,
+        splits: [{ id: 's1', expenseId: 'e1', userId: 'u1', amount: 5, createdAt: new Date() }],
+    });
+    useAppStore.setState({
+        currentUser: {
+            id: 'u1',
+            email: 'a@x.com',
+            name: 'Alice',
+            inviteToken: 'alice123456',
+            defaultCurrency: 'USD',
+            language: 'en',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        },
+    });
 });
 
-describe('EditExpenseScreen', () => {
+describe('AddExpenseScreen edit mode', () => {
     it('loads existing expense data into form', async () => {
-        const { findByDisplayValue } = render(<EditExpenseScreen />);
+        const { findByDisplayValue } = renderWithQuery(<AddExpenseScreen />);
         expect(await findByDisplayValue('Coffee')).toBeTruthy();
         expect(await findByDisplayValue('5')).toBeTruthy();
     });
 
     it('calls updateExpense with new values', async () => {
         mockUpdate.mockResolvedValueOnce({ ...expense, description: 'Tea' });
-        const { findByDisplayValue, findByText } = render(<EditExpenseScreen />);
+        const { findByDisplayValue, findByText } = renderWithQuery(<AddExpenseScreen />);
         const descInput = await findByDisplayValue('Coffee');
         fireEvent.changeText(descInput, 'Tea');
         fireEvent.press(await findByText('common.save'));
@@ -74,9 +109,9 @@ describe('EditExpenseScreen', () => {
         );
     });
 
-    it('cancel button navigates back', async () => {
-        const { findByText } = render(<EditExpenseScreen />);
-        fireEvent.press(await findByText('common.cancel'));
-        expect(mockGoBack).toHaveBeenCalled();
+    it('does not show cancel-only button in edit mode', async () => {
+        const { queryByText } = renderWithQuery(<AddExpenseScreen />);
+        await waitFor(() => expect(mockGet).toHaveBeenCalled());
+        expect(queryByText('common.cancel')).toBeNull();
     });
 });

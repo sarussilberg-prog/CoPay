@@ -3,17 +3,13 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { QuickActionsRow } from '../../components/QuickActionsRow';
 
 describe('QuickActionsRow', () => {
-    it('renders all three labels', () => {
+    it('renders settle up and balances labels', () => {
         const { getByText, queryByText } = render(
-            <QuickActionsRow
-                onSettleUp={() => {}}
-                onBalances={() => {}}
-                onExport={() => {}}
-            />,
+            <QuickActionsRow onSettleUp={() => {}} onBalances={() => {}} />,
         );
         expect(getByText('groups.actions.settleUp')).toBeTruthy();
         expect(getByText('groups.actions.balances')).toBeTruthy();
-        expect(getByText('groups.actions.export')).toBeTruthy();
+        expect(queryByText('groups.actions.export')).toBeNull();
         expect(queryByText('groups.actions.message')).toBeNull();
     });
 
@@ -23,7 +19,6 @@ describe('QuickActionsRow', () => {
             <QuickActionsRow
                 onSettleUp={onSettleUp}
                 onBalances={() => {}}
-                onExport={() => {}}
                 settleUpDisabled
             />,
         );
@@ -31,16 +26,12 @@ describe('QuickActionsRow', () => {
         expect(onSettleUp).not.toHaveBeenCalled();
     });
 
-    it('fires onExport when the export chip is tapped', () => {
-        const onExport = jest.fn();
+    it('fires onBalances when the balances chip is tapped', () => {
+        const onBalances = jest.fn();
         const { getByTestId } = render(
-            <QuickActionsRow
-                onSettleUp={() => {}}
-                onBalances={() => {}}
-                onExport={onExport}
-            />,
+            <QuickActionsRow onSettleUp={() => {}} onBalances={onBalances} />,
         );
-        fireEvent.press(getByTestId('qa-export'));
-        expect(onExport).toHaveBeenCalled();
+        fireEvent.press(getByTestId('qa-balances'));
+        expect(onBalances).toHaveBeenCalled();
     });
 });

@@ -4,6 +4,7 @@
  */
 
 export * from './constants';
+export * from './brand';
 export * from './types';
 export * from './schemas';
 export * from './utils';

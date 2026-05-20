@@ -49,6 +49,7 @@ function shell({
   .card{background:#fff;color:#0f172a;border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;}
   .avatar{width:96px;height:96px;border-radius:48px;margin:0 auto 16px;background:#e2e8f0;object-fit:cover;}
   h1{margin:0 0 8px;font-size:22px;}
+  h1.brand-title{font-size:30px;font-weight:700;color:#3B82F6;}
   h2{margin:8px 0 16px;font-size:28px;color:#0ea5e9;}
   p{margin:0 0 16px;color:#475569;font-size:15px;}
   .btn{display:block;text-decoration:none;padding:14px;border-radius:12px;font-weight:600;margin:8px 0;}
@@ -58,6 +59,7 @@ function shell({
   .members img{width:36px;height:36px;border-radius:18px;background:#e2e8f0;}
   .meta{font-size:13px;color:#64748b;margin-bottom:24px;}
   .footnote{font-size:12px;color:#94a3b8;margin-top:20px;}
+  .brand-name{font-weight:700;color:#3B82F6;}
 </style>
 </head>
 <body>
@@ -70,6 +72,12 @@ function shell({
   }, 100);
 </script>
 </body></html>`;
+}
+
+const APP_BRAND_TITLE = 'Kupa';
+
+function brandName(): string {
+    return `<span class="brand-name">${APP_BRAND_TITLE}</span>`;
 }
 
 function platformButtons(): string {
@@ -88,9 +96,9 @@ export function renderFriendInvite(
         : `<div class="avatar"></div>`;
     const body = `
         ${avatar}
-        <h1>${inviterName} רוצה לחלוק איתך הוצאות דרך Kupa</h1>
+        <h1>${inviterName} רוצה לחלוק איתך הוצאות דרך ${brandName()}</h1>
         <p>חלקו את חשבון המסעדה, הטיול, והדירה — בלי לעשות חשבונות.</p>
-        <a class="btn primary" href="com.kupa.mobile://invite/i/${escapeHtml(token)}">פתח את Kupa</a>
+        <a class="btn primary" href="com.kupa.mobile://invite/i/${escapeHtml(token)}">פתח את ${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
@@ -124,11 +132,11 @@ export function renderGroupInvite(
     ).join('');
 
     const body = `
-        <h1>הוזמנת לקופה ב-Kupa</h1>
+        <h1>הוזמנת לקופה ב-${brandName()}</h1>
         <h2>${name}</h2>
         <div class="members">${memberAvatars}</div>
         <div class="meta">${g.member_count} חברים · ${escapeHtml(g.currency)}</div>
-        <a class="btn primary" href="com.kupa.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-Kupa</a>
+        <a class="btn primary" href="com.kupa.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
@@ -154,11 +162,11 @@ export function renderInvalid(): string {
 
 export function renderRoot(): string {
     return shell({
-        title: 'Kupa',
+        title: APP_BRAND_TITLE,
         description: 'חלקו הוצאות בקלות.',
         canonical: 'https://kupa.pro/',
         body: `
-            <h1>Kupa</h1>
+            <h1 class="brand-title">${APP_BRAND_TITLE}</h1>
             <p>חלקו את חשבון המסעדה, הטיול, והדירה — בלי לעשות חשבונות.</p>
             ${platformButtons()}
         `,

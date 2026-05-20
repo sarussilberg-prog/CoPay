@@ -8,7 +8,11 @@ jest.mock('@react-navigation/native', () => {
     const actual = jest.requireActual('@react-navigation/native');
     return {
         ...actual,
-        useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
+        useNavigation: () => ({
+            navigate: mockNavigate,
+            goBack: mockGoBack,
+            setOptions: jest.fn(),
+        }),
         useRoute: () => ({ params: { groupId: 'g1' } }),
         useFocusEffect: (cb: () => void) => cb(),
         useIsFocused: () => true,

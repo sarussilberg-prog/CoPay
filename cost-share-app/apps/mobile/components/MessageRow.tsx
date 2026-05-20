@@ -1,6 +1,5 @@
 /**
- * MessageRow — feed row for a group message (avatar + bubble + footer).
- * Long-press on own messages opens an action sheet for Edit/Delete.
+ * MessageRow — WhatsApp-style group message bubble with avatar and full date/time.
  */
 
 import React, { useCallback } from 'react';
@@ -17,6 +16,11 @@ import { GroupMessage } from '@cost-share/shared';
 import { MemberAvatar } from './MemberAvatar';
 import { HighlightedText } from './HighlightedText';
 import { AppIcon } from './AppIcon';
+import { FeedChatRow } from './FeedChatRow';
+import { FeedActorName } from './FeedActorName';
+import { feedBubbleStyles } from './feedBubbleStyles';
+import { formatFeedDateTime } from '../lib/formatFeedDateTime';
+import { useAppLanguage } from '../hooks/useRtlLayout';
 import { colors } from '../theme';
 
 interface MessageRowProps {
@@ -29,21 +33,6 @@ interface MessageRowProps {
     searchQuery?: string;
 }
 
-function relativeTime(date: Date, now: Date = new Date()): string {
-    const diffMs = now.getTime() - date.getTime();
-    const sec = Math.max(0, Math.round(diffMs / 1000));
-    if (sec < 60) return 'now';
-    const min = Math.round(sec / 60);
-    if (min < 60) return `${min}m`;
-    const hr = Math.round(min / 60);
-    if (hr < 24) return `${hr}h`;
-    const day = Math.round(hr / 24);
-    if (day < 7) return `${day}d`;
-    const weeks = Math.round(day / 7);
-    if (weeks < 5) return `${weeks}w`;
-    return date.toLocaleDateString();
-}
-
 function MessageRowBase({
     message,
     senderName,
@@ -54,6 +43,8 @@ function MessageRowBase({
     searchQuery,
 }: MessageRowProps) {
     const { t } = useTranslation();
+    const language = useAppLanguage();
+    const timestamp = formatFeedDateTime(message.createdAt, language);
 
     const handleLongPress = useCallback(() => {
         if (!isMine) return;
@@ -87,34 +78,42 @@ function MessageRowBase({
         }
     }, [isMine, message, onEdit, onDelete, senderName, t]);
 
+    const avatar = (
+        <MemberAvatar
+            name={senderName}
+            avatarUrl={senderAvatarUrl}
+            size="xs"
+            testID="message-avatar"
+        />
+    );
+
     return (
-        <TouchableOpacity
-            onLongPress={handleLongPress}
-            activeOpacity={isMine ? 0.7 : 1}
-            disabled={!isMine}
-            className="flex-row items-start mb-2"
-        >
-            <View className="mr-2 mt-3">
-                <MemberAvatar name={senderName} avatarUrl={senderAvatarUrl} size="sm" />
-            </View>
-            <View className="flex-1 bg-white rounded-2xl p-3 border border-gray-100">
+        <FeedChatRow avatar={avatar} testID="message-row">
+            <TouchableOpacity
+                onLongPress={handleLongPress}
+                activeOpacity={isMine ? 0.85 : 1}
+                disabled={!isMine}
+                style={feedBubbleStyles.bubble}
+            >
+                {!isMine && (
+                    <FeedActorName
+                        name={senderName}
+                        className="text-xs font-semibold text-gray-600 mb-1"
+                    />
+                )}
                 <View className="flex-row items-start">
-                    <View className="flex-1 mr-2">
-                        <Text className="text-xs font-medium text-gray-600">
-                            {senderName}
-                        </Text>
-                        <HighlightedText
-                            className="text-sm text-gray-900 mt-0.5"
-                            text={message.body}
-                            query={searchQuery}
-                        />
-                    </View>
+                    <HighlightedText
+                        className="text-sm text-gray-900 flex-1"
+                        text={message.body}
+                        query={searchQuery}
+                    />
                     {isMine && (
                         <TouchableOpacity
                             onPress={() => onDelete(message)}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             accessibilityRole="button"
                             accessibilityLabel={t('groups.message.delete')}
+                            className="ml-2"
                             testID="message-delete-btn"
                         >
                             <AppIcon
@@ -125,21 +124,21 @@ function MessageRowBase({
                         </TouchableOpacity>
                     )}
                 </View>
-                <View className="flex-row items-center mt-1.5">
-                    <Text className="text-[10px] text-gray-400">
-                        {relativeTime(message.createdAt)}
+                <View className="flex-row items-center mt-2 flex-wrap">
+                    <Text className="text-[11px] text-gray-400" testID="message-timestamp">
+                        {timestamp}
                     </Text>
                     {message.editedAt && (
                         <Text
-                            className="text-[10px] text-gray-400 ml-1"
+                            className="text-[11px] text-gray-400 ml-1"
                             testID="message-edited-tag"
                         >
                             · {t('groups.message.edited')}
                         </Text>
                     )}
                 </View>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </FeedChatRow>
     );
 }
 

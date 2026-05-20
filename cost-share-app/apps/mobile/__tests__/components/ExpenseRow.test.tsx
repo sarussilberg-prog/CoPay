@@ -24,14 +24,26 @@ const baseExpense: ExpenseWithDelta = {
 describe('ExpenseRow', () => {
     it('renders the description', () => {
         const { getByText } = render(
-            <ExpenseRow expense={baseExpense} payerName="Alice" onPress={() => {}} />,
+            <ExpenseRow
+                expense={baseExpense}
+                actorName="Bob"
+                payerName="Alice"
+                isMine={false}
+                onPress={() => {}}
+            />,
         );
         expect(getByText('Coffee')).toBeTruthy();
     });
 
     it('shows the lent label in green when myDeltaState is lent', () => {
         const { getByText } = render(
-            <ExpenseRow expense={baseExpense} payerName="Alice" onPress={() => {}} />,
+            <ExpenseRow
+                expense={baseExpense}
+                actorName="Bob"
+                payerName="Alice"
+                isMine={false}
+                onPress={() => {}}
+            />,
         );
         expect(getByText(/groups\.expense\.youLent/)).toBeTruthy();
     });
@@ -40,7 +52,9 @@ describe('ExpenseRow', () => {
         const { getByText } = render(
             <ExpenseRow
                 expense={{ ...baseExpense, myDelta: -10, myDeltaState: 'borrowed' }}
+                actorName="Bob"
                 payerName="Alice"
+                isMine={false}
                 onPress={() => {}}
             />,
         );
@@ -50,7 +64,13 @@ describe('ExpenseRow', () => {
     it('calls onPress with the expense id', () => {
         const onPress = jest.fn();
         const { getByText } = render(
-            <ExpenseRow expense={baseExpense} payerName="Alice" onPress={onPress} />,
+            <ExpenseRow
+                expense={baseExpense}
+                actorName="Bob"
+                payerName="Alice"
+                isMine={false}
+                onPress={onPress}
+            />,
         );
         fireEvent.press(getByText('Coffee'));
         expect(onPress).toHaveBeenCalledWith('e1');

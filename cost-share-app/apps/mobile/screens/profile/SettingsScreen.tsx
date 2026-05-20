@@ -29,7 +29,7 @@ const APP_STORE_URL = process.env.EXPO_PUBLIC_APP_STORE_URL;
 const PLAY_STORE_URL = process.env.EXPO_PUBLIC_PLAY_STORE_URL;
 
 export function SettingsScreen() {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const language = useAppStore((s) => s.language);
     const setLanguage = useAppStore((s) => s.setLanguage);
     const currentUser = useAppStore((s) => s.currentUser);
@@ -45,11 +45,8 @@ export function SettingsScreen() {
     const handleLanguagePick = useCallback(async (lang: Language) => {
         setShowLanguage(false);
         try {
-            const needsRestart = await changeLanguage(lang);
+            await changeLanguage(lang);
             setLanguage(lang);
-            if (needsRestart) {
-                Alert.alert(t('profile.restartRequired'), t('profile.restartMessage'), [{ text: t('common.ok') }]);
-            }
         } catch {
             Alert.alert(t('common.error'), t('profile.languageChangeError'));
         }
@@ -58,7 +55,7 @@ export function SettingsScreen() {
     const currencyCode = currentUser?.defaultCurrency ?? DEFAULT_CURRENCY;
     const currencyMeta = currencyCodes.code(currencyCode);
     const currencyValueText = currencyMeta
-        ? `${currencyMeta.code} - ${getCurrencyDisplayName(currencyMeta.code, currencyMeta.currency, i18n.language)}`
+        ? `${currencyMeta.code} - ${getCurrencyDisplayName(currencyMeta.code, currencyMeta.currency, language)}`
         : currencyCode;
 
     const handleCurrencyPick = useCallback(async (nextCurrency: string) => {

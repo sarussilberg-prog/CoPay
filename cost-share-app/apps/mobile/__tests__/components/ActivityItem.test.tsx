@@ -35,14 +35,26 @@ describe('ActivityItem', () => {
         expect(getByText(/\$5\.50/)).toBeTruthy();
     });
 
-    it('renders the expense icon for expense activities', () => {
+    it('renders the actor avatar for expense activities', () => {
         const { getByTestId } = render(<ActivityItem activity={expenseActivity} />);
-        expect(getByTestId('activity-icon-expense')).toBeTruthy();
+        expect(getByTestId('activity-avatar')).toBeTruthy();
     });
 
-    it('renders the settlement icon for settlement activities', () => {
+    it('renders the actor avatar for settlement activities', () => {
         const { getByTestId } = render(<ActivityItem activity={settlementActivity} />);
-        expect(getByTestId('activity-icon-settlement')).toBeTruthy();
+        expect(getByTestId('activity-avatar')).toBeTruthy();
+    });
+
+    it('renders profile image when avatar url is provided', () => {
+        const { getByTestId } = render(
+            <ActivityItem
+                activity={{
+                    ...expenseActivity,
+                    userAvatarUrl: 'https://example.com/alice.png',
+                }}
+            />,
+        );
+        expect(getByTestId('activity-avatar-image')).toBeTruthy();
     });
 
     it('calls onPress with the activity when pressed', () => {
@@ -67,7 +79,7 @@ describe('ActivityItem', () => {
             <ActivityItem activity={messageActivity} onPress={jest.fn()} />,
         );
         expect(getByText('See you tonight')).toBeTruthy();
-        expect(getByTestId('activity-icon-message')).toBeTruthy();
+        expect(getByTestId('activity-avatar')).toBeTruthy();
         expect(queryByText(/USD/)).toBeNull();
     });
 });

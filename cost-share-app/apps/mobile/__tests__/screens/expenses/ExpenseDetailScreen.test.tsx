@@ -63,7 +63,7 @@ describe('ExpenseDetailScreen', () => {
         mockGet.mockResolvedValueOnce({ expense, splits: [] });
         const { findByText } = renderWithQuery(<ExpenseDetailScreen />);
         fireEvent.press(await findByText('common.edit'));
-        expect(mockNavigate).toHaveBeenCalledWith('EditExpense', {
+        expect(mockNavigate).toHaveBeenCalledWith('AddExpense', {
             expenseId: 'e1',
             groupId: 'g1',
         });

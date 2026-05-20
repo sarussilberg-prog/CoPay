@@ -1,19 +1,28 @@
 /**
- * ExpenseRow — feed row for an expense.
- * Date stack · receipt/category thumb · description + sub-line · delta on the trailing edge.
+ * ExpenseRow — WhatsApp-style feed row for an expense with actor avatar.
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ExpenseWithDelta } from '@cost-share/shared';
 import { AppIcon, AppIconName } from './AppIcon';
 import { HighlightedText } from './HighlightedText';
+import { MemberAvatar } from './MemberAvatar';
+import { FeedChatRow } from './FeedChatRow';
+import { FeedActorName } from './FeedActorName';
+import { ExpensePaidBySub } from './ExpensePaidBySub';
+import { feedBubbleStyles } from './feedBubbleStyles';
+import { formatFeedDateTime } from '../lib/formatFeedDateTime';
+import { useAppLanguage } from '../hooks/useRtlLayout';
 import { colors } from '../theme';
 
 interface ExpenseRowProps {
     expense: ExpenseWithDelta;
+    actorName: string;
+    actorAvatarUrl?: string;
     payerName: string;
+    isMine: boolean;
     onPress: (id: string) => void;
     searchQuery?: string;
 }
@@ -29,13 +38,18 @@ const categoryIcon: Record<string, AppIconName> = {
     other: 'receipt-outline',
 };
 
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-function ExpenseRowBase({ expense, payerName, onPress, searchQuery }: ExpenseRowProps) {
+function ExpenseRowBase({
+    expense,
+    actorName,
+    actorAvatarUrl,
+    payerName,
+    isMine,
+    onPress,
+    searchQuery,
+}: ExpenseRowProps) {
     const { t } = useTranslation();
-    const date = new Date(expense.expenseDate);
-    const month = MONTHS[date.getMonth()];
-    const day = date.getDate();
+    const language = useAppLanguage();
+    const timestamp = formatFeedDateTime(new Date(expense.expenseDate), language);
 
     const deltaText = Math.abs(expense.myDelta).toFixed(2);
     const isLent = expense.myDeltaState === 'lent';
@@ -51,64 +65,91 @@ function ExpenseRowBase({ expense, payerName, onPress, searchQuery }: ExpenseRow
             ? 'groups.expense.youBorrowed'
             : 'groups.expense.settled';
 
+    const avatar = (
+        <MemberAvatar
+            name={actorName}
+            avatarUrl={actorAvatarUrl}
+            size="xs"
+            testID="expense-avatar"
+        />
+    );
+
     return (
-        <TouchableOpacity
-            onPress={() => onPress(expense.id)}
-            activeOpacity={0.7}
-            className="bg-white rounded-2xl p-3 mb-2 border border-gray-100 flex-row items-center"
-        >
-            <View style={{ width: 44 }} className="items-center mr-2">
-                <Text className="text-[10px] font-semibold text-gray-500">{month}</Text>
-                <Text className="text-lg font-bold text-gray-900 leading-5">{day}</Text>
-            </View>
-
-            <View
-                style={{ width: 40, height: 40 }}
-                className="rounded-xl bg-primary-extra-light items-center justify-center overflow-hidden mr-3"
+        <FeedChatRow avatar={avatar} testID="expense-row">
+            <TouchableOpacity
+                onPress={() => onPress(expense.id)}
+                activeOpacity={0.85}
+                style={feedBubbleStyles.bubble}
             >
-                {expense.receiptUrl ? (
-                    <Image
-                        source={{ uri: expense.receiptUrl }}
-                        style={{ width: 40, height: 40 }}
-                        resizeMode="cover"
-                    />
-                ) : (
-                    <AppIcon
-                        name={categoryIcon[expense.category ?? 'other'] ?? 'receipt-outline'}
-                        size={20}
-                        color={colors.primary}
-                    />
-                )}
-            </View>
+                {!isMine && <FeedActorName name={actorName} />}
 
-            <View className="flex-1 mr-2">
-                <HighlightedText
-                    className="text-base font-semibold text-gray-900"
-                    text={expense.description}
-                    query={searchQuery}
-                    numberOfLines={1}
-                />
-                <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>
-                    {t('expenses.paidBySub', {
-                        amount: `${expense.currency} ${expense.amount.toFixed(2)}`,
-                        name: payerName,
-                    })}
-                </Text>
-            </View>
+                <View className="flex-row items-center">
+                    <View
+                        style={styles.thumb}
+                        className="rounded-xl bg-primary-extra-light items-center justify-center overflow-hidden mr-3"
+                    >
+                        {expense.receiptUrl ? (
+                            <Image
+                                source={{ uri: expense.receiptUrl }}
+                                style={styles.thumbImage}
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <AppIcon
+                                name={
+                                    categoryIcon[expense.category ?? 'other'] ??
+                                    'receipt-outline'
+                                }
+                                size={18}
+                                color={colors.primary}
+                            />
+                        )}
+                    </View>
 
-            <View className="items-end">
-                <Text
-                    className={`text-sm font-semibold ${amountColor}`}
-                    numberOfLines={1}
-                >
-                    {`${expense.currency} ${deltaText}`}
+                    <View className="flex-1 min-w-0">
+                        <HighlightedText
+                            className="text-base font-semibold text-gray-900"
+                            text={expense.description}
+                            query={searchQuery}
+                        />
+                        <ExpensePaidBySub
+                            amount={`${expense.currency} ${expense.amount.toFixed(2)}`}
+                            payerName={payerName}
+                        />
+                    </View>
+
+                    <View className="items-end ml-2 shrink-0">
+                        <Text
+                            className={`text-sm font-bold ${amountColor}`}
+                            numberOfLines={1}
+                        >
+                            {`${expense.currency} ${deltaText}`}
+                        </Text>
+                        <Text className="text-[10px] text-gray-400 mt-0.5" numberOfLines={1}>
+                            {t(labelKey, {
+                                amount: `${expense.currency} ${deltaText}`,
+                            })}
+                        </Text>
+                    </View>
+                </View>
+
+                <Text className="text-[11px] text-gray-400 mt-2" testID="expense-timestamp">
+                    {timestamp}
                 </Text>
-                <Text className="text-[10px] text-gray-400 mt-0.5" numberOfLines={1}>
-                    {t(labelKey, { amount: `${expense.currency} ${deltaText}` })}
-                </Text>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </FeedChatRow>
     );
 }
+
+const styles = StyleSheet.create({
+    thumb: {
+        width: 36,
+        height: 36,
+    },
+    thumbImage: {
+        width: 36,
+        height: 36,
+    },
+});
 
 export const ExpenseRow = React.memo(ExpenseRowBase);

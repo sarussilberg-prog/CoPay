@@ -9,6 +9,7 @@ import React, { useCallback, useState } from 'react';
 import { View, TouchableOpacity, Alert, Modal } from 'react-native';
 import { AppIcon } from '../../components/AppIcon';
 import { AppLogo } from '../../components/AppLogo';
+import { AppBrandTitle } from '../../components/AppBrandTitle';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,6 @@ import { Button } from '../../components/Button';
 import Toast from 'react-native-toast-message';
 import { changeLanguage } from '../../i18n';
 import { useAppStore } from '../../store';
-import { APP_BRAND_TITLE } from '../../theme/brand';
 
 export function LoginScreen() {
     const { t } = useTranslation();
@@ -31,16 +31,8 @@ export function LoginScreen() {
         async (lang: 'en' | 'he') => {
             setLanguagePickerVisible(false);
             try {
-                const needsRestart = await changeLanguage(lang);
+                await changeLanguage(lang);
                 setLanguage(lang);
-
-                if (needsRestart) {
-                    Alert.alert(
-                        t('profile.restartRequired'),
-                        t('profile.restartMessage'),
-                        [{ text: t('common.ok') }]
-                    );
-                }
             } catch {
                 Alert.alert(t('common.error'), t('profile.languageChangeError'));
             }
@@ -87,10 +79,7 @@ export function LoginScreen() {
             <View className="flex-1 justify-center items-center px-8">
                 <AppLogo size={128} style={{ marginBottom: 24 }} />
 
-                {/* App Name */}
-                <Text className="text-3xl font-bold text-gray-900 mb-2">
-                    {APP_BRAND_TITLE}
-                </Text>
+                <AppBrandTitle className="mb-2" />
 
                 {/* Subtitle */}
                 <Text className="text-base text-gray-500 text-center mb-12">

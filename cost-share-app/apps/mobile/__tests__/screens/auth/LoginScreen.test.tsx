@@ -6,7 +6,7 @@ jest.mock('../../../services/auth.service', () => ({
 }));
 
 jest.mock('../../../i18n', () => ({
-    changeLanguage: jest.fn().mockResolvedValue(false),
+    changeLanguage: jest.fn().mockResolvedValue(undefined),
 }));
 
 import { LoginScreen } from '../../../screens/auth/LoginScreen';

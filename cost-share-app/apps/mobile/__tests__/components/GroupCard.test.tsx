@@ -18,6 +18,8 @@ const baseGroup: GroupWithMembers = {
         { userId: 'u1', displayName: 'Alice' },
         { userId: 'u2', displayName: 'Bob' },
     ],
+    isArchivedByMe: false,
+    isAutoArchived: false,
 };
 
 describe('GroupCard', () => {

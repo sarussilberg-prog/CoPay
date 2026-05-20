@@ -1,68 +1,107 @@
 /**
- * SettlementRow — feed row for a settlement (payment between two users).
- * Distinct visual treatment from expenses: green accent + payment icon.
- * Tap opens the View / Edit / Delete action sheet (Edit / Delete only if the
- * current user is the payer or receiver).
+ * SettlementRow — WhatsApp-style feed row for a settlement payment.
  */
 
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Settlement } from '@cost-share/shared';
 import { Text } from './AppText';
 import { AppIcon } from './AppIcon';
+import { MemberAvatar } from './MemberAvatar';
+import { FeedChatRow } from './FeedChatRow';
+import { FeedActorName } from './FeedActorName';
+import { feedBubbleStyles } from './feedBubbleStyles';
+import { formatFeedDateTime } from '../lib/formatFeedDateTime';
+import { useAppLanguage } from '../hooks/useRtlLayout';
 import { colors } from '../theme';
 
 interface SettlementRowProps {
     settlement: Settlement;
+    actorName: string;
+    actorAvatarUrl?: string;
     fromName: string;
     toName: string;
-    onPress: (settlement: Settlement) => void;
+    isMine: boolean;
+    onPress: () => void;
 }
 
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-function SettlementRowBase({ settlement, fromName, toName, onPress }: SettlementRowProps) {
+function SettlementRowBase({
+    settlement,
+    actorName,
+    actorAvatarUrl,
+    fromName,
+    toName,
+    isMine,
+    onPress,
+}: SettlementRowProps) {
     const { t } = useTranslation();
-    const date = new Date(settlement.settlementDate);
-    const month = MONTHS[date.getMonth()];
-    const day = date.getDate();
-
+    const language = useAppLanguage();
+    const timestamp = formatFeedDateTime(new Date(settlement.settlementDate), language);
     const amountText = `${settlement.currency} ${settlement.amount.toFixed(2)}`;
 
+    const avatar = (
+        <MemberAvatar
+            name={actorName}
+            avatarUrl={actorAvatarUrl}
+            size="xs"
+            testID="settlement-avatar"
+        />
+    );
+
     return (
-        <TouchableOpacity
-            onPress={() => onPress(settlement)}
-            activeOpacity={0.7}
-            className="bg-white rounded-2xl p-3 mb-2 border border-gray-100 flex-row items-center"
-            testID={`settlement-row-${settlement.id}`}
-        >
-            <View style={{ width: 44 }} className="items-center mr-2">
-                <Text className="text-[10px] font-semibold text-gray-500">{month}</Text>
-                <Text className="text-lg font-bold text-gray-900 leading-5">{day}</Text>
-            </View>
-
-            <View
-                style={{ width: 40, height: 40 }}
-                className="rounded-xl bg-green-100 items-center justify-center mr-3"
+        <FeedChatRow avatar={avatar} testID={`settlement-row-${settlement.id}`}>
+            <TouchableOpacity
+                onPress={onPress}
+                testID={`settlement-press-${settlement.id}`}
+                activeOpacity={0.85}
+                style={feedBubbleStyles.bubble}
             >
-                <AppIcon name="swap-horizontal-outline" size={20} color={colors.success} />
-            </View>
+                {!isMine && <FeedActorName name={actorName} />}
 
-            <View className="flex-1 mr-2">
-                <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
-                    {t('feed.settlement', {
-                        from: fromName,
-                        to: toName,
-                        amount: amountText,
-                    })}
+                <View className="flex-row items-center">
+                    <View
+                        style={styles.thumb}
+                        className="rounded-xl bg-green-50 items-center justify-center mr-3"
+                    >
+                        <AppIcon
+                            name="swap-horizontal-outline"
+                            size={18}
+                            color={colors.success}
+                        />
+                    </View>
+
+                    <View className="flex-1 min-w-0 mr-2">
+                        <Text className="text-base font-semibold text-gray-900" numberOfLines={2}>
+                            {t('feed.settlement', {
+                                from: fromName,
+                                to: toName,
+                                amount: amountText,
+                            })}
+                        </Text>
+                        <Text className="text-xs text-gray-500 mt-0.5">
+                            {t('activity.settlement')}
+                        </Text>
+                    </View>
+
+                    <Text className="text-sm font-bold text-green-600 shrink-0">
+                        {amountText}
+                    </Text>
+                </View>
+
+                <Text className="text-[11px] text-gray-400 mt-2" testID="settlement-timestamp">
+                    {timestamp}
                 </Text>
-                <Text className="text-xs text-gray-500 mt-0.5">{t('activity.settlement')}</Text>
-            </View>
-
-            <Text className="text-sm font-semibold text-green-600">{amountText}</Text>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </FeedChatRow>
     );
 }
+
+const styles = StyleSheet.create({
+    thumb: {
+        width: 36,
+        height: 36,
+    },
+});
 
 export const SettlementRow = React.memo(SettlementRowBase);

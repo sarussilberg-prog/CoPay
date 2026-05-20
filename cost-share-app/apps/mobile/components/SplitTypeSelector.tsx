@@ -1,13 +1,13 @@
 /**
  * SplitTypeSelector Component
  * Toggle between equal and unequal split types
- * Uses NativeWind styling only, supports i18n
  */
 
 import { Text } from './AppText';
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { colors } from '../theme';
 
 type SplitType = 'equal' | 'unequal';
 
@@ -21,36 +21,26 @@ export function SplitTypeSelector({ value, onChange, label }: SplitTypeSelectorP
     const { t } = useTranslation();
 
     return (
-        <View className="mb-4">
-            {label && (
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                    {label}
-                </Text>
-            )}
-            <View className="flex-row bg-gray-100 rounded-xl p-1">
+        <View style={styles.container}>
+            {label ? <Text style={styles.label}>{label}</Text> : null}
+            <View style={styles.track}>
                 <TouchableOpacity
                     onPress={() => onChange('equal')}
                     activeOpacity={0.7}
-                    className={`flex-1 py-3 rounded-lg ${value === 'equal' ? 'bg-white shadow-sm' : ''
-                        }`}
+                    style={[styles.option, value === 'equal' && styles.optionSelected]}
+                    testID="split-type-equal"
                 >
-                    <Text
-                        className={`text-center text-sm font-medium ${value === 'equal' ? 'text-primary-dark' : 'text-gray-500'
-                            }`}
-                    >
+                    <Text style={[styles.optionText, value === 'equal' && styles.optionTextSelected]}>
                         {t('expenses.equalSplit')}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => onChange('unequal')}
                     activeOpacity={0.7}
-                    className={`flex-1 py-3 rounded-lg ${value === 'unequal' ? 'bg-white shadow-sm' : ''
-                        }`}
+                    style={[styles.option, value === 'unequal' && styles.optionSelected]}
+                    testID="split-type-unequal"
                 >
-                    <Text
-                        className={`text-center text-sm font-medium ${value === 'unequal' ? 'text-primary-dark' : 'text-gray-500'
-                            }`}
-                    >
+                    <Text style={[styles.optionText, value === 'unequal' && styles.optionTextSelected]}>
                         {t('expenses.unequalSplit')}
                     </Text>
                 </TouchableOpacity>
@@ -58,3 +48,44 @@ export function SplitTypeSelector({ value, onChange, label }: SplitTypeSelectorP
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: colors.gray700,
+        marginBottom: 8,
+    },
+    track: {
+        flexDirection: 'row',
+        backgroundColor: colors.gray100,
+        borderRadius: 12,
+        padding: 4,
+    },
+    option: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    optionSelected: {
+        backgroundColor: colors.white,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    optionText: {
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: '500',
+        color: colors.gray500,
+    },
+    optionTextSelected: {
+        color: colors.primaryDark,
+    },
+});

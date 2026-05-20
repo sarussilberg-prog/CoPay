@@ -1,9 +1,25 @@
-import { resolveAutoTextStyle, rtlTextAlign, rtlTextClassName } from '../../hooks/useRtlLayout';
+import {
+    feedActorNameStyle,
+    resolveAutoTextStyle,
+    rtlTextAlign,
+    rtlTextClassName,
+} from '../../hooks/useRtlLayout';
 
 describe('useRtlLayout helpers', () => {
     it('returns right alignment for Hebrew', () => {
         expect(rtlTextAlign(true)).toBe('right');
         expect(rtlTextAlign(false)).toBe('left');
+    });
+
+    it('pins feed actor names to the app edge', () => {
+        expect(feedActorNameStyle(true)).toEqual({
+            textAlign: 'right',
+            alignSelf: 'stretch',
+        });
+        expect(feedActorNameStyle(false)).toEqual({
+            textAlign: 'left',
+            alignSelf: 'stretch',
+        });
     });
 
     it('adds nativewind alignment classes for Hebrew', () => {

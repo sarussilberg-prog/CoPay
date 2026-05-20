@@ -34,7 +34,7 @@ export function LoadingIndicator({ message }: LoadingIndicatorProps) {
     return (
         <View className="flex-1 justify-center items-center bg-gray-50">
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text className="mt-4 text-gray-600">
+            <Text className="mt-4 text-gray-600 text-center w-full">
                 {message || t('common.loading')}
             </Text>
         </View>

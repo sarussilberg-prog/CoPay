@@ -3,6 +3,7 @@ import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import { clearGroupFeedHydration } from '../lib/groupFeedCache';
 import { supabase } from '../lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -30,6 +31,9 @@ const redirectTo = resolveOAuthRedirectUri();
 
 console.log('[Auth] redirectTo =', redirectTo);
 
+/** Prevents double exchange when WebBrowser and Linking both deliver the same callback URL. */
+const exchangeByCode = new Map<string, Promise<{ error: Error | null }>>();
+
 export async function handleAuthRedirectUrl(url: string): Promise<{ error: Error | null }> {
   const { params, errorCode } = QueryParams.getQueryParams(url);
 
@@ -40,8 +44,23 @@ export async function handleAuthRedirectUrl(url: string): Promise<{ error: Error
   const { code, access_token, refresh_token } = params;
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    return { error };
+    const existing = exchangeByCode.get(code);
+    if (existing) return existing;
+
+    const exchange = (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) return { error: null };
+
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      return { error };
+    })();
+
+    exchangeByCode.set(code, exchange);
+    try {
+      return await exchange;
+    } finally {
+      exchangeByCode.delete(code);
+    }
   }
 
   if (access_token && refresh_token) {
@@ -106,5 +125,6 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
 }
 
 export async function signOut(): Promise<void> {
+  clearGroupFeedHydration();
   await supabase.auth.signOut();
 }

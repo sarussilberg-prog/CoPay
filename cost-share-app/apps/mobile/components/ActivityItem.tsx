@@ -1,6 +1,5 @@
 /**
- * ActivityItem Component
- * Activity feed item for expenses, settlements, and group messages
+ * ActivityItem — activity feed row matching group feed card styling.
  */
 
 import { Text } from './AppText';
@@ -8,40 +7,16 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { RecentActivity } from '@cost-share/shared';
-import { AppIcon, AppIconName } from './AppIcon';
-import { colors } from '../theme';
+import { MemberAvatar } from './MemberAvatar';
+import { FeedChatRow } from './FeedChatRow';
+import { feedBubbleStyles } from './feedBubbleStyles';
 import { formatCurrencyAmount } from '../lib/currencyDisplay';
+import { formatFeedDateTime } from '../lib/formatFeedDateTime';
+import { useAppLanguage } from '../hooks/useRtlLayout';
 
 interface ActivityItemProps {
     activity: RecentActivity;
     onPress?: (activity: RecentActivity) => void;
-}
-
-function activityVisual(activity: RecentActivity): {
-    iconName: AppIconName;
-    iconColor: string;
-    iconBg: string;
-} {
-    switch (activity.activityType) {
-        case 'expense':
-            return {
-                iconName: 'cash-outline',
-                iconColor: colors.primary,
-                iconBg: 'bg-blue-50',
-            };
-        case 'settlement':
-            return {
-                iconName: 'swap-horizontal-outline',
-                iconColor: colors.success,
-                iconBg: 'bg-green-50',
-            };
-        case 'message':
-            return {
-                iconName: 'chatbubble-outline',
-                iconColor: colors.gray600,
-                iconBg: 'bg-gray-100',
-            };
-    }
 }
 
 export const ActivityItem = React.memo(function ActivityItem({
@@ -49,57 +24,62 @@ export const ActivityItem = React.memo(function ActivityItem({
     onPress,
 }: ActivityItemProps) {
     const { t } = useTranslation();
+    const language = useAppLanguage();
     const isMessage = activity.activityType === 'message';
     const isExpense = activity.activityType === 'expense';
-    const formattedDate = new Date(activity.activityDate).toLocaleDateString();
-    const visual = activityVisual(activity);
+    const timestamp = formatFeedDateTime(
+        new Date(activity.activityDate),
+        language,
+    );
     const pressable = Boolean(onPress);
 
+    const avatar = (
+        <MemberAvatar
+            name={activity.userName}
+            avatarUrl={activity.userAvatarUrl}
+            size="xs"
+            testID="activity-avatar"
+        />
+    );
+
+    const metaParts = [
+        activity.userName,
+        ...(isMessage ? [t('activity.message')] : []),
+        timestamp,
+    ];
+
     return (
-        <TouchableOpacity
-            onPress={() => onPress?.(activity)}
-            activeOpacity={pressable ? 0.7 : 1}
-            disabled={!pressable}
-            className="bg-white rounded-xl p-4 mb-2 border border-gray-100"
-        >
-            <View className="flex-row items-center">
-                <View
-                    className={`w-10 h-10 rounded-lg justify-center items-center mr-3 ${visual.iconBg}`}
-                >
-                    <AppIcon
-                        name={visual.iconName}
-                        size={22}
-                        color={visual.iconColor}
-                        testID={`activity-icon-${activity.activityType}`}
-                    />
-                </View>
+        <FeedChatRow avatar={avatar} testID={`activity-item-${activity.id}`}>
+            <TouchableOpacity
+                onPress={() => onPress?.(activity)}
+                activeOpacity={pressable ? 0.85 : 1}
+                disabled={!pressable}
+                style={feedBubbleStyles.bubble}
+            >
+                <View className="flex-row items-start">
+                    <View className="flex-1 min-w-0">
+                        <Text
+                            className="text-base font-semibold text-gray-900"
+                            numberOfLines={isMessage ? 3 : 2}
+                        >
+                            {activity.description}
+                        </Text>
+                        <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>
+                            {metaParts.join(' · ')}
+                        </Text>
+                    </View>
 
-                <View className="flex-1 min-w-0">
-                    <Text
-                        className="text-base font-medium text-gray-900"
-                        numberOfLines={isMessage ? 2 : 1}
-                    >
-                        {activity.description}
-                    </Text>
-                    <Text className="text-xs text-gray-400 mt-0.5">
-                        {activity.userName}
-                        {isMessage
-                            ? ` • ${t('activity.message')}`
-                            : ''}{' '}
-                        • {formattedDate}
-                    </Text>
+                    {!isMessage && (
+                        <Text
+                            className={`text-sm font-bold shrink-0 ml-2 ${
+                                isExpense ? 'text-gray-900' : 'text-green-600'
+                            }`}
+                        >
+                            {formatCurrencyAmount(activity.amount, activity.currency)}
+                        </Text>
+                    )}
                 </View>
-
-                {!isMessage && (
-                    <Text
-                        className={`text-base font-semibold ml-2 ${
-                            isExpense ? 'text-gray-900' : 'text-green-600'
-                        }`}
-                    >
-                        {formatCurrencyAmount(activity.amount, activity.currency)}
-                    </Text>
-                )}
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </FeedChatRow>
     );
 });

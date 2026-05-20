@@ -66,31 +66,21 @@ export const initializeLanguage = async (): Promise<void> => {
 /**
  * Change language and update RTL settings
  * Saves preference to AsyncStorage for persistence
- * Returns true if app restart is needed for RTL changes
  */
-export const changeLanguage = async (language: 'en' | 'he'): Promise<boolean> => {
+export const changeLanguage = async (language: 'en' | 'he'): Promise<void> => {
     try {
-        // Change i18next language
         await i18n.changeLanguage(language);
 
-        // Determine if RTL is needed
         const isRTL = language === 'he';
-        const needsRestart = I18nManager.isRTL !== isRTL;
-
-        // Update RTL setting
-        if (needsRestart) {
+        if (I18nManager.isRTL !== isRTL) {
             I18nManager.forceRTL(isRTL);
-            console.log('RTL setting changed. App restart required.');
         }
 
-        // Save to AsyncStorage
         await AsyncStorage.setItem(LANGUAGE_KEY, language);
         console.log(`Language saved to storage: ${language}`);
-
-        return needsRestart;
     } catch (error) {
         console.error('Failed to change language:', error);
-        return false;
+        throw error;
     }
 };
 

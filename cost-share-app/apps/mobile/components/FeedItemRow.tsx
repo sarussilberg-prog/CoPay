@@ -33,17 +33,22 @@ export function FeedItemRow({
     const { t } = useTranslation();
 
     if (item.kind === 'expense') {
+        const actor = memberMap[item.expense.createdBy];
         const payer = memberMap[item.expense.paidBy];
         return (
             <ExpenseRow
                 expense={item.expense}
+                actorName={actor?.displayName ?? ''}
+                actorAvatarUrl={actor?.avatarUrl}
                 payerName={payer?.displayName ?? ''}
+                isMine={item.expense.createdBy === currentUserId}
                 onPress={onExpensePress}
                 searchQuery={searchQuery}
             />
         );
     }
     if (item.kind === 'settlement') {
+        const actor = memberMap[item.settlement.createdBy];
         const fromName =
             item.settlement.fromUserId === currentUserId
                 ? t('settleUp.you')
@@ -55,9 +60,12 @@ export function FeedItemRow({
         return (
             <SettlementRow
                 settlement={item.settlement}
+                actorName={actor?.displayName ?? fromName}
+                actorAvatarUrl={actor?.avatarUrl}
                 fromName={fromName}
                 toName={toName}
-                onPress={onSettlementPress}
+                isMine={item.settlement.createdBy === currentUserId}
+                onPress={() => onSettlementPress(item.settlement)}
             />
         );
     }

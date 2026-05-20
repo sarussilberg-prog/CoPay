@@ -19,8 +19,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.kupa.mobile",
       "associatedDomains": ["applinks:kupa.pro"],
+      "icon": "./assets/icon.png",
       "infoPlist": {
-        "CFBundleDisplayName": "Kupa"
+        "CFBundleDisplayName": "Kupa",
+        "CFBundleName": "Kupa"
       }
     },
     "android": {
@@ -46,6 +48,14 @@
       ]
     },
     "web": {
+      "name": "Kupa",
+      "shortName": "Kupa",
+      "description": "Split expenses with friends",
+      "themeColor": "#3B82F6",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "startUrl": "/",
+      "lang": "he",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [

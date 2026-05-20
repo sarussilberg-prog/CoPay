@@ -30,9 +30,10 @@ export function FilterSection({
 
     return (
         <View
-            className={`rounded-2xl bg-slate-50 border border-gray-100 px-4 py-3.5 ${
+            className={`rounded-2xl bg-slate-50 border border-gray-100 px-4 ${
                 first ? 'mt-1' : 'mt-3'
             }`}
+            style={{ paddingVertical: 14 }}
         >
             {label ? <Text className={labelClass}>{label}</Text> : null}
             {hint ? (
@@ -40,7 +41,7 @@ export function FilterSection({
                     {hint}
                 </Text>
             ) : null}
-            <View className={hasHeader ? 'mt-2.5' : ''}>{children}</View>
+            <View style={hasHeader ? { marginTop: 10 } : undefined}>{children}</View>
         </View>
     );
 }

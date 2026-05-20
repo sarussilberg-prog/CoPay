@@ -70,7 +70,14 @@ export function Toast({
             <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={onHide}
-                className={`${getBackgroundColor()} rounded-lg p-4 shadow-lg flex-row items-center`}
+                style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 8,
+                    elevation: 6,
+                }}
+                className={`${getBackgroundColor()} rounded-lg p-4 flex-row items-center`}
             >
                 <Text className="text-white text-base flex-1">{message}</Text>
             </TouchableOpacity>

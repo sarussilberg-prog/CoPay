@@ -43,6 +43,10 @@ describe('currencyDisplay', () => {
         it('returns English name for USD', () => {
             expect(getLocalizedCurrencyName('USD', 'en')).toBe('US Dollar');
         });
+
+        it('normalizes lowercase ISO codes', () => {
+            expect(getLocalizedCurrencyName('amd', 'he')).toBe('דראם ארמני');
+        });
     });
 
     describe('getCurrencyDisplayName', () => {

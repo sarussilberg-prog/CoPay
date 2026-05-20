@@ -17,10 +17,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { RecentActivity } from '@cost-share/shared';
 import { useActivityQuery } from '../../hooks/queries/useActivityQuery';
+import { ACTIVITY_INITIAL_SKELETON_COUNT } from '../../services/activity.service';
 import { resolveAutoTextInputStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
-import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { ActivityItem } from '../../components/ActivityItem';
+import { ActivityItemSkeleton } from '../../components/ActivityItemSkeleton';
 import { AppIcon } from '../../components/AppIcon';
 import {
     ActivityFiltersSheet,
@@ -51,6 +52,7 @@ export function ActivityFeedScreen() {
         isLoading,
         isRefetching,
         isFetchingNextPage,
+        isError,
         fetchNextPage,
         hasNextPage,
         refetch,
@@ -114,6 +116,7 @@ export function ActivityFeedScreen() {
     }, [activities, filters, searchQuery, currentUser?.id, groupTypeById]);
 
     const filterActive = isAnyActivityFilterActive(filters);
+    const showInitialSkeleton = isLoading && activities.length === 0;
 
     const handleActivityPress = useCallback(
         (activity: RecentActivity) => {
@@ -149,9 +152,37 @@ export function ActivityFeedScreen() {
         [],
     );
 
-    if (isLoading && activities.length === 0) {
-        return <LoadingIndicator />;
-    }
+    const listEmptyComponent = useMemo(() => {
+        if (showInitialSkeleton) {
+            return (
+                <View>
+                    {Array.from({ length: ACTIVITY_INITIAL_SKELETON_COUNT }, (_, index) => (
+                        <ActivityItemSkeleton key={`activity-skeleton-${index}`} />
+                    ))}
+                </View>
+            );
+        }
+
+        if (isError) {
+            return (
+                <EmptyState
+                    iconName="alert-circle-outline"
+                    title={t('activity.loadError')}
+                    message={t('common.networkError')}
+                    actionTitle={t('common.retry')}
+                    onAction={handleRefresh}
+                />
+            );
+        }
+
+        return (
+            <EmptyState
+                iconName="list-outline"
+                title={t('activity.noActivity')}
+                message={t('activity.noActivityMessage')}
+            />
+        );
+    }, [showInitialSkeleton, isError, t, handleRefresh]);
 
     return (
         <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
@@ -211,7 +242,7 @@ export function ActivityFeedScreen() {
                 data={displayedActivities}
                 keyExtractor={keyExtractor}
                 renderItem={renderActivity}
-                contentContainerClassName="px-4 pb-4"
+                contentContainerClassName="px-2 pb-4"
                 initialNumToRender={10}
                 maxToRenderPerBatch={10}
                 windowSize={5}
@@ -231,13 +262,7 @@ export function ActivityFeedScreen() {
                         <ActivityIndicator className="py-4" color={colors.primary} />
                     ) : null
                 }
-                ListEmptyComponent={
-                    <EmptyState
-                        iconName="list-outline"
-                        title={t('activity.noActivity')}
-                        message={t('activity.noActivityMessage')}
-                    />
-                }
+                ListEmptyComponent={listEmptyComponent}
             />
 
             <ActivityFiltersSheet

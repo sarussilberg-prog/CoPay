@@ -5,8 +5,8 @@
  */
 
 import { Text } from '../../components/AppText';
-import React, { useCallback, useState, useEffect } from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState, useEffect, useLayoutEffect } from 'react';
+import { View, ScrollView, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,9 +15,9 @@ import { useLoading } from '../../hooks/useLoading';
 import {
     getGroupById,
     updateGroup,
-    deleteGroup,
     removeGroupMember,
 } from '../../services/groups.service';
+import { fetchGroupPairwiseDebts } from '../../services/settlements.service';
 import { fetchGroupUsers } from '../../services/users.service';
 import { uploadGroupImage } from '../../services/storage.service';
 import { getCurrentUserId } from '../../lib/auth';
@@ -26,13 +26,11 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AddMembersSheet } from '../../components/AddMembersSheet';
 import { AppIcon } from '../../components/AppIcon';
 import { colors } from '../../theme';
 import { GroupTypeSelector } from '../../components/GroupTypeSelector';
-import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 
 export function EditGroupScreen() {
     const { t } = useTranslation();
@@ -50,15 +48,52 @@ export function EditGroupScreen() {
     const [imageUrl, setImageUrl] = useState<string | undefined>();
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);
     const [imageRemoved, setImageRemoved] = useState(false);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [showLeaveDialog, setShowLeaveDialog] = useState(false);
     const [members, setMembers] = useState<User[]>([]);
     const [addMembersOpen, setAddMembersOpen] = useState(false);
+    const [removeTarget, setRemoveTarget] = useState<User | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [unsettledMemberIds, setUnsettledMemberIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        void getCurrentUserId().then(setCurrentUserId);
+    }, []);
 
     const loadMembers = useCallback(async () => {
-        const users = await fetchGroupUsers(groupId);
+        const [users, debts] = await Promise.all([
+            fetchGroupUsers(groupId),
+            fetchGroupPairwiseDebts(groupId),
+        ]);
         setMembers(users);
+        const unsettled = new Set<string>();
+        debts.forEach(d => {
+            unsettled.add(d.fromUserId);
+            unsettled.add(d.toUserId);
+        });
+        setUnsettledMemberIds(unsettled);
     }, [groupId]);
+
+    const openRemoveDialog = useCallback(
+        (m: User) => {
+            if (unsettledMemberIds.has(m.id)) {
+                setRemoveTarget(m);
+                return;
+            }
+            Alert.alert(t('groups.removeMemberConfirm'), undefined, [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('groups.removeMember'),
+                    style: 'destructive',
+                    onPress: () => {
+                        void (async () => {
+                            const ok = await removeGroupMember(groupId, m.id);
+                            if (ok) await loadMembers();
+                        })();
+                    },
+                },
+            ]);
+        },
+        [unsettledMemberIds, groupId, t, loadMembers],
+    );
 
     useEffect(() => {
         const loadGroup = async () => {
@@ -136,19 +171,9 @@ export function EditGroupScreen() {
         }
     };
 
-    const handleDelete = async () => {
-        setShowDeleteDialog(false);
-        const ok = await deleteGroup(groupId);
-        if (ok) navigation.popToTop?.() ?? navigation.goBack();
-    };
-
-    const handleLeave = async () => {
-        setShowLeaveDialog(false);
-        const userId = await getCurrentUserId();
-        if (!userId) return;
-        const ok = await removeGroupMember(groupId, userId);
-        if (ok) navigation.popToTop?.() ?? navigation.goBack();
-    };
+    useLayoutEffect(() => {
+        navigation.setOptions({ title: name });
+    }, [navigation, name]);
 
     if (loading) {
         return <LoadingIndicator />;
@@ -197,35 +222,48 @@ export function EditGroupScreen() {
 
                 {/* Members */}
                 <View className="mb-4">
-                    <View className="flex-row items-center justify-between mb-2">
-                        <Text className="text-sm font-medium text-gray-700">
-                            {t('groups.members.title')}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('GroupMembers', { groupId })}
-                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                        >
-                            <Text className="text-xs font-semibold text-primary">
-                                {t('groups.members.seeAll')}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                    <Text className="text-sm font-medium text-gray-700 mb-2">
+                        {t('groups.members.title')}
+                    </Text>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingVertical: 4, gap: 12 }}
                     >
-                        {members.map(m => (
-                            <View key={m.id} className="items-center" style={{ width: 56 }}>
-                                <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size="md" />
-                                <Text
-                                    numberOfLines={1}
-                                    className="text-xs text-gray-600 mt-1 w-14 text-center"
+                        {members.map(m => {
+                            const isSelf = m.id === currentUserId;
+                            return (
+                                <View
+                                    key={m.id}
+                                    className="items-center"
+                                    style={{ width: 56 }}
+                                    testID={`edit-group-member-${m.id}`}
                                 >
-                                    {m.name}
-                                </Text>
-                            </View>
-                        ))}
+                                    <View>
+                                        <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size="md" />
+                                        {!isSelf && (
+                                            <TouchableOpacity
+                                                onPress={() => openRemoveDialog(m)}
+                                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={t('groups.removeMember')}
+                                                testID={`edit-group-member-remove-${m.id}`}
+                                                className="absolute -top-1 -right-1 bg-gray-200 items-center justify-center"
+                                                style={{ width: 20, height: 20, borderRadius: 10 }}
+                                            >
+                                                <AppIcon name="trash-outline" size={12} color={colors.gray600} />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                    <Text
+                                        numberOfLines={1}
+                                        className="text-xs text-gray-600 mt-1 w-14 text-center"
+                                    >
+                                        {m.name}
+                                    </Text>
+                                </View>
+                            );
+                        })}
                         <TouchableOpacity
                             onPress={() => setAddMembersOpen(true)}
                             activeOpacity={0.7}
@@ -244,14 +282,6 @@ export function EditGroupScreen() {
                             </Text>
                         </TouchableOpacity>
                     </ScrollView>
-                    <View className="mt-3">
-                        <Button
-                            title={t('groups.members.addMembers')}
-                            onPress={() => setAddMembersOpen(true)}
-                            variant="outline"
-                            testID="edit-group-add-members-button"
-                        />
-                    </View>
                 </View>
 
                 {/* Action Buttons */}
@@ -269,51 +299,7 @@ export function EditGroupScreen() {
                     />
                 </View>
 
-                {/* Invite Link Block */}
-                <View className="mt-6">
-                    <InviteLinkBlock kind="group" mode="expanded" groupId={groupId} />
-                </View>
-
-                {/* Danger zone */}
-                <View className="mt-8 mb-4">
-                    <Text className="text-xs font-semibold uppercase text-gray-500 mb-2">
-                        {t('groups.dangerZone')}
-                    </Text>
-                    <View className="gap-2">
-                        <Button
-                            title={t('groups.leaveGroup')}
-                            onPress={() => setShowLeaveDialog(true)}
-                            variant="outline"
-                        />
-                        <Button
-                            title={t('groups.deleteGroup')}
-                            onPress={() => setShowDeleteDialog(true)}
-                            variant="danger"
-                        />
-                    </View>
-                </View>
             </View>
-
-            <ConfirmDialog
-                visible={showDeleteDialog}
-                title={t('groups.deleteGroup')}
-                message={t('groups.deleteGroupConfirm')}
-                confirmText={t('common.delete')}
-                cancelText={t('common.cancel')}
-                onConfirm={handleDelete}
-                onCancel={() => setShowDeleteDialog(false)}
-                destructive
-            />
-            <ConfirmDialog
-                visible={showLeaveDialog}
-                title={t('groups.leaveGroup')}
-                message={t('groups.leaveGroupConfirm')}
-                confirmText={t('groups.leaveGroup')}
-                cancelText={t('common.cancel')}
-                onConfirm={handleLeave}
-                onCancel={() => setShowLeaveDialog(false)}
-                destructive
-            />
 
             <AddMembersSheet
                 visible={addMembersOpen}
@@ -322,6 +308,28 @@ export function EditGroupScreen() {
                 onClose={() => setAddMembersOpen(false)}
                 onAdded={loadMembers}
             />
+
+            <Modal
+                visible={removeTarget !== null}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setRemoveTarget(null)}
+            >
+                <Pressable
+                    className="flex-1 bg-black/50 justify-center items-center p-4"
+                    onPress={() => setRemoveTarget(null)}
+                >
+                    <Pressable onPress={() => { }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                        <Text className="text-xl font-bold text-gray-900 mb-2">
+                            {t('groups.cannotRemoveMember')}
+                        </Text>
+                        <Text className="text-base text-gray-600">
+                            {t('groups.cannotRemoveMemberReason')}
+                        </Text>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </ScrollView>
     );
 }
+

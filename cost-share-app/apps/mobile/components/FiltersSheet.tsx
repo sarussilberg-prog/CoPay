@@ -11,6 +11,7 @@ import { FilterChipGrid } from './filters/FilterChipGrid';
 import { GroupTypeFilterGrid } from './filters/GroupTypeFilterGrid';
 import { FilterToggleRow } from './filters/FilterToggleRow';
 import {
+    BalanceState,
     DEFAULT_GROUP_LIST_FILTERS,
     GroupListFilters,
     GroupSortOption,
@@ -49,11 +50,12 @@ export function FiltersSheet({
         { key: 'balanceAsc', label: t('groups.filters.sort.balanceAsc') },
     ];
 
-    const balanceOptions = [
-        { key: 'all' as const, label: t('groups.filters.balance.all') },
-        { key: 'owe' as const, label: t('groups.filters.balance.owe') },
-        { key: 'owed' as const, label: t('groups.filters.balance.owed') },
-        { key: 'settled' as const, label: t('groups.filters.balance.settled') },
+    const balanceOptions: { key: BalanceState; label: string }[] = [
+        { key: 'all', label: t('groups.filters.balance.all') },
+        { key: 'owe', label: t('groups.filters.balance.owe') },
+        { key: 'owed', label: t('groups.filters.balance.owed') },
+        { key: 'unsettled', label: t('groups.filters.balance.unsettled') },
+        { key: 'settled', label: t('groups.filters.balance.settled') },
     ];
 
     const currencyOptions = availableCurrencies.map((c) => ({
@@ -117,10 +119,10 @@ export function FiltersSheet({
 
                     <FilterSection label={t('groups.filters.status.label')}>
                         <FilterToggleRow
-                            label={t('groups.filters.status.includeArchived')}
-                            value={f.includeArchived}
-                            onValueChange={(includeArchived) =>
-                                patch({ includeArchived })
+                            label={t('groups.filters.status.showArchived')}
+                            value={f.showArchived}
+                            onValueChange={(showArchived) =>
+                                patch({ showArchived })
                             }
                         />
                     </FilterSection>

@@ -8,7 +8,7 @@ import { Text } from './AppText';
 import React from 'react';
 import { View, Image } from 'react-native';
 
-type AvatarSize = 'sm' | 'md' | 'lg';
+type AvatarSize = 'xs' | 'sm' | 'md' | 'lg';
 
 interface MemberAvatarProps {
     name: string;
@@ -18,6 +18,7 @@ interface MemberAvatarProps {
 }
 
 const sizeStyles: Record<AvatarSize, { imageSize: number; text: string }> = {
+    xs: { imageSize: 32, text: 'text-[10px]' },
     sm: { imageSize: 36, text: 'text-xs' },
     md: { imageSize: 44, text: 'text-sm' },
     lg: { imageSize: 56, text: 'text-lg' },
@@ -61,8 +62,8 @@ export function MemberAvatar({
 
     return (
         <View
-            style={frameStyle}
-            className="shrink-0 bg-slate-100 justify-center items-center border border-slate-200/80"
+            style={[frameStyle, { borderWidth: 1, borderColor: 'rgba(226, 232, 240, 0.8)' }]}
+            className="shrink-0 bg-slate-100 justify-center items-center"
             testID={testID}
         >
             <Text className={`${text} font-semibold text-slate-600`}>

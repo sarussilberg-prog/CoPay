@@ -3,13 +3,11 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockNavigate = jest.fn();
-const mockSetOptions = jest.fn();
-
 jest.mock('@react-navigation/native', () => {
     const actual = jest.requireActual('@react-navigation/native');
     return {
         ...actual,
-        useNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn(), setOptions: mockSetOptions }),
+        useNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn(), setOptions: jest.fn() }),
         useRoute: () => ({ params: {} }),
         useFocusEffect: (cb: () => void) => cb(),
         useIsFocused: () => true,
@@ -53,7 +51,6 @@ const dashboardPayload = {
 
 beforeEach(() => {
     mockNavigate.mockClear();
-    mockSetOptions.mockClear();
     mockedFetch.mockReset();
     mockedFetch.mockResolvedValue(dashboardPayload as any);
     useAppStore.setState({
@@ -72,12 +69,9 @@ describe('ProfileScreen (dashboard)', () => {
         expect(getByText('dashboard.netOwedToYou')).toBeTruthy();
     });
 
-    it('settings header button navigates to Settings', async () => {
-        renderWithQuery(<ProfileScreen />);
-        await waitFor(() => expect(mockSetOptions).toHaveBeenCalled());
-        const headerRight = mockSetOptions.mock.calls[0][0].headerRight;
-        const { getByTestId } = render(headerRight());
-        fireEvent.press(getByTestId('profile-settings-button'));
+    it('settings button navigates to Settings', async () => {
+        const { findByTestId } = renderWithQuery(<ProfileScreen />);
+        fireEvent.press(await findByTestId('profile-settings-button'));
         expect(mockNavigate).toHaveBeenCalledWith('Settings');
     });
 

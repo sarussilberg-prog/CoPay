@@ -11,16 +11,18 @@ import {
     RefreshControl,
     TouchableOpacity,
     Alert,
-    ActionSheetIOS,
-    Platform,
+    Modal,
+    Pressable,
+    TextInput,
+    ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import {
     ExpenseCategory,
+    ExpenseWithDelta,
     FeedItem,
     Group,
-    GroupMember,
     GroupMemberLite,
     GroupMessage,
     Settlement,
@@ -29,9 +31,14 @@ import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import {
     getGroupById,
-    getGroupMembers,
+    archiveGroup,
+    unarchiveGroup,
+    deleteGroup,
+    removeGroupMember,
+    fetchProfilesByUserIds,
 } from '../../services/groups.service';
-import { fetchExpenses } from '../../services/expenses.service';
+import { collectFeedUserIds } from '../../lib/feedParticipants';
+import { deleteExpense, fetchExpenses } from '../../services/expenses.service';
 import {
     fetchMessages,
     createMessage,
@@ -42,23 +49,38 @@ import { exportGroupCsv } from '../../services/group-share.service';
 import { shareGroupInvite } from '../../services/invite.service';
 import { buildFeed } from '../../services/feed';
 import { useGroupMessagesRealtime } from '../../hooks/useGroupMessagesRealtime';
-import { getCurrentUserId } from '../../lib/auth';
-import { supabase } from '../../lib/supabase';
+import {
+    hasStoreGroupMembers,
+    isGroupExpensesHydrated,
+    isGroupFeedHydrated,
+    isGroupMessagesHydrated,
+} from '../../lib/groupFeedCache';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../hooks/queries/keys';
+import { prefetchAddExpense } from '../../hooks/queries/prefetchAddExpense';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupHero } from '../../components/GroupHero';
 import { QuickActionsRow } from '../../components/QuickActionsRow';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FeedItemRow } from '../../components/FeedItemRow';
-import { SearchExpandable } from '../../components/SearchExpandable';
+import {
+    FAB_BOTTOM_GAP,
+    FAB_LIST_GAP,
+    FAB_ROW_HEIGHT,
+    GroupDetailFloatingActions,
+} from '../../components/GroupDetailFloatingActions';
+import { resolveAutoTextInputStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 import { MessageComposerSheet } from '../../components/MessageComposerSheet';
 import { AddMembersSheet } from '../../components/AddMembersSheet';
 import {
-    DEFAULT_EXPENSE_FILTERS,
-    ExpenseFilters,
-    ExpenseFiltersSheet,
-    isAnyExpenseFilterActive,
-} from '../../components/ExpenseFiltersSheet';
+    DEFAULT_GROUP_FEED_FILTERS,
+    GroupFeedFilters,
+    GroupFeedFiltersSheet,
+    isAnyGroupFeedFilterActive,
+} from '../../components/GroupFeedFiltersSheet';
+import { filterAndSortGroupFeed } from '../../lib/groupFeedFilters';
 import { SettleUpSheet, SettleUpFormValues } from '../../components/SettleUpSheet';
 import {
     useDeleteSettlementMutation,
@@ -67,7 +89,10 @@ import {
     useUpdateSettlementMutation,
 } from '../../hooks/queries/useSettlementQueries';
 import { AppIcon } from '../../components/AppIcon';
+import { FeedItemDetailSheet } from '../../components/FeedItemDetailSheet';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { colors } from '../../theme';
+import Toast from 'react-native-toast-message';
 
 type ComposerState =
     | { open: false }
@@ -85,37 +110,58 @@ const CATEGORIES: ExpenseCategory[] = [
     'other',
 ];
 
-function membersToLite(members: GroupMember[], nameById: Map<string, string>, avatarById: Map<string, string | undefined>): GroupMemberLite[] {
-    return members.map(m => ({
-        userId: m.userId,
-        displayName: nameById.get(m.userId) ?? m.userId.slice(0, 8),
-        avatarUrl: avatarById.get(m.userId),
-    }));
-}
-
 export function GroupDetailScreen() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { groupId } = route.params;
     const { isLoading, startLoading, stopLoading } = useLoading();
+    const [isFeedLoading, setIsFeedLoading] = useState(
+        () => !isGroupFeedHydrated(groupId),
+    );
 
     const [group, setGroup] = useState<Group | null>(null);
     const storeGroup = useAppStore(s => s.groups.find(g => g.id === groupId));
     const displayGroup = storeGroup ?? group;
-    const [memberLites, setMemberLites] = useState<GroupMemberLite[]>([]);
-    const [currentUserId, setCurrentUserId] = useState<string>('');
+    const isArchivedByMe = storeGroup?.isArchivedByMe ?? false;
+    const hasOpenBalance = useAppStore(s => Boolean(s.groupBalances[groupId]));
+    const insets = useSafeAreaInsets();
+    const listBottomPadding = FAB_BOTTOM_GAP + FAB_ROW_HEIGHT + FAB_LIST_GAP;
+    const { data: groupUsers = [], refetch: refetchGroupUsers } =
+        useGroupUsersQuery(groupId);
+    const memberLites = useMemo<GroupMemberLite[]>(() => {
+        if (storeGroup?.members?.length) return storeGroup.members;
+        return groupUsers.map(u => ({
+            userId: u.id,
+            displayName: u.name ?? u.id.slice(0, 8),
+            avatarUrl: u.avatarUrl,
+        }));
+    }, [storeGroup?.members, groupUsers]);
+    const [feedParticipants, setFeedParticipants] = useState<
+        Record<string, GroupMemberLite>
+    >({});
+    const currentUserId = useAppStore(s => s.currentUser?.id ?? '');
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchExpanded, setSearchExpanded] = useState(false);
-    const [filters, setFilters] = useState<ExpenseFilters>(DEFAULT_EXPENSE_FILTERS);
+    const [filters, setFilters] = useState<GroupFeedFilters>(DEFAULT_GROUP_FEED_FILTERS);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [composer, setComposer] = useState<ComposerState>({ open: false });
     const [addMembersOpen, setAddMembersOpen] = useState(false);
     const [editingSettlement, setEditingSettlement] = useState<Settlement | null>(null);
+    const [feedDetailItem, setFeedDetailItem] = useState<
+        | { kind: 'expense'; expense: ExpenseWithDelta }
+        | { kind: 'settlement'; settlement: Settlement }
+        | null
+    >(null);
+    const [pendingDelete, setPendingDelete] = useState<'expense' | 'settlement' | null>(
+        null,
+    );
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [archiveBusy, setArchiveBusy] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
-    const { data: settlements = [], refetch: refetchSettlements } =
-        useGroupSettlementsQuery(groupId);
+    const { data: settlements = [] } = useGroupSettlementsQuery(groupId);
     const { data: pairwiseDebts = [] } = useGroupPairwiseDebtsQuery(groupId);
     const updateSettlementMutation = useUpdateSettlementMutation(groupId);
     const deleteSettlementMutation = useDeleteSettlementMutation(groupId);
@@ -129,56 +175,114 @@ export function GroupDetailScreen() {
 
     useGroupMessagesRealtime(groupId);
 
+    const groupExpenses = useMemo(
+        () => expenses.filter(e => e.groupId === groupId),
+        [expenses, groupId],
+    );
+
+    const feedUserIds = useMemo(
+        () => collectFeedUserIds(groupExpenses, messages, settlements),
+        [groupExpenses, messages, settlements],
+    );
+
+    useEffect(() => {
+        const activeIds = new Set(memberLites.map(m => m.userId));
+        const missing = feedUserIds.filter(id => !activeIds.has(id));
+        if (missing.length === 0) return;
+
+        let cancelled = false;
+        void fetchProfilesByUserIds(missing).then(profiles => {
+            if (cancelled || Object.keys(profiles).length === 0) return;
+            setFeedParticipants(prev => {
+                const next = { ...prev };
+                let changed = false;
+                for (const [id, lite] of Object.entries(profiles)) {
+                    if (!next[id]) {
+                        next[id] = lite;
+                        changed = true;
+                    }
+                }
+                return changed ? next : prev;
+            });
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [feedUserIds, memberLites]);
+
     const memberMap = useMemo(() => {
-        const map: Record<string, GroupMemberLite> = {};
+        const map: Record<string, GroupMemberLite> = { ...feedParticipants };
         memberLites.forEach(m => {
             map[m.userId] = m;
         });
         return map;
-    }, [memberLites]);
+    }, [memberLites, feedParticipants]);
 
-    const loadAll = useCallback(async () => {
-        const [groupData, membersData, userId] = await Promise.all([
-            getGroupById(groupId),
-            getGroupMembers(groupId),
-            getCurrentUserId(),
-        ]);
+    const loadAll = useCallback(
+        async (options?: { force?: boolean }) => {
+            const force = options?.force ?? false;
+            const needsGroupFetch = !useAppStore
+                .getState()
+                .groups.some(g => g.id === groupId);
 
-        if (groupData) setGroup(groupData);
-        if (userId) setCurrentUserId(userId);
+            const tasks: Promise<unknown>[] = [];
 
-        const userIds = membersData.map(m => m.userId);
-        const nameById = new Map<string, string>();
-        const avatarById = new Map<string, string | undefined>();
-        if (userIds.length > 0) {
-            const { data: profiles } = await supabase
-                .from('profiles')
-                .select('id, name, avatar_url')
-                .in('id', userIds);
-            (profiles ?? []).forEach(p => {
-                nameById.set(p.id as string, (p.name as string) ?? '');
-                avatarById.set(p.id as string, (p.avatar_url as string | undefined) ?? undefined);
-            });
-        }
-        setMemberLites(membersToLite(membersData, nameById, avatarById));
+            if (needsGroupFetch) {
+                tasks.push(
+                    getGroupById(groupId).then(g => {
+                        if (g) setGroup(g);
+                    }),
+                );
+            }
+            if (force || !isGroupExpensesHydrated(groupId)) {
+                tasks.push(fetchExpenses(groupId));
+            }
+            if (force || !isGroupMessagesHydrated(groupId)) {
+                tasks.push(fetchMessages(groupId));
+            }
+            if (force || !hasStoreGroupMembers(groupId)) {
+                tasks.push(refetchGroupUsers());
+            }
 
-        await Promise.all([
-            fetchExpenses(groupId),
-            fetchMessages(groupId),
-            refetchSettlements(),
-        ]);
-    }, [groupId, refetchSettlements]);
+            await Promise.all(tasks);
+        },
+        [groupId, refetchGroupUsers],
+    );
 
     useEffect(() => {
-        startLoading();
-        void loadAll().finally(stopLoading);
-    }, []);
+        let cancelled = false;
+        const hasCachedGroup = Boolean(
+            useAppStore.getState().groups.find(g => g.id === groupId),
+        );
+        const needsFeedFetch = !isGroupFeedHydrated(groupId);
+
+        if (!hasCachedGroup) startLoading();
+        setIsFeedLoading(needsFeedFetch);
+
+        void loadAll().finally(() => {
+            if (cancelled) return;
+            stopLoading();
+            setIsFeedLoading(false);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [groupId, loadAll, startLoading, stopLoading]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        await loadAll();
+        await Promise.all([
+            loadAll({ force: true }),
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.groupSettlements(groupId),
+            }),
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.groupPairwiseDebts(groupId),
+            }),
+        ]);
         setRefreshing(false);
-    }, [loadAll]);
+    }, [loadAll, groupId]);
 
     const feed = useMemo<FeedItem[]>(
         () => buildFeed(groupId, expenses, messages, settlements, currentUserId),
@@ -186,69 +290,89 @@ export function GroupDetailScreen() {
     );
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
-    const filterActive = isAnyExpenseFilterActive(filters);
+    const filterActive = isAnyGroupFeedFilterActive(filters);
+    const hasActiveSearchOrFilter = trimmedQuery.length > 0 || filterActive;
 
-    const filteredFeed = useMemo(() => {
-        const dateFromMs = filters.dateFrom ? Date.parse(filters.dateFrom) : null;
-        const dateToMs = filters.dateTo ? Date.parse(filters.dateTo) + 24 * 3600 * 1000 : null;
-        return feed.filter(item => {
-            if (item.kind === 'expense') {
-                const e = item.expense;
-                if (
-                    filters.categories.length > 0 &&
-                    (!e.category || !filters.categories.includes(e.category))
-                ) {
-                    return false;
-                }
-                if (filters.memberIds.length > 0) {
-                    const participants = new Set<string>([
-                        e.paidBy,
-                        ...e.splits.map(s => s.userId),
-                    ]);
-                    if (!filters.memberIds.some(id => participants.has(id))) return false;
-                }
-                const expenseMs = new Date(e.expenseDate).getTime();
-                if (dateFromMs !== null && expenseMs < dateFromMs) return false;
-                if (dateToMs !== null && expenseMs >= dateToMs) return false;
-                if (trimmedQuery) {
-                    const payer = memberMap[e.paidBy]?.displayName ?? '';
-                    const hay = `${e.description} ${payer}`.toLowerCase();
-                    if (!hay.includes(trimmedQuery)) return false;
-                }
-                return true;
-            }
-            if (item.kind === 'settlement') {
-                const s = item.settlement;
-                if (filters.memberIds.length > 0) {
-                    const participants = new Set<string>([s.fromUserId, s.toUserId]);
-                    if (!filters.memberIds.some(id => participants.has(id))) return false;
-                }
-                const settlementMs = new Date(s.settlementDate).getTime();
-                if (dateFromMs !== null && settlementMs < dateFromMs) return false;
-                if (dateToMs !== null && settlementMs >= dateToMs) return false;
-                if (trimmedQuery) {
-                    const fromName = memberMap[s.fromUserId]?.displayName ?? '';
-                    const toName = memberMap[s.toUserId]?.displayName ?? '';
-                    const hay = `${fromName} ${toName}`.toLowerCase();
-                    if (!hay.includes(trimmedQuery)) return false;
-                }
-                return true;
-            }
-            // message
-            if (trimmedQuery) {
-                const sender = memberMap[item.message.userId]?.displayName ?? '';
-                const hay = `${item.message.body} ${sender}`.toLowerCase();
-                if (!hay.includes(trimmedQuery)) return false;
-            }
-            return true;
-        });
-    }, [feed, filters, trimmedQuery, memberMap]);
+    const filteredFeed = useMemo(
+        () => filterAndSortGroupFeed(feed, filters, memberMap, searchQuery),
+        [feed, filters, memberMap, searchQuery],
+    );
+
+    const handleClearFeedSearchAndFilters = useCallback(() => {
+        setSearchQuery('');
+        setFilters(DEFAULT_GROUP_FEED_FILTERS);
+    }, []);
 
     const handleBack = useCallback(() => navigation.goBack(), [navigation]);
-    const handleSettings = useCallback(
-        () => navigation.navigate('EditGroup', { groupId }),
-        [navigation, groupId],
-    );
+    const handleOpenGroupMenu = useCallback(() => setMenuOpen(true), []);
+    const handleEditGroup = useCallback(() => {
+        setMenuOpen(false);
+        navigation.navigate('EditGroup', { groupId });
+    }, [navigation, groupId]);
+    const handleArchiveToggle = useCallback(async () => {
+        setMenuOpen(false);
+        setArchiveBusy(true);
+        try {
+            if (isArchivedByMe) {
+                await unarchiveGroup(groupId);
+            } else {
+                await archiveGroup(groupId);
+            }
+        } finally {
+            setArchiveBusy(false);
+        }
+    }, [isArchivedByMe, groupId]);
+    const handleLeaveGroup = useCallback(() => {
+        setMenuOpen(false);
+        Alert.alert(t('groups.leaveGroup'), t('groups.leaveGroupConfirm'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('groups.leaveGroup'),
+                style: 'destructive',
+                onPress: () => {
+                    void (async () => {
+                        if (!currentUserId) return;
+                        const ok = await removeGroupMember(groupId, currentUserId);
+                        if (ok) navigation.popToTop?.() ?? navigation.goBack();
+                    })();
+                },
+            },
+        ]);
+    }, [groupId, currentUserId, navigation, t]);
+    const handleDeleteGroup = useCallback(() => {
+        setMenuOpen(false);
+        Alert.alert(t('groups.deleteGroup'), t('groups.deleteGroupConfirm'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('common.delete'),
+                style: 'destructive',
+                onPress: () => {
+                    void (async () => {
+                        const ok = await deleteGroup(groupId);
+                        if (ok) navigation.popToTop?.() ?? navigation.goBack();
+                    })();
+                },
+            },
+        ]);
+    }, [groupId, navigation, t]);
+    const handleExport = useCallback(async () => {
+        setMenuOpen(false);
+        if (!displayGroup || exporting) return;
+        setExporting(true);
+        Toast.show({
+            type: 'info',
+            text1: t('groups.share.exporting'),
+        });
+        try {
+            await exportGroupCsv(displayGroup, {
+                feed,
+                debts: pairwiseDebts,
+                members: memberLites,
+            });
+        } finally {
+            setExporting(false);
+        }
+    }, [displayGroup, exporting, feed, memberLites, pairwiseDebts, t]);
     const handleSettleUp = useCallback(
         () => navigation.navigate('SettleUpList', { groupId }),
         [navigation, groupId],
@@ -257,28 +381,26 @@ export function GroupDetailScreen() {
         () => navigation.navigate('Balances', { groupId }),
         [navigation, groupId],
     );
-    const handleAddExpense = useCallback(
-        () => navigation.navigate('AddExpense', { groupId }),
-        [navigation, groupId],
-    );
+    const handleAddExpense = useCallback(() => {
+        prefetchAddExpense(groupId);
+        navigation.navigate('AddExpense', { groupId });
+    }, [navigation, groupId]);
     const handleExpensePress = useCallback(
-        (expenseId: string) =>
-            navigation.navigate('ExpenseDetail', { expenseId, groupId }),
-        [navigation, groupId],
+        (expenseId: string) => {
+            const match = feed.find(
+                i => i.kind === 'expense' && i.expense.id === expenseId,
+            );
+            if (match?.kind === 'expense') {
+                setFeedDetailItem({ kind: 'expense', expense: match.expense });
+            }
+        },
+        [feed],
     );
 
     const handleOpenComposer = useCallback(
         () => setComposer({ open: true, mode: 'create' }),
         [],
     );
-
-    const handleExport = useCallback(async () => {
-        if (!displayGroup) return;
-        const filteredExpenses = filteredFeed
-            .filter((i): i is Extract<FeedItem, { kind: 'expense' }> => i.kind === 'expense')
-            .map(i => i.expense);
-        await exportGroupCsv(displayGroup, filteredExpenses, memberLites);
-    }, [displayGroup, filteredFeed, memberLites]);
 
     const handleShare = useCallback(() => {
         void shareGroupInvite(groupId);
@@ -295,65 +417,49 @@ export function GroupDetailScreen() {
         [],
     );
 
-    const confirmDeleteSettlement = useCallback(
-        (s: Settlement) => {
-            Alert.alert(t('settleUp.confirmDelete'), undefined, [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: t('settleUp.delete'),
-                    style: 'destructive',
-                    onPress: () => {
-                        void deleteSettlementMutation.mutateAsync(s.id);
-                    },
-                },
-            ]);
-        },
-        [deleteSettlementMutation, t],
-    );
+    const handleSettlementPress = useCallback((s: Settlement) => {
+        setFeedDetailItem({ kind: 'settlement', settlement: s });
+    }, []);
 
-    const handleSettlementPress = useCallback(
-        (s: Settlement) => {
-            const involved =
-                s.fromUserId === currentUserId || s.toUserId === currentUserId;
-            const options = [
-                t('common.cancel'),
-                ...(involved ? [t('settleUp.edit'), t('settleUp.delete')] : []),
-            ];
+    const handleFeedDetailEdit = useCallback(() => {
+        if (!feedDetailItem) return;
+        if (feedDetailItem.kind === 'expense') {
+            const { id: expenseId } = feedDetailItem.expense;
+            setFeedDetailItem(null);
+            navigation.navigate('AddExpense', { expenseId, groupId });
+            return;
+        }
+        const settlement = feedDetailItem.settlement;
+        setFeedDetailItem(null);
+        setEditingSettlement(settlement);
+    }, [feedDetailItem, navigation, groupId]);
 
-            if (Platform.OS === 'ios') {
-                ActionSheetIOS.showActionSheetWithOptions(
-                    {
-                        options,
-                        cancelButtonIndex: 0,
-                        destructiveButtonIndex: involved ? 2 : undefined,
-                    },
-                    idx => {
-                        if (!involved) return;
-                        if (idx === 1) setEditingSettlement(s);
-                        else if (idx === 2) confirmDeleteSettlement(s);
-                    },
-                );
-                return;
-            }
+    const handleFeedDetailDeleteRequest = useCallback(() => {
+        if (!feedDetailItem) return;
+        setPendingDelete(feedDetailItem.kind);
+    }, [feedDetailItem]);
 
-            if (!involved) return;
-            Alert.alert(t('settleUp.title'), undefined, [
-                { text: t('settleUp.edit'), onPress: () => setEditingSettlement(s) },
-                {
-                    text: t('settleUp.delete'),
-                    style: 'destructive',
-                    onPress: () => confirmDeleteSettlement(s),
-                },
-                { text: t('common.cancel'), style: 'cancel' },
-            ]);
-        },
-        [confirmDeleteSettlement, currentUserId, t],
-    );
+    const handleConfirmFeedDetailDelete = useCallback(async () => {
+        if (!feedDetailItem || !pendingDelete) return;
+        if (pendingDelete === 'expense' && feedDetailItem.kind === 'expense') {
+            const ok = await deleteExpense(feedDetailItem.expense.id);
+            if (ok) setFeedDetailItem(null);
+        } else if (
+            pendingDelete === 'settlement' &&
+            feedDetailItem.kind === 'settlement'
+        ) {
+            const deleted = await deleteSettlementMutation.mutateAsync(
+                feedDetailItem.settlement.id,
+            );
+            if (deleted) setFeedDetailItem(null);
+        }
+        setPendingDelete(null);
+    }, [feedDetailItem, pendingDelete, deleteSettlementMutation]);
 
     const handleSettlementEditSubmit = useCallback(
         async (values: SettleUpFormValues) => {
             if (!editingSettlement) return;
-            await updateSettlementMutation.mutateAsync({
+            const updated = await updateSettlementMutation.mutateAsync({
                 id: editingSettlement.id,
                 dto: {
                     fromUserId: values.fromUserId,
@@ -362,7 +468,7 @@ export function GroupDetailScreen() {
                     currency: values.currency,
                 },
             });
-            setEditingSettlement(null);
+            if (updated) setEditingSettlement(null);
         },
         [editingSettlement, updateSettlementMutation],
     );
@@ -423,7 +529,7 @@ export function GroupDetailScreen() {
                             : `m:${item.message.id}`
                 }
                 renderItem={({ item }) => (
-                    <View className="px-4">
+                    <View className="px-2">
                         <FeedItemRow
                             item={item}
                             currentUserId={currentUserId}
@@ -442,46 +548,75 @@ export function GroupDetailScreen() {
                             group={displayGroup}
                             memberCount={memberLites.length}
                             onBack={handleBack}
-                            onSettings={handleSettings}
+                            onMenu={handleOpenGroupMenu}
                             onShare={handleShare}
                         />
                         <QuickActionsRow
                             onSettleUp={handleSettleUp}
                             onBalances={handleBalances}
-                            onExport={handleExport}
                         />
-                        <View className="px-4 mt-4 mb-2 flex-row items-center">
-                            <SearchExpandable
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                expanded={searchExpanded}
-                                onExpandedChange={setSearchExpanded}
-                                placeholder={t('groups.search.placeholder')}
-                                testID="detail-search"
-                            />
-                            {!searchExpanded && (
-                                <TouchableOpacity
-                                    onPress={() => setFiltersOpen(true)}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={t('groups.filters.title')}
-                                    className="ml-1 h-9 w-9 items-center justify-center relative"
-                                    testID="detail-filter-btn"
-                                >
-                                    <AppIcon
-                                        name="options-outline"
-                                        size={22}
-                                        color={colors.gray500}
-                                    />
-                                    {filterActive && (
-                                        <View className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
-                                    )}
-                                </TouchableOpacity>
-                            )}
+                        <View className="px-4 mt-3 mb-2 flex-row items-center">
+                            <View className="flex-1 flex-row items-center rounded-full bg-gray-100 px-3 h-9">
+                                <AppIcon name="search" size={18} color={colors.gray500} />
+                                <TextInput
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    placeholder={t('groups.search.feedPlaceholder')}
+                                    placeholderTextColor={colors.gray400}
+                                    className={[
+                                        'flex-1 text-sm text-gray-900 mx-2',
+                                        rtlTextClassName(isRtl),
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                    autoCorrect={false}
+                                    autoCapitalize="none"
+                                    returnKeyType="search"
+                                    style={resolveAutoTextInputStyle(isRtl)}
+                                    testID="detail-search-input"
+                                />
+                                {searchQuery.length > 0 && (
+                                    <TouchableOpacity
+                                        onPress={() => setSearchQuery('')}
+                                        accessibilityRole="button"
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                        <AppIcon
+                                            name="close-circle"
+                                            size={18}
+                                            color={colors.gray400}
+                                        />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => setFiltersOpen(true)}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('groups.filters.title')}
+                                className="ml-2 h-9 w-9 items-center justify-center relative"
+                                testID="detail-filter-btn"
+                            >
+                                <AppIcon
+                                    name="options-outline"
+                                    size={22}
+                                    color={colors.gray500}
+                                />
+                                {filterActive && (
+                                    <View className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+                                )}
+                            </TouchableOpacity>
                         </View>
                     </>
                 }
                 ListEmptyComponent={
-                    isLoading ? null : (
+                    isFeedLoading ? (
+                        <View
+                            className="py-16 items-center justify-center"
+                            testID="feed-loading"
+                        >
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        </View>
+                    ) : feed.length === 0 ? (
                         <View className="mx-4 my-6 bg-white rounded-2xl p-6 items-center border border-gray-100">
                             <Text className="text-base font-semibold text-gray-900 mb-1">
                                 {t('groups.emptyFeed.title')}
@@ -509,9 +644,29 @@ export function GroupDetailScreen() {
                                 </Text>
                             </TouchableOpacity>
                         </View>
+                    ) : (
+                        <View className="mx-4 my-6 bg-white rounded-2xl p-6 items-center border border-gray-100">
+                            <Text className="text-base font-semibold text-gray-900 mb-1">
+                                {t('groups.emptyFeed.noResultsTitle')}
+                            </Text>
+                            <Text className="text-sm text-gray-500 text-center mb-4">
+                                {t('groups.emptyFeed.noResultsMessage')}
+                            </Text>
+                            {hasActiveSearchOrFilter && (
+                                <TouchableOpacity
+                                    onPress={handleClearFeedSearchAndFilters}
+                                    className="h-11 rounded-xl border border-primary px-5 items-center justify-center"
+                                    testID="empty-feed-clear-filters"
+                                >
+                                    <Text className="text-sm font-semibold text-primary-dark">
+                                        {t('groups.filters.clearAll')}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     )
                 }
-                contentContainerStyle={{ paddingBottom: 120 }}
+                contentContainerStyle={{ paddingBottom: listBottomPadding }}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -524,45 +679,17 @@ export function GroupDetailScreen() {
                 ListFooterComponent={<View style={{ height: 4 }} />}
             />
 
-            <SafeAreaView
-                edges={['bottom']}
-                style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
-                className="bg-white border-t border-gray-100"
-            >
-                <View className="flex-row px-4 pt-2.5 pb-1" style={{ gap: 8 }}>
-                    <TouchableOpacity
-                        onPress={handleOpenComposer}
-                        activeOpacity={0.85}
-                        className="h-14 rounded-2xl bg-primary-extra-light items-center justify-center flex-row"
-                        style={{ flex: 1 }}
-                        testID="detail-message-btn"
-                    >
-                        <AppIcon name="chatbubble-outline" size={20} color={colors.primary} />
-                        <Text className="text-base font-semibold text-primary-dark ml-2">
-                            {t('groups.actions.message')}
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={handleAddExpense}
-                        activeOpacity={0.85}
-                        className="h-14 rounded-2xl bg-primary items-center justify-center flex-row"
-                        style={{ flex: 1 }}
-                        testID="detail-add-expense"
-                    >
-                        <AppIcon name="add" size={22} color="#fff" />
-                        <Text className="text-base font-semibold text-white ml-2">
-                            {t('expenses.addExpense')}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
+            <GroupDetailFloatingActions
+                onMessage={handleOpenComposer}
+                onExpense={handleAddExpense}
+            />
 
-            <ExpenseFiltersSheet
+            <GroupFeedFiltersSheet
                 visible={filtersOpen}
                 filters={filters}
                 availableCategories={CATEGORIES}
                 availableMembers={memberLites}
-                onApply={setFilters}
+                onChange={setFilters}
                 onClose={() => setFiltersOpen(false)}
             />
 
@@ -582,8 +709,38 @@ export function GroupDetailScreen() {
                 currentMemberIds={memberLites.map(m => m.userId)}
                 onClose={() => setAddMembersOpen(false)}
                 onAdded={() => {
-                    void loadAll();
+                    void loadAll({ force: true });
                 }}
+            />
+
+            <FeedItemDetailSheet
+                item={feedDetailItem}
+                memberMap={memberMap}
+                currentUserId={currentUserId}
+                onClose={() => setFeedDetailItem(null)}
+                onEdit={handleFeedDetailEdit}
+                onDelete={handleFeedDetailDeleteRequest}
+            />
+
+            <ConfirmDialog
+                visible={pendingDelete !== null}
+                title={
+                    pendingDelete === 'expense'
+                        ? t('expenses.deleteExpense')
+                        : t('settleUp.delete')
+                }
+                message={
+                    pendingDelete === 'expense'
+                        ? t('expenses.deleteExpenseConfirm')
+                        : t('settleUp.confirmDelete')
+                }
+                confirmText={t('common.delete')}
+                cancelText={t('common.cancel')}
+                onConfirm={() => {
+                    void handleConfirmFeedDetailDelete();
+                }}
+                onCancel={() => setPendingDelete(null)}
+                destructive
             />
 
             {editingSettlement && (
@@ -604,6 +761,96 @@ export function GroupDetailScreen() {
                     onClose={() => setEditingSettlement(null)}
                 />
             )}
+
+            <Modal
+                visible={menuOpen}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setMenuOpen(false)}
+            >
+                <Pressable className="flex-1" onPress={() => setMenuOpen(false)}>
+                    <View
+                        className="absolute right-2 bg-white rounded-2xl border border-gray-200 py-1"
+                        style={{
+                            top: insets.top + 52,
+                            minWidth: 260,
+                            maxWidth: 320,
+                            shadowColor: '#000',
+                            shadowOpacity: 0.15,
+                            shadowRadius: 12,
+                            shadowOffset: { width: 0, height: 4 },
+                            elevation: 6,
+                        }}
+                    >
+                        {hasOpenBalance && !isArchivedByMe && (
+                            <View className="px-4 py-2 border-b border-gray-100">
+                                <Text className="text-xs text-amber-700">
+                                    {t('groups.archive.disabledReason')}
+                                </Text>
+                            </View>
+                        )}
+                        <DetailMenuRow
+                            label={t('groups.editGroup')}
+                            onPress={handleEditGroup}
+                        />
+                        <DetailMenuRow
+                            label={
+                                isArchivedByMe
+                                    ? t('groups.archive.unarchiveCta')
+                                    : t('groups.archive.archiveCta')
+                            }
+                            onPress={handleArchiveToggle}
+                            disabled={archiveBusy || (!isArchivedByMe && hasOpenBalance)}
+                        />
+                        <DetailMenuRow
+                            label={t('groups.actions.export')}
+                            onPress={handleExport}
+                            disabled={exporting}
+                        />
+                        <DetailMenuRow
+                            label={t('groups.leaveGroup')}
+                            onPress={handleLeaveGroup}
+                            disabled={hasOpenBalance}
+                        />
+                        <View className="h-px bg-gray-100 my-1" />
+                        <DetailMenuRow
+                            label={t('groups.deleteGroup')}
+                            onPress={handleDeleteGroup}
+                            destructive
+                        />
+                    </View>
+                </Pressable>
+            </Modal>
         </View>
+    );
+}
+
+interface DetailMenuRowProps {
+    label: string;
+    onPress: () => void;
+    disabled?: boolean;
+    destructive?: boolean;
+}
+
+function DetailMenuRow({ label, onPress, disabled, destructive }: DetailMenuRowProps) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={disabled}
+            activeOpacity={0.6}
+            className="px-4 py-3"
+        >
+            <Text
+                className={
+                    disabled
+                        ? 'text-sm font-medium text-gray-400'
+                        : destructive
+                            ? 'text-sm font-medium text-red-600'
+                            : 'text-sm font-medium text-gray-900'
+                }
+            >
+                {label}
+            </Text>
+        </TouchableOpacity>
     );
 }

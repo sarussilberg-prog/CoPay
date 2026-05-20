@@ -1,6 +1,7 @@
 import { Text } from '../../components/AppText';
-import React, { useCallback, useLayoutEffect } from 'react';
+import React, { useCallback } from 'react';
 import { View, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { FriendBalance } from '@cost-share/shared';
@@ -15,7 +16,7 @@ import { ProfileHeaderRow } from '../../components/dashboard/ProfileHeaderRow';
 import { BalanceHeroCard } from '../../components/dashboard/BalanceHeroCard';
 import { StatTile, StatGroup, StatDivider } from '../../components/dashboard/StatTile';
 import { FriendBalanceRow } from '../../components/dashboard/FriendBalanceRow';
-import { APP_BRAND_TITLE, colors, shadows } from '../../theme';
+import { colors, shadows } from '../../theme';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 import { useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQueries';
 
@@ -39,23 +40,6 @@ export function ProfileScreen() {
     const handleOpenSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
     const handleEditProfile = useCallback(() => navigation.navigate('EditProfile'), [navigation]);
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            title: APP_BRAND_TITLE,
-            headerTitleAlign: 'center',
-            headerRight: () => (
-                <TouchableOpacity
-                    onPress={handleOpenSettings}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    testID="profile-settings-button"
-                    className="mr-2"
-                >
-                    <AppIcon name="settings-outline" size={22} color={colors.gray600} />
-                </TouchableOpacity>
-            ),
-        });
-    }, [navigation, handleOpenSettings, t]);
-
     const handleFriendPress = useCallback((friend: FriendBalance) => {
         const firstGroup = friend.sharedGroupIds[0];
         if (!firstGroup) return;
@@ -67,17 +51,33 @@ export function ProfileScreen() {
     if (isLoading && !dashboard) return <LoadingIndicator />;
 
     return (
-        <ScrollView
-            className="flex-1 bg-slate-100"
-            contentContainerClassName="pb-10"
-            refreshControl={
-                <RefreshControl
-                    refreshing={isRefetching}
-                    onRefresh={handleRefresh}
-                    tintColor={colors.primary}
-                />
-            }
-        >
+        <SafeAreaView className="flex-1 bg-slate-100" edges={['top']}>
+            <View
+                style={rtlRowStyle(isRtl)}
+                className="px-4 pt-1 pb-0 items-center justify-end"
+            >
+                <TouchableOpacity
+                    onPress={handleOpenSettings}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    testID="profile-settings-button"
+                    accessibilityLabel={t('settings.title')}
+                    className="w-10 h-10 items-center justify-center rounded-full bg-white border border-slate-200/80"
+                    style={shadows.sm}
+                >
+                    <AppIcon name="settings-outline" size={22} color={colors.gray600} />
+                </TouchableOpacity>
+            </View>
+            <ScrollView
+                className="flex-1"
+                contentContainerClassName="pb-10"
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={handleRefresh}
+                        tintColor={colors.primary}
+                    />
+                }
+            >
             <ProfileHeaderRow
                 name={currentUser?.name || t('common.unknown')}
                 avatarUrl={currentUser?.avatarUrl}
@@ -103,14 +103,24 @@ export function ProfileScreen() {
                         <StatTile
                             label={t('dashboard.activeGroups')}
                             value={dashboard.stats.activeGroupsCount}
-                            onPress={() => navigation.navigate('Groups', { screen: 'GroupsList' })}
+                            onPress={() =>
+                                navigation.navigate('Groups', {
+                                    screen: 'GroupsList',
+                                    params: { balanceState: 'unsettled', showArchived: true },
+                                })
+                            }
                             testID="stat-active"
                         />
                         <StatDivider />
                         <StatTile
                             label={t('dashboard.closedGroups')}
                             value={dashboard.stats.closedGroupsCount}
-                            onPress={() => navigation.navigate('Groups', { screen: 'GroupsList' })}
+                            onPress={() =>
+                                navigation.navigate('Groups', {
+                                    screen: 'GroupsList',
+                                    params: { balanceState: 'settled', showArchived: true },
+                                })
+                            }
                             testID="stat-closed"
                         />
                     </StatGroup>
@@ -173,6 +183,7 @@ export function ProfileScreen() {
                     ) : null}
                 </>
             )}
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }

@@ -24,14 +24,14 @@ const base: Group = {
 describe('GroupHero', () => {
     it('renders the group name', () => {
         const { getByText } = render(
-            <GroupHero group={base} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={base} memberCount={3} onBack={() => {}} onMenu={() => {}} />,
         );
         expect(getByText('Trip to Paris')).toBeTruthy();
     });
 
     it('renders the gradient fallback when group has no image', () => {
         const { getByTestId } = render(
-            <GroupHero group={base} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={base} memberCount={3} onBack={() => {}} onMenu={() => {}} />,
         );
         expect(getByTestId('hero-gradient')).toBeTruthy();
     });
@@ -39,20 +39,20 @@ describe('GroupHero', () => {
     it('renders the image background when group has an imageUrl', () => {
         const withImage = { ...base, imageUrl: 'https://x/y.jpg' };
         const { getByTestId } = render(
-            <GroupHero group={withImage} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={withImage} memberCount={3} onBack={() => {}} onMenu={() => {}} />,
         );
         expect(getByTestId('hero-image-bg')).toBeTruthy();
     });
 
-    it('invokes onBack and onSettings', () => {
+    it('invokes onBack and onMenu', () => {
         const onBack = jest.fn();
-        const onSettings = jest.fn();
+        const onMenu = jest.fn();
         const { getByTestId } = render(
-            <GroupHero group={base} memberCount={3} onBack={onBack} onSettings={onSettings} />,
+            <GroupHero group={base} memberCount={3} onBack={onBack} onMenu={onMenu} />,
         );
         fireEvent.press(getByTestId('hero-back-btn'));
-        fireEvent.press(getByTestId('hero-settings-btn'));
+        fireEvent.press(getByTestId('hero-menu-btn'));
         expect(onBack).toHaveBeenCalled();
-        expect(onSettings).toHaveBeenCalled();
+        expect(onMenu).toHaveBeenCalled();
     });
 });

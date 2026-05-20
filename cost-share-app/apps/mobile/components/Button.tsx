@@ -60,7 +60,8 @@ export function Button({
             activeOpacity={0.7}
             disabled={isDisabled}
             testID={testID}
-            className={`${styles.container} ${fullWidth ? 'w-full' : ''} ${isDisabled ? 'opacity-50' : ''} ${className}`}
+            style={isDisabled ? { opacity: 0.5 } : undefined}
+            className={`${styles.container} ${fullWidth ? 'w-full' : ''} ${className}`}
         >
             {loading ? (
                 <ActivityIndicator

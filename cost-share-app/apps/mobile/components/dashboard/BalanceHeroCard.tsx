@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { BalanceSummary } from '@cost-share/shared';
 import { AppIcon } from '../AppIcon';
 import { colors, shadows } from '../../theme';
-import { formatCurrencyAmount, getCurrencySymbol } from '../../lib/currencyDisplay';
+import { CurrencyBadge } from '../CurrencyBadge';
+import { formatCurrencyAmount } from '../../lib/currencyDisplay';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 import type { ProfileBalanceConversion } from '../../hooks/useProfileBalanceSummary';
 
@@ -109,7 +110,6 @@ function CurrencyBreakdownRow({
     isLast: boolean;
 }) {
     const isRtl = useRtlLayout();
-    const symbol = getCurrencySymbol(currency);
     const hasOwe = owed >= 0.01;
     const hasOwed = owedToUser >= 0.01;
 
@@ -118,12 +118,7 @@ function CurrencyBreakdownRow({
             style={rtlRowStyle(isRtl)}
             className={`items-center gap-3 px-3 py-3 ${isLast ? '' : 'border-b border-slate-100'}`}
         >
-            <View
-                className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 items-center justify-center"
-                testID={`currency-badge-${currency}`}
-            >
-                <Text className="text-lg font-bold text-slate-700">{symbol}</Text>
-            </View>
+            <CurrencyBadge currency={currency} />
             <View style={rtlRowStyle(isRtl)} className="flex-1 flex-wrap gap-2 justify-end">
                 {hasOwe ? (
                     <AmountChip

@@ -34,12 +34,17 @@ export function GroupCard({
     const isRtl = useRtlLayout();
     const memberCount = group.members?.length ?? 0;
     const hasMatches = Boolean(matchedMemberNames && matchedMemberNames.length > 0);
+    const isArchived = group.isArchivedByMe || group.isAutoArchived;
 
     return (
         <TouchableOpacity
             onPress={() => onPress(group.id)}
             activeOpacity={0.7}
-            className="bg-white rounded-2xl p-4 mb-3 border border-gray-100"
+            className={
+                isArchived
+                    ? 'bg-slate-50 rounded-2xl p-4 mb-3 border border-dashed border-gray-300'
+                    : 'bg-white rounded-2xl p-4 mb-3 border border-gray-100'
+            }
         >
             <View style={[rtlRowStyle(isRtl), { alignItems: 'center' }]}>
                 <View className="mr-3">
@@ -51,13 +56,38 @@ export function GroupCard({
                 </View>
 
                 <View className="flex-1 mr-2 self-stretch" style={{ minWidth: 0 }}>
-                    <HighlightedText
-                        className="text-base font-semibold text-gray-900"
-                        text={group.name}
-                        query={searchQuery}
+                    <View style={[rtlRowStyle(isRtl), { alignItems: 'center' }]}>
+                        <View style={{ flexShrink: 1, minWidth: 0 }}>
+                            <HighlightedText
+                                className={
+                                    isArchived
+                                        ? 'text-base font-semibold text-gray-600'
+                                        : 'text-base font-semibold text-gray-900'
+                                }
+                                text={group.name}
+                                query={searchQuery}
+                                numberOfLines={1}
+                            />
+                        </View>
+                        {isArchived && (
+                            <View
+                                className="px-2 py-1 rounded-md bg-gray-200"
+                                style={{ marginStart: 'auto', marginEnd: 4 }}
+                                testID="group-archived-badge"
+                            >
+                                <Text
+                                    className="text-gray-600 font-medium"
+                                    style={{ fontSize: 12, letterSpacing: 0.5 }}
+                                >
+                                    {t('groups.archive.badge')}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                    <Text
+                        className={`text-xs mt-1 ${isArchived ? 'text-gray-500' : 'text-gray-400'}`}
                         numberOfLines={1}
-                    />
-                    <Text className="text-xs text-gray-400 mt-1" numberOfLines={1}>
+                    >
                         {t(`groups.types.${group.groupType}`)}
                         {memberCount > 0
                             ? ` · ${t('groups.memberCount', { count: memberCount })}`

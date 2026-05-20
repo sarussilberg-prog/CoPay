@@ -60,7 +60,7 @@ export function ExpenseDetailScreen() {
     };
 
     const handleEdit = useCallback(() => {
-        navigation.navigate('EditExpense', { expenseId, groupId });
+        navigation.navigate('AddExpense', { expenseId, groupId });
     }, [navigation, expenseId, groupId]);
 
     const handleDelete = useCallback(async () => {

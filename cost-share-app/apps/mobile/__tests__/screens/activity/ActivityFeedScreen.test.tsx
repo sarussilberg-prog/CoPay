@@ -17,14 +17,21 @@ jest.mock('../../../services/activity.service', () => ({
     fetchRecentActivity: jest.fn(),
     ACTIVITY_INITIAL_PAGE_SIZE: 15,
     ACTIVITY_PAGE_SIZE: 20,
+    ACTIVITY_INITIAL_SKELETON_COUNT: 3,
+}));
+
+jest.mock('../../../store', () => ({
+    useAppStore: jest.fn(),
 }));
 
 import { ActivityFeedScreen } from '../../../screens/activity/ActivityFeedScreen';
 import { fetchRecentActivity } from '../../../services/activity.service';
+import { useAppStore } from '../../../store';
 
 const mockFetchRecentActivity = fetchRecentActivity as jest.MockedFunction<
     typeof fetchRecentActivity
 >;
+const mockUseAppStore = useAppStore as unknown as jest.Mock;
 
 function renderWithQuery(ui: React.ReactElement) {
     const client = new QueryClient({
@@ -37,13 +44,33 @@ function renderWithQuery(ui: React.ReactElement) {
 
 beforeEach(() => {
     mockFetchRecentActivity.mockReset();
+    mockUseAppStore.mockImplementation((selector) =>
+        selector({
+            currentUser: { id: 'u1' },
+            groups: [{ id: 'g1', name: 'Trip', defaultCurrency: 'USD', groupType: 'trip' }],
+        }),
+    );
 });
 
 describe('ActivityFeedScreen', () => {
+    it('shows skeleton placeholders while the first page loads', async () => {
+        mockFetchRecentActivity.mockReturnValue(new Promise(() => {}));
+        const { findAllByTestId } = renderWithQuery(<ActivityFeedScreen />);
+        expect((await findAllByTestId('activity-item-skeleton')).length).toBe(3);
+    });
+
     it('shows empty state when no activities', async () => {
         mockFetchRecentActivity.mockResolvedValue({ items: [] });
         const { findByText } = renderWithQuery(<ActivityFeedScreen />);
         expect(await findByText('activity.noActivity')).toBeTruthy();
+    });
+
+    it('shows network error state when fetch fails', async () => {
+        mockFetchRecentActivity.mockRejectedValue(new Error('Network error'));
+        const { findByText } = renderWithQuery(<ActivityFeedScreen />);
+        expect(await findByText('activity.loadError')).toBeTruthy();
+        expect(await findByText('common.networkError')).toBeTruthy();
+        expect(await findByText('common.retry')).toBeTruthy();
     });
 
     it('renders activities when present', async () => {

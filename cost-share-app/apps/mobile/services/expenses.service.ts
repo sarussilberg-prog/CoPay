@@ -8,6 +8,7 @@ import {
     ExpenseWithSplits,
     CreateExpenseDto,
     UpdateExpenseDto,
+    ExpenseSplitInput,
 } from '@cost-share/shared';
 import {
     expenseFromRow,
@@ -17,9 +18,22 @@ import {
 } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
+import { markGroupExpensesHydrated } from '../lib/groupFeedCache';
 import { useAppStore } from '../store';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
+
+function resolveSplitAmounts(
+    totalAmount: number,
+    inputs: ExpenseSplitInput[],
+): { userId: string; amount: number }[] {
+    const useEqualSplit = inputs.every(s => s.amount === undefined);
+    if (useEqualSplit) {
+        const equal = calculateEqualSplit(totalAmount, inputs.length);
+        return inputs.map((s, i) => ({ userId: s.userId, amount: equal[i] }));
+    }
+    return inputs.map(s => ({ userId: s.userId, amount: s.amount ?? 0 }));
+}
 
 export async function fetchExpenses(groupId?: string): Promise<ExpenseWithSplits[]> {
     try {
@@ -42,7 +56,15 @@ export async function fetchExpenses(groupId?: string): Promise<ExpenseWithSplits
             const splits = splitRows.map(expenseSplitFromRow);
             return { ...expense, splits };
         });
-        useAppStore.getState().setExpenses(expenses);
+
+        const store = useAppStore.getState();
+        if (groupId) {
+            const otherGroups = store.expenses.filter(e => e.groupId !== groupId);
+            store.setExpenses([...otherGroups, ...expenses]);
+            markGroupExpensesHydrated(groupId);
+        } else {
+            store.setExpenses(expenses);
+        }
         return expenses;
     } catch (error) {
         console.error('Failed to fetch expenses:', error);
@@ -72,13 +94,7 @@ export async function createExpense(dto: CreateExpenseDto): Promise<Expense | nu
     const createdBy = await getCurrentUserId();
     if (!createdBy) return null;
 
-    const splits = dto.splits.map(s => ({ userId: s.userId, amount: s.amount ?? 0 }));
-    if (splits.some(s => s.amount === 0)) {
-        const equal = calculateEqualSplit(dto.amount, splits.length);
-        splits.forEach((s, i) => {
-            s.amount = equal[i];
-        });
-    }
+    const splits = resolveSplitAmounts(dto.amount, dto.splits);
 
     const validation = validateExpenseSplits(dto.amount, splits);
     if (!validation.valid) {

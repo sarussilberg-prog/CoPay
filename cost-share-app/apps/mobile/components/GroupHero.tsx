@@ -27,7 +27,7 @@ interface GroupHeroProps {
     group: Group;
     memberCount: number;
     onBack: () => void;
-    onSettings: () => void;
+    onMenu: () => void;
     onShare?: () => void;
 }
 
@@ -35,7 +35,7 @@ function HeroChrome({
     group,
     memberCount,
     onBack,
-    onSettings,
+    onMenu,
     onShare,
     topInset,
 }: GroupHeroProps & { topInset: number }) {
@@ -111,14 +111,14 @@ function HeroChrome({
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        onPress={onSettings}
+                        onPress={onMenu}
                         accessibilityRole="button"
-                        accessibilityLabel="Settings"
+                        accessibilityLabel={t('groups.menu.title')}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
-                        testID="hero-settings-btn"
+                        testID="hero-menu-btn"
                     >
-                        <AppIcon name="settings-outline" size={20} color="#fff" />
+                        <AppIcon name="ellipsis-horizontal" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -126,7 +126,7 @@ function HeroChrome({
     );
 }
 
-export function GroupHero({ group, memberCount, onBack, onSettings, onShare }: GroupHeroProps) {
+export function GroupHero({ group, memberCount, onBack, onMenu, onShare }: GroupHeroProps) {
     const insets = useSafeAreaInsets();
 
     if (group.imageUrl) {
@@ -141,7 +141,7 @@ export function GroupHero({ group, memberCount, onBack, onSettings, onShare }: G
                     group={group}
                     memberCount={memberCount}
                     onBack={onBack}
-                    onSettings={onSettings}
+                    onMenu={onMenu}
                     onShare={onShare}
                     topInset={insets.top}
                 />
@@ -170,7 +170,7 @@ export function GroupHero({ group, memberCount, onBack, onSettings, onShare }: G
                 group={group}
                 memberCount={memberCount}
                 onBack={onBack}
-                onSettings={onSettings}
+                onMenu={onMenu}
                 onShare={onShare}
                 topInset={insets.top}
             />

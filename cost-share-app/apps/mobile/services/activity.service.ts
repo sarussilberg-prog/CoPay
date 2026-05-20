@@ -9,11 +9,28 @@ import i18n from '../i18n';
 
 export const ACTIVITY_INITIAL_PAGE_SIZE = 15;
 export const ACTIVITY_PAGE_SIZE = 20;
+export const ACTIVITY_INITIAL_SKELETON_COUNT = 6;
 
 export interface ActivityPage {
     items: RecentActivity[];
     nextCursor?: string;
 }
+
+export interface FetchRecentActivityOptions {
+    limit?: number;
+    before?: string;
+    userId?: string;
+    groupIds?: string[];
+    groupNamesById?: Record<string, string>;
+}
+
+interface ProfileSummary {
+    name: string;
+    avatarUrl?: string;
+}
+
+type ProfileEmbedRow = { name?: string; avatar_url?: string | null };
+type ProfileEmbed = ProfileEmbedRow | ProfileEmbedRow[] | null;
 
 async function getUserGroupIds(userId: string): Promise<string[]> {
     const { data, error } = await supabase
@@ -25,27 +42,20 @@ async function getUserGroupIds(userId: string): Promise<string[]> {
     return (data ?? []).map(row => row.group_id as string);
 }
 
-async function fetchProfileNames(userIds: string[]): Promise<Map<string, string>> {
-    const names = new Map<string, string>();
-    if (userIds.length === 0) return names;
-
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .in('id', userIds);
-    if (error) throw error;
-
-    for (const row of data ?? []) {
-        names.set(row.id as string, row.name as string);
-    }
-    return names;
+function profileFromEmbed(embed: ProfileEmbed): ProfileSummary | undefined {
+    const row: ProfileEmbedRow | null | undefined = Array.isArray(embed) ? embed[0] : embed;
+    if (!row?.name) return undefined;
+    return {
+        name: row.name,
+        avatarUrl: row.avatar_url ?? undefined,
+    };
 }
 
 function buildExpenseQuery(groupIds: string[], limit: number, before?: string) {
     let query = supabase
         .from('expenses')
         .select(
-            'id, group_id, description, amount, currency, expense_date, created_at, created_by',
+            'id, group_id, description, amount, currency, expense_date, created_at, created_by, creator:profiles!created_by(name, avatar_url)',
         )
         .in('group_id', groupIds)
         .eq('is_deleted', false)
@@ -73,11 +83,30 @@ function buildMessageQuery(groupIds: string[], limit: number, before?: string) {
     return query;
 }
 
+async function fetchProfiles(userIds: string[]): Promise<Map<string, ProfileSummary>> {
+    const profiles = new Map<string, ProfileSummary>();
+    if (userIds.length === 0) return profiles;
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', userIds);
+    if (error) throw error;
+
+    for (const row of data ?? []) {
+        profiles.set(row.id as string, {
+            name: row.name as string,
+            avatarUrl: (row.avatar_url as string | null) ?? undefined,
+        });
+    }
+    return profiles;
+}
+
 function buildSettlementQuery(groupIds: string[], limit: number, before?: string) {
     let query = supabase
         .from('settlements')
         .select(
-            'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id',
+            'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id, from_user:profiles!from_user_id(name, avatar_url), to_user:profiles!to_user_id(name, avatar_url)',
         )
         .in('group_id', groupIds)
         .is('deleted_at', null)
@@ -109,14 +138,15 @@ function mapToActivities(
     expenses: Record<string, unknown>[],
     settlements: Record<string, unknown>[],
     messages: Record<string, unknown>[],
-    namesById: Map<string, string>,
     groupNamesById: Map<string, string>,
+    messageProfilesById: Map<string, ProfileSummary>,
     currentUserId: string,
 ): RecentActivity[] {
     const activities: RecentActivity[] = [];
 
     for (const row of expenses) {
         const createdBy = row.created_by as string;
+        const creator = profileFromEmbed(row.creator as ProfileEmbed);
         activities.push({
             id: row.id as string,
             activityType: 'expense',
@@ -125,7 +155,8 @@ function mapToActivities(
             amount: Number(row.amount),
             currency: row.currency as string,
             userId: createdBy,
-            userName: namesById.get(createdBy) ?? 'Unknown',
+            userName: creator?.name ?? 'Unknown',
+            userAvatarUrl: creator?.avatarUrl,
             activityDate: new Date(row.expense_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -136,8 +167,10 @@ function mapToActivities(
         const toUserId = row.to_user_id as string;
         const groupId = row.group_id as string;
         const amountStr = `${row.currency as string} ${Number(row.amount).toFixed(2)}`;
-        const fromName = namesById.get(fromUserId) ?? 'Unknown';
-        const toName = namesById.get(toUserId) ?? 'Unknown';
+        const fromProfile = profileFromEmbed(row.from_user as ProfileEmbed);
+        const toProfile = profileFromEmbed(row.to_user as ProfileEmbed);
+        const fromName = fromProfile?.name ?? 'Unknown';
+        const toName = toProfile?.name ?? 'Unknown';
         const groupName = groupNamesById.get(groupId) ?? '';
 
         let description: string;
@@ -165,6 +198,7 @@ function mapToActivities(
             currency: row.currency as string,
             userId: fromUserId,
             userName: fromName,
+            userAvatarUrl: fromProfile?.avatarUrl,
             activityDate: new Date(row.settlement_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -172,6 +206,7 @@ function mapToActivities(
 
     for (const row of messages) {
         const userId = row.user_id as string;
+        const sender = messageProfilesById.get(userId);
         const createdAt = new Date(row.created_at as string);
         activities.push({
             id: row.id as string,
@@ -181,7 +216,8 @@ function mapToActivities(
             amount: 0,
             currency: '',
             userId,
-            userName: namesById.get(userId) ?? 'Unknown',
+            userName: sender?.name ?? 'Unknown',
+            userAvatarUrl: sender?.avatarUrl,
             activityDate: createdAt,
             createdAt,
         });
@@ -191,16 +227,19 @@ function mapToActivities(
 }
 
 export async function fetchRecentActivity(
-    options: { limit?: number; before?: string } = {},
+    options: FetchRecentActivityOptions = {},
 ): Promise<ActivityPage> {
-    const userId = await getCurrentUserId();
+    const userId = options.userId ?? (await getCurrentUserId());
     if (!userId) return { items: [] };
 
     const limit = options.limit ?? ACTIVITY_PAGE_SIZE;
     const fetchLimit = limit + 1;
 
     try {
-        const groupIds = await getUserGroupIds(userId);
+        const groupIds =
+            options.groupIds && options.groupIds.length > 0
+                ? options.groupIds
+                : await getUserGroupIds(userId);
         if (groupIds.length === 0) return { items: [] };
 
         const [expensesResult, settlementsResult, messagesResult] = await Promise.all([
@@ -213,34 +252,30 @@ export async function fetchRecentActivity(
         if (settlementsResult.error) throw settlementsResult.error;
         if (messagesResult.error) throw messagesResult.error;
 
-        const userIds = new Set<string>();
-        for (const row of expensesResult.data ?? []) {
-            userIds.add(row.created_by as string);
-        }
-        for (const row of settlementsResult.data ?? []) {
-            userIds.add(row.from_user_id as string);
-            userIds.add(row.to_user_id as string);
-        }
-        for (const row of messagesResult.data ?? []) {
-            userIds.add(row.user_id as string);
-        }
-
         const settlementGroupIds = new Set<string>();
         for (const row of settlementsResult.data ?? []) {
             settlementGroupIds.add(row.group_id as string);
         }
 
-        const [namesById, groupNamesById] = await Promise.all([
-            fetchProfileNames([...userIds]),
-            fetchGroupNames([...settlementGroupIds]),
+        const messageUserIds = [
+            ...new Set(
+                (messagesResult.data ?? []).map((row) => row.user_id as string),
+            ),
+        ];
+
+        const [groupNamesById, messageProfilesById] = await Promise.all([
+            options.groupNamesById
+                ? Promise.resolve(new Map(Object.entries(options.groupNamesById)))
+                : fetchGroupNames([...settlementGroupIds]),
+            fetchProfiles(messageUserIds),
         ]);
 
         const merged = mapToActivities(
             (expensesResult.data ?? []) as Record<string, unknown>[],
             (settlementsResult.data ?? []) as Record<string, unknown>[],
             (messagesResult.data ?? []) as Record<string, unknown>[],
-            namesById,
             groupNamesById,
+            messageProfilesById,
             userId,
         );
 
@@ -252,7 +287,7 @@ export async function fetchRecentActivity(
         const items = merged.slice(0, limit);
         const nextCursor =
             hasMore && items.length > 0
-                ? items[items.length - 1].createdAt.toISOString()
+                ? items.at(-1)!.createdAt.toISOString()
                 : undefined;
 
         return { items, nextCursor };

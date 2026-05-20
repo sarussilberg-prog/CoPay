@@ -46,8 +46,8 @@ Located in `apps/mobile/i18n/locales/`
 ```json
 {
   "groups": {
-    "title": "קבוצות",
-    "createGroup": "צור קבוצה"
+    "title": "קופות",
+    "createGroup": "פתח קופה"
   }
 }
 ```

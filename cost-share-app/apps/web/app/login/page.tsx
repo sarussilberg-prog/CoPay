@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { APP_BRAND_TITLE, appBrandTitleStyle } from '@/lib/brand';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,13 +24,13 @@ export default function LoginPage() {
     <main style={styles.container}>
       <Image
         src="/icon.png"
-        alt="Kupa"
+        alt={APP_BRAND_TITLE}
         width={128}
         height={128}
         priority
         style={styles.logo}
       />
-      <h1 style={styles.appName}>kupa</h1>
+      <h1 style={appBrandTitleStyle}>{APP_BRAND_TITLE}</h1>
       <p style={styles.subtitle}>Split expenses with friends</p>
 
       <button
@@ -55,12 +56,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   logo: {
     marginBottom: '16px',
-  },
-  appName: {
-    fontSize: '3rem',
-    fontWeight: 'bold',
-    color: '#3B82F6',
-    margin: '0 0 8px 0',
   },
   subtitle: {
     fontSize: '1rem',
