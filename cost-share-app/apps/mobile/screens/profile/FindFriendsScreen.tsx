@@ -25,6 +25,7 @@ import {
     useSendFriendRequestMutation,
 } from '../../hooks/queries/useFriendsQueries';
 import { SearchUserResult } from '../../services/friends.service';
+import { shareFriendInvite } from '../../services/invite.service';
 
 function useDebouncedValue<T>(value: T, ms: number): T {
     const [debounced, setDebounced] = useState(value);
@@ -192,38 +193,66 @@ export function FindFriendsScreen() {
                 )}
 
                 {!tooShort && !searchQ.isFetching && trimmed.length >= 2 && results.length === 0 && (
-                    <Text className="text-sm text-gray-500 py-4 text-center">
-                        {t('friends.find.noResults')}
-                    </Text>
+                    <View className="items-center px-6 py-10">
+                        <Text className="text-base text-slate-600 mb-4">
+                            {t('invite.friend.findEmpty')}
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => { void shareFriendInvite(); }}
+                            className="px-5 py-3 bg-primary rounded-full"
+                            testID="findfriends-empty-invite"
+                        >
+                            <Text className="text-sm font-semibold text-white">
+                                {trimmed.length > 0
+                                    ? t('invite.friend.findInviteName', { name: trimmed })
+                                    : t('invite.friend.findEmptyCta')}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 {results.length > 0 && (
-                    <View className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
-                        {results.map((r, idx) => (
-                            <View
-                                key={r.user.id}
-                                className={`flex-row items-center px-3 py-3 ${
-                                    idx < results.length - 1 ? 'border-b border-slate-100' : ''
-                                }`}
-                            >
-                                <MemberAvatar
-                                    name={r.user.name || '?'}
-                                    avatarUrl={r.user.avatarUrl}
-                                    size="sm"
-                                />
-                                <View className="flex-1 ml-3">
-                                    <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
-                                        {r.user.name || '—'}
-                                    </Text>
-                                    {(r.user.email || r.user.phone) && (
-                                        <Text className="text-xs text-gray-500" numberOfLines={1}>
-                                            {r.user.email ?? r.user.phone}
+                    <View>
+                        <View className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
+                            {results.map((r, idx) => (
+                                <View
+                                    key={r.user.id}
+                                    className={`flex-row items-center px-3 py-3 ${
+                                        idx < results.length - 1 ? 'border-b border-slate-100' : ''
+                                    }`}
+                                >
+                                    <MemberAvatar
+                                        name={r.user.name || '?'}
+                                        avatarUrl={r.user.avatarUrl}
+                                        size="sm"
+                                    />
+                                    <View className="flex-1 ml-3">
+                                        <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
+                                            {r.user.name || '—'}
                                         </Text>
-                                    )}
+                                        {(r.user.email || r.user.phone) && (
+                                            <Text className="text-xs text-gray-500" numberOfLines={1}>
+                                                {r.user.email ?? r.user.phone}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    {renderActions(r)}
                                 </View>
-                                {renderActions(r)}
-                            </View>
-                        ))}
+                            ))}
+                        </View>
+                        <View className="items-center py-6 border-t border-slate-100 mt-4">
+                            <Text className="text-sm text-slate-500 mb-2">
+                                {t('invite.friend.findEmpty')}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => { void shareFriendInvite(); }}
+                                testID="findfriends-footer-invite"
+                            >
+                                <Text className="text-sm font-semibold text-primary">
+                                    {t('invite.friend.findEmptyCta')}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
             </ScrollView>
