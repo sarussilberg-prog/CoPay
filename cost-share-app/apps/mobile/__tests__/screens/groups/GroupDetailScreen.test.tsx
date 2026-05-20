@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, waitFor, fireEvent } from '@testing-library/react-native';
+import { waitFor, fireEvent } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -35,6 +36,14 @@ jest.mock('../../../services/messages.service', () => ({
     createMessage: jest.fn(),
     updateMessage: jest.fn(),
     deleteMessage: jest.fn(),
+}));
+
+jest.mock('../../../services/settlements.service', () => ({
+    fetchSettlements: jest.fn().mockResolvedValue([]),
+    fetchGroupPairwiseDebts: jest.fn().mockResolvedValue([]),
+    createSettlement: jest.fn(),
+    updateSettlement: jest.fn(),
+    deleteSettlement: jest.fn(),
 }));
 
 jest.mock('../../../services/group-share.service', () => ({
@@ -93,40 +102,40 @@ beforeEach(() => {
 
 describe('GroupDetailScreen', () => {
     it('renders the hero with the group name', async () => {
-        const { findByText } = render(<GroupDetailScreen />);
+        const { findByText } = renderWithQuery(<GroupDetailScreen />);
         expect(await findByText('Trip')).toBeTruthy();
     });
 
     it('navigates back when the hero back button is tapped', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('hero-back-btn'));
         expect(mockGoBack).toHaveBeenCalled();
     });
 
     it('navigates to EditGroup when the settings gear is tapped', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('hero-settings-btn'));
         expect(mockNavigate).toHaveBeenCalledWith('EditGroup', { groupId: 'g1' });
     });
 
     it('renders the sticky Add expense footer', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         expect(await findByTestId('detail-add-expense')).toBeTruthy();
     });
 
     it('shows the empty feed card when there is no feed content', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
-        expect(await findByTestId('empty-feed-add')).toBeTruthy();
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
+        expect(await findByTestId('empty-feed-add-members')).toBeTruthy();
     });
 
     it('invokes exportGroupCsv when the Export quick action is tapped', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('qa-export'));
         await waitFor(() => expect(mockExport).toHaveBeenCalled());
     });
 
     it('opens the composer when the Message quick action is tapped', async () => {
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('detail-message-btn'));
         await waitFor(async () => {
             expect(await findByTestId('composer-input')).toBeTruthy();
@@ -144,7 +153,7 @@ describe('GroupDetailScreen', () => {
             createdAt: new Date(),
             updatedAt: new Date(),
         });
-        const { findByTestId } = render(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('detail-message-btn'));
         const input = await findByTestId('composer-input');
         fireEvent.changeText(input, 'hello');

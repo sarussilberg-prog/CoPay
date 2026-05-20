@@ -106,6 +106,13 @@ export function ActivityFeedScreen() {
                     screen: 'ExpenseDetail',
                     params: { expenseId: activity.id, groupId: activity.groupId },
                 });
+                return;
+            }
+            if (activity.activityType === 'settlement') {
+                navigation.navigate('Groups', {
+                    screen: 'GroupDetail',
+                    params: { groupId: activity.groupId },
+                });
             }
         },
         [navigation],

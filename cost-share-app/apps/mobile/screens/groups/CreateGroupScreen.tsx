@@ -5,7 +5,7 @@
  */
 
 import { Text } from '../../components/AppText';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -15,12 +15,9 @@ import { useAppStore } from '../../store';
 import { createGroup, updateGroup } from '../../services/groups.service';
 import { uploadGroupImage } from '../../services/storage.service';
 import { GroupImagePicker } from '../../components/GroupImagePicker';
-import { fetchUsers } from '../../services/users.service';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
-import { User } from '@cost-share/shared';
-import { MemberSelector } from '../../components/MemberSelector';
 
 const groupTypes: { key: GroupType; emoji: string }[] = [
     { key: 'trip', emoji: '✈️' },
@@ -39,19 +36,8 @@ export function CreateGroupScreen() {
     const [description, setDescription] = useState('');
     const [groupType, setGroupType] = useState<GroupType>('general');
     const [currency, setCurrency] = useState(currentUser?.defaultCurrency || DEFAULT_CURRENCY);
-    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-    const [availableUsers, setAvailableUsers] = useState<User[]>([]);
     const [nameError, setNameError] = useState('');
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);
-
-    useEffect(() => {
-        const loadUsers = async () => {
-            const users = await fetchUsers();
-            // Exclude current user from selection (auto-included)
-            setAvailableUsers(users.filter((u) => u.id !== currentUser?.id));
-        };
-        void loadUsers();
-    }, [currentUser?.id]);
 
     const validateForm = (): boolean => {
         if (!name.trim()) {
@@ -71,7 +57,7 @@ export function CreateGroupScreen() {
             description: description.trim() || undefined,
             groupType,
             defaultCurrency: currency,
-            memberIds: selectedMemberIds,
+            memberIds: [],
         });
         stopLoading();
 
@@ -82,16 +68,8 @@ export function CreateGroupScreen() {
                     await updateGroup(result.id, { imageUrl });
                 }
             }
-            navigation.goBack();
+            navigation.replace('GroupDetail', { groupId: result.id });
         }
-    };
-
-    const handleToggleMember = (userId: string) => {
-        setSelectedMemberIds((prev) =>
-            prev.includes(userId)
-                ? prev.filter((id) => id !== userId)
-                : [...prev, userId]
-        );
     };
 
     return (
@@ -158,14 +136,6 @@ export function CreateGroupScreen() {
                     value={currency}
                     onChange={setCurrency}
                     label={t('groups.currency')}
-                />
-
-                {/* Members */}
-                <MemberSelector
-                    members={availableUsers}
-                    selectedIds={selectedMemberIds}
-                    onToggle={handleToggleMember}
-                    label={t('groups.selectMembers')}
                 />
 
                 {/* Create Button */}

@@ -101,12 +101,15 @@ CREATE TABLE settlements (
     payment_method VARCHAR(50),
     created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
     CHECK (from_user_id != to_user_id)
 );
 CREATE INDEX idx_settlements_group ON settlements(group_id);
 CREATE INDEX idx_settlements_from_user ON settlements(from_user_id);
 CREATE INDEX idx_settlements_to_user ON settlements(to_user_id);
 CREATE INDEX idx_settlements_date ON settlements(settlement_date);
+CREATE INDEX idx_settlements_active ON settlements(group_id) WHERE deleted_at IS NULL;
 
 -- ============================================
 -- TRIGGERS
@@ -128,6 +131,8 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
 CREATE TRIGGER update_groups_updated_at BEFORE UPDATE ON groups
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_expenses_updated_at BEFORE UPDATE ON expenses
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_settlements_updated_at BEFORE UPDATE ON settlements
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -262,9 +267,19 @@ CREATE POLICY "Users can delete expense splits" ON expense_splits
     );
 
 CREATE POLICY "Users can view settlements in their groups" ON settlements
-    FOR SELECT USING (public.is_group_member(group_id));
+    FOR SELECT USING (public.is_group_member(group_id) AND deleted_at IS NULL);
 CREATE POLICY "Users can create settlements in their groups" ON settlements
     FOR INSERT WITH CHECK (public.is_group_member(group_id));
+CREATE POLICY "Either party can update settlement" ON settlements
+    FOR UPDATE USING (
+        public.is_group_member(group_id)
+        AND (auth.uid() = from_user_id OR auth.uid() = to_user_id)
+    );
+CREATE POLICY "Either party can delete settlement" ON settlements
+    FOR DELETE USING (
+        public.is_group_member(group_id)
+        AND (auth.uid() = from_user_id OR auth.uid() = to_user_id)
+    );
 
 -- ============================================
 -- DASHBOARD RPC

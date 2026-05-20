@@ -2,11 +2,15 @@
  * Settlements Service — Supabase direct
  */
 
-import { Settlement, CreateSettlementDto } from '@cost-share/shared';
-import { settlementFromRow, validateSettlementAmount } from '@cost-share/shared';
+import {
+    Settlement,
+    CreateSettlementDto,
+    UpdateSettlementDto,
+    PairwiseDebt,
+} from '@cost-share/shared';
+import { settlementFromRow } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
-import { getGroupBalances } from './groups.service';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
 
@@ -15,6 +19,7 @@ export async function fetchSettlements(groupId?: string): Promise<Settlement[]> 
         let query = supabase
             .from('settlements')
             .select('*')
+            .is('deleted_at', null)
             .order('settlement_date', { ascending: false });
         if (groupId) {
             query = query.eq('group_id', groupId);
@@ -38,6 +43,7 @@ export async function getSettlementById(id: string): Promise<Settlement | null> 
         .from('settlements')
         .select('*')
         .eq('id', id)
+        .is('deleted_at', null)
         .maybeSingle();
     if (error || !data) return null;
     return settlementFromRow(data);
@@ -47,18 +53,11 @@ export async function createSettlement(dto: CreateSettlementDto): Promise<Settle
     const createdBy = await getCurrentUserId();
     if (!createdBy) return null;
 
-    const balances = await getGroupBalances(dto.groupId);
-    const validation = validateSettlementAmount(
-        balances,
-        dto.fromUserId,
-        dto.toUserId,
-        dto.amount,
-    );
-    if (!validation.valid) {
+    if (!Number.isFinite(dto.amount) || dto.amount <= 0) {
         Toast.show({
             type: 'error',
             text1: 'Failed to record payment',
-            text2: validation.message ?? i18n.t('common.networkError'),
+            text2: i18n.t('expenses.invalidAmount'),
         });
         return null;
     }
@@ -85,7 +84,7 @@ export async function createSettlement(dto: CreateSettlementDto): Promise<Settle
         Toast.show({
             type: 'success',
             text1: i18n.t('common.success'),
-            text2: 'Payment recorded',
+            text2: i18n.t('settleUp.toastRecorded'),
         });
         return settlementFromRow(data);
     } catch (error) {
@@ -99,11 +98,98 @@ export async function createSettlement(dto: CreateSettlementDto): Promise<Settle
     }
 }
 
+export async function updateSettlement(
+    id: string,
+    dto: UpdateSettlementDto,
+): Promise<Settlement | null> {
+    if (dto.amount !== undefined && (!Number.isFinite(dto.amount) || dto.amount <= 0)) {
+        Toast.show({
+            type: 'error',
+            text1: 'Failed to update payment',
+            text2: i18n.t('expenses.invalidAmount'),
+        });
+        return null;
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (dto.fromUserId !== undefined) patch.from_user_id = dto.fromUserId;
+    if (dto.toUserId !== undefined) patch.to_user_id = dto.toUserId;
+    if (dto.amount !== undefined) patch.amount = dto.amount;
+    if (dto.currency !== undefined) patch.currency = dto.currency;
+
+    try {
+        const { data, error } = await supabase
+            .from('settlements')
+            .update(patch)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        Toast.show({
+            type: 'success',
+            text1: i18n.t('common.success'),
+            text2: i18n.t('settleUp.toastUpdated'),
+        });
+        return settlementFromRow(data);
+    } catch (error) {
+        console.error('Failed to update settlement:', error);
+        Toast.show({
+            type: 'error',
+            text1: 'Failed to update payment',
+            text2: i18n.t('common.networkError'),
+        });
+        return null;
+    }
+}
+
+export async function deleteSettlement(id: string): Promise<boolean> {
+    try {
+        const { error } = await supabase
+            .from('settlements')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', id);
+        if (error) throw error;
+        Toast.show({
+            type: 'success',
+            text1: i18n.t('common.success'),
+            text2: i18n.t('settleUp.toastDeleted'),
+        });
+        return true;
+    } catch (error) {
+        console.error('Failed to delete settlement:', error);
+        Toast.show({
+            type: 'error',
+            text1: 'Failed to delete payment',
+            text2: i18n.t('common.networkError'),
+        });
+        return false;
+    }
+}
+
+export async function fetchGroupPairwiseDebts(groupId: string): Promise<PairwiseDebt[]> {
+    try {
+        const { data, error } = await supabase.rpc('get_group_pairwise_debts', {
+            p_group_id: groupId,
+        });
+        if (error) throw error;
+        return (data ?? []).map((row: Record<string, unknown>) => ({
+            fromUserId: row.from_user_id as string,
+            toUserId: row.to_user_id as string,
+            currency: row.currency as string,
+            amount: Number(row.amount),
+        }));
+    } catch (error) {
+        console.error('Failed to fetch pairwise debts:', error);
+        return [];
+    }
+}
+
 export async function getUserSettlements(userId: string): Promise<Settlement[]> {
     const { data, error } = await supabase
         .from('settlements')
         .select('*')
         .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+        .is('deleted_at', null)
         .order('settlement_date', { ascending: false });
     if (error) {
         console.error('Failed to fetch user settlements:', error);
@@ -121,6 +207,7 @@ export async function getSettlementHistory(
         .from('settlements')
         .select('*')
         .eq('group_id', groupId)
+        .is('deleted_at', null)
         .or(
             `and(from_user_id.eq.${userId1},to_user_id.eq.${userId2}),and(from_user_id.eq.${userId2},to_user_id.eq.${userId1})`,
         )

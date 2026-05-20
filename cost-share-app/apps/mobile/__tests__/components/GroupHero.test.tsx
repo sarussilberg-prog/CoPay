@@ -23,14 +23,14 @@ const base: Group = {
 describe('GroupHero', () => {
     it('renders the group name', () => {
         const { getByText } = render(
-            <GroupHero group={base} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={base} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
         );
         expect(getByText('Trip to Paris')).toBeTruthy();
     });
 
     it('renders the gradient fallback when group has no image', () => {
         const { getByTestId } = render(
-            <GroupHero group={base} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={base} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
         );
         expect(getByTestId('hero-gradient')).toBeTruthy();
     });
@@ -38,7 +38,7 @@ describe('GroupHero', () => {
     it('renders the image background when group has an imageUrl', () => {
         const withImage = { ...base, imageUrl: 'https://x/y.jpg' };
         const { getByTestId } = render(
-            <GroupHero group={withImage} onBack={() => {}} onSettings={() => {}} />,
+            <GroupHero group={withImage} memberCount={3} onBack={() => {}} onSettings={() => {}} />,
         );
         expect(getByTestId('hero-image-bg')).toBeTruthy();
     });
@@ -47,7 +47,7 @@ describe('GroupHero', () => {
         const onBack = jest.fn();
         const onSettings = jest.fn();
         const { getByTestId } = render(
-            <GroupHero group={base} onBack={onBack} onSettings={onSettings} />,
+            <GroupHero group={base} memberCount={3} onBack={onBack} onSettings={onSettings} />,
         );
         fireEvent.press(getByTestId('hero-back-btn'));
         fireEvent.press(getByTestId('hero-settings-btn'));

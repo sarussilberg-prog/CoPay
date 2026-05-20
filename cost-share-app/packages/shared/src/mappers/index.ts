@@ -116,4 +116,6 @@ export const settlementFromRow = (r: Row): Settlement => ({
     paymentMethod: (r.payment_method as Settlement['paymentMethod']) ?? undefined,
     createdBy: r.created_by as string,
     createdAt: toDate(r.created_at),
+    updatedAt: r.updated_at ? toDate(r.updated_at) : toDate(r.created_at),
+    deletedAt: r.deleted_at ? toDate(r.deleted_at) : null,
 });

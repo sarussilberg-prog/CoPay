@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { Group, GroupType } from '@cost-share/shared';
 import { AppIcon } from './AppIcon';
 
@@ -39,16 +40,19 @@ const groupTypeEmoji: Record<GroupType, string> = {
 
 interface GroupHeroProps {
     group: Group;
+    memberCount: number;
     onBack: () => void;
     onSettings: () => void;
 }
 
 function HeroChrome({
     group,
+    memberCount,
     onBack,
     onSettings,
     topInset,
 }: GroupHeroProps & { topInset: number }) {
+    const { t } = useTranslation();
     const isRtl = I18nManager.isRTL;
     return (
         <>
@@ -69,6 +73,14 @@ function HeroChrome({
                 >
                     {group.name}
                 </Text>
+                <View className="mt-2 px-3 py-1 rounded-full bg-black/35">
+                    <Text
+                        className="text-xs font-semibold text-white text-center"
+                        numberOfLines={1}
+                    >
+                        {t('groups.memberCount', { count: memberCount })}
+                    </Text>
+                </View>
             </View>
 
             <View
@@ -113,7 +125,7 @@ function HeroChrome({
     );
 }
 
-export function GroupHero({ group, onBack, onSettings }: GroupHeroProps) {
+export function GroupHero({ group, memberCount, onBack, onSettings }: GroupHeroProps) {
     const insets = useSafeAreaInsets();
 
     if (group.imageUrl) {
@@ -126,6 +138,7 @@ export function GroupHero({ group, onBack, onSettings }: GroupHeroProps) {
             >
                 <HeroChrome
                     group={group}
+                    memberCount={memberCount}
                     onBack={onBack}
                     onSettings={onSettings}
                     topInset={insets.top}
@@ -150,6 +163,7 @@ export function GroupHero({ group, onBack, onSettings }: GroupHeroProps) {
             </View>
             <HeroChrome
                 group={group}
+                memberCount={memberCount}
                 onBack={onBack}
                 onSettings={onSettings}
                 topInset={insets.top}

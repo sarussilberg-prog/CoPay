@@ -5,6 +5,7 @@
 import { RecentActivity } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
+import i18n from '../i18n';
 
 export const ACTIVITY_PAGE_SIZE = 50;
 
@@ -63,6 +64,7 @@ function buildSettlementQuery(groupIds: string[], limit: number, before?: string
             'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id',
         )
         .in('group_id', groupIds)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -72,10 +74,27 @@ function buildSettlementQuery(groupIds: string[], limit: number, before?: string
     return query;
 }
 
+async function fetchGroupNames(groupIds: string[]): Promise<Map<string, string>> {
+    const names = new Map<string, string>();
+    if (groupIds.length === 0) return names;
+
+    const { data, error } = await supabase
+        .from('groups')
+        .select('id, name')
+        .in('id', groupIds);
+    if (error) throw error;
+    for (const row of data ?? []) {
+        names.set(row.id as string, row.name as string);
+    }
+    return names;
+}
+
 function mapToActivities(
     expenses: Record<string, unknown>[],
     settlements: Record<string, unknown>[],
     namesById: Map<string, string>,
+    groupNamesById: Map<string, string>,
+    currentUserId: string,
 ): RecentActivity[] {
     const activities: RecentActivity[] = [];
 
@@ -98,13 +117,33 @@ function mapToActivities(
     for (const row of settlements) {
         const fromUserId = row.from_user_id as string;
         const toUserId = row.to_user_id as string;
+        const groupId = row.group_id as string;
+        const amountStr = `${row.currency as string} ${Number(row.amount).toFixed(2)}`;
         const fromName = namesById.get(fromUserId) ?? 'Unknown';
         const toName = namesById.get(toUserId) ?? 'Unknown';
+        const groupName = groupNamesById.get(groupId) ?? '';
+
+        let description: string;
+        if (fromUserId === currentUserId) {
+            description = i18n.t('activity.youPaid', { name: toName, amount: amountStr });
+        } else if (toUserId === currentUserId) {
+            description = i18n.t('activity.paidYou', { name: fromName, amount: amountStr });
+        } else {
+            description = i18n.t('feed.settlement', {
+                from: fromName,
+                to: toName,
+                amount: amountStr,
+            });
+        }
+        if (groupName) {
+            description = `${description} ${i18n.t('activity.inGroup', { group: groupName })}`;
+        }
+
         activities.push({
             id: row.id as string,
             activityType: 'settlement',
-            groupId: row.group_id as string,
-            description: `${fromName} paid ${toName}`,
+            groupId,
+            description,
             amount: Number(row.amount),
             currency: row.currency as string,
             userId: fromUserId,
@@ -147,11 +186,22 @@ export async function fetchRecentActivity(
             userIds.add(row.to_user_id as string);
         }
 
-        const namesById = await fetchProfileNames([...userIds]);
+        const settlementGroupIds = new Set<string>();
+        for (const row of settlementsResult.data ?? []) {
+            settlementGroupIds.add(row.group_id as string);
+        }
+
+        const [namesById, groupNamesById] = await Promise.all([
+            fetchProfileNames([...userIds]),
+            fetchGroupNames([...settlementGroupIds]),
+        ]);
+
         const merged = mapToActivities(
             (expensesResult.data ?? []) as Record<string, unknown>[],
             (settlementsResult.data ?? []) as Record<string, unknown>[],
             namesById,
+            groupNamesById,
+            userId,
         );
 
         const hasMore =

@@ -60,14 +60,8 @@ export function BalancesScreen() {
     };
 
     const handleSettleUp = useCallback(
-        (debt: DebtSummary) => {
-            navigation.navigate('SettleUp', {
-                groupId,
-                fromUserId: debt.fromUserId,
-                toUserId: debt.toUserId,
-                amount: debt.amount,
-                currency: debt.currency,
-            });
+        (_debt: DebtSummary) => {
+            navigation.navigate('SettleUpList', { groupId });
         },
         [navigation, groupId]
     );

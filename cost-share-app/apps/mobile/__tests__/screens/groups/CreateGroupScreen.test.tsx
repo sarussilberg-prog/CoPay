@@ -3,12 +3,17 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
+const mockReplace = jest.fn();
 
 jest.mock('@react-navigation/native', () => {
     const actual = jest.requireActual('@react-navigation/native');
     return {
         ...actual,
-        useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
+        useNavigation: () => ({
+            navigate: mockNavigate,
+            goBack: mockGoBack,
+            replace: mockReplace,
+        }),
         useRoute: () => ({ params: {} }),
         useFocusEffect: (cb: () => void) => cb(),
         useIsFocused: () => true,
@@ -43,6 +48,7 @@ const mockCreateGroup = createGroup as jest.MockedFunction<typeof createGroup>;
 beforeEach(() => {
     mockNavigate.mockClear();
     mockGoBack.mockClear();
+    mockReplace.mockClear();
     mockCreateGroup.mockClear();
     useAppStore.setState({
         currentUser: {
@@ -73,7 +79,7 @@ describe('CreateGroupScreen', () => {
         expect(mockCreateGroup).not.toHaveBeenCalled();
     });
 
-    it('calls createGroup with the form data and navigates back on success', async () => {
+    it('calls createGroup with the form data and enters the new group on success', async () => {
         mockCreateGroup.mockResolvedValueOnce({ id: 'g1' } as any);
         const { findAllByText, getByPlaceholderText } = render(<CreateGroupScreen />);
         fireEvent.changeText(
@@ -86,6 +92,8 @@ describe('CreateGroupScreen', () => {
         expect(mockCreateGroup).toHaveBeenCalledWith(
             expect.objectContaining({ name: 'My Group' })
         );
-        await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(mockReplace).toHaveBeenCalledWith('GroupDetail', { groupId: 'g1' })
+        );
     });
 });

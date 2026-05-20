@@ -259,6 +259,14 @@ export function EditGroupScreen() {
                             </Text>
                         </TouchableOpacity>
                     </ScrollView>
+                    <View className="mt-3">
+                        <Button
+                            title={t('groups.members.addMembers')}
+                            onPress={() => setAddMembersOpen(true)}
+                            variant="outline"
+                            testID="edit-group-add-members-button"
+                        />
+                    </View>
                 </View>
 
                 {/* Action Buttons */}

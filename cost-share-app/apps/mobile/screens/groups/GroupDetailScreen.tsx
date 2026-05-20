@@ -11,6 +11,8 @@ import {
     RefreshControl,
     TouchableOpacity,
     Alert,
+    ActionSheetIOS,
+    Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -21,14 +23,13 @@ import {
     GroupMember,
     GroupMemberLite,
     GroupMessage,
-    UserBalance,
+    Settlement,
 } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import {
     getGroupById,
     getGroupMembers,
-    getGroupBalances,
 } from '../../services/groups.service';
 import { fetchExpenses } from '../../services/expenses.service';
 import {
@@ -57,6 +58,13 @@ import {
     ExpenseFiltersSheet,
     isAnyExpenseFilterActive,
 } from '../../components/ExpenseFiltersSheet';
+import { SettleUpSheet, SettleUpFormValues } from '../../components/SettleUpSheet';
+import {
+    useDeleteSettlementMutation,
+    useGroupPairwiseDebtsQuery,
+    useGroupSettlementsQuery,
+    useUpdateSettlementMutation,
+} from '../../hooks/queries/useSettlementQueries';
 import { AppIcon } from '../../components/AppIcon';
 import { colors } from '../../theme';
 
@@ -93,7 +101,6 @@ export function GroupDetailScreen() {
 
     const [group, setGroup] = useState<Group | null>(null);
     const [memberLites, setMemberLites] = useState<GroupMemberLite[]>([]);
-    const [balances, setBalances] = useState<UserBalance[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -102,6 +109,13 @@ export function GroupDetailScreen() {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [composer, setComposer] = useState<ComposerState>({ open: false });
     const [addMembersOpen, setAddMembersOpen] = useState(false);
+    const [editingSettlement, setEditingSettlement] = useState<Settlement | null>(null);
+
+    const { data: settlements = [], refetch: refetchSettlements } =
+        useGroupSettlementsQuery(groupId);
+    const { data: pairwiseDebts = [] } = useGroupPairwiseDebtsQuery(groupId);
+    const updateSettlementMutation = useUpdateSettlementMutation(groupId);
+    const deleteSettlementMutation = useDeleteSettlementMutation(groupId);
 
     const expenses = useAppStore(s => s.expenses);
     const messagesMap = useAppStore(s => s.messagesByGroup);
@@ -121,15 +135,13 @@ export function GroupDetailScreen() {
     }, [memberLites]);
 
     const loadAll = useCallback(async () => {
-        const [groupData, membersData, balancesData, userId] = await Promise.all([
+        const [groupData, membersData, userId] = await Promise.all([
             getGroupById(groupId),
             getGroupMembers(groupId),
-            getGroupBalances(groupId),
             getCurrentUserId(),
         ]);
 
         if (groupData) setGroup(groupData);
-        setBalances(balancesData);
         if (userId) setCurrentUserId(userId);
 
         const userIds = membersData.map(m => m.userId);
@@ -147,8 +159,12 @@ export function GroupDetailScreen() {
         }
         setMemberLites(membersToLite(membersData, nameById, avatarById));
 
-        await Promise.all([fetchExpenses(groupId), fetchMessages(groupId)]);
-    }, [groupId]);
+        await Promise.all([
+            fetchExpenses(groupId),
+            fetchMessages(groupId),
+            refetchSettlements(),
+        ]);
+    }, [groupId, refetchSettlements]);
 
     useEffect(() => {
         startLoading();
@@ -162,8 +178,8 @@ export function GroupDetailScreen() {
     }, [loadAll]);
 
     const feed = useMemo<FeedItem[]>(
-        () => buildFeed(groupId, expenses, messages, currentUserId),
-        [groupId, expenses, messages, currentUserId],
+        () => buildFeed(groupId, expenses, messages, settlements, currentUserId),
+        [groupId, expenses, messages, settlements, currentUserId],
     );
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
@@ -198,6 +214,23 @@ export function GroupDetailScreen() {
                 }
                 return true;
             }
+            if (item.kind === 'settlement') {
+                const s = item.settlement;
+                if (filters.memberIds.length > 0) {
+                    const participants = new Set<string>([s.fromUserId, s.toUserId]);
+                    if (!filters.memberIds.some(id => participants.has(id))) return false;
+                }
+                const settlementMs = new Date(s.settlementDate).getTime();
+                if (dateFromMs !== null && settlementMs < dateFromMs) return false;
+                if (dateToMs !== null && settlementMs >= dateToMs) return false;
+                if (trimmedQuery) {
+                    const fromName = memberMap[s.fromUserId]?.displayName ?? '';
+                    const toName = memberMap[s.toUserId]?.displayName ?? '';
+                    const hay = `${fromName} ${toName}`.toLowerCase();
+                    if (!hay.includes(trimmedQuery)) return false;
+                }
+                return true;
+            }
             // message
             if (trimmedQuery) {
                 const sender = memberMap[item.message.userId]?.displayName ?? '';
@@ -208,17 +241,16 @@ export function GroupDetailScreen() {
         });
     }, [feed, filters, trimmedQuery, memberMap]);
 
-    const settleUpDisabled = useMemo(
-        () => balances.length === 0 || balances.every(b => Math.round(b.netBalance * 100) === 0),
-        [balances],
-    );
-
     const handleBack = useCallback(() => navigation.goBack(), [navigation]);
     const handleSettings = useCallback(
         () => navigation.navigate('EditGroup', { groupId }),
         [navigation, groupId],
     );
     const handleSettleUp = useCallback(
+        () => navigation.navigate('SettleUpList', { groupId }),
+        [navigation, groupId],
+    );
+    const handleBalances = useCallback(
         () => navigation.navigate('Balances', { groupId }),
         [navigation, groupId],
     );
@@ -254,6 +286,78 @@ export function GroupDetailScreen() {
                 initialBody: m.body,
             }),
         [],
+    );
+
+    const confirmDeleteSettlement = useCallback(
+        (s: Settlement) => {
+            Alert.alert(t('settleUp.confirmDelete'), undefined, [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                    text: t('settleUp.delete'),
+                    style: 'destructive',
+                    onPress: () => {
+                        void deleteSettlementMutation.mutateAsync(s.id);
+                    },
+                },
+            ]);
+        },
+        [deleteSettlementMutation, t],
+    );
+
+    const handleSettlementPress = useCallback(
+        (s: Settlement) => {
+            const involved =
+                s.fromUserId === currentUserId || s.toUserId === currentUserId;
+            const options = [
+                t('common.cancel'),
+                ...(involved ? [t('settleUp.edit'), t('settleUp.delete')] : []),
+            ];
+
+            if (Platform.OS === 'ios') {
+                ActionSheetIOS.showActionSheetWithOptions(
+                    {
+                        options,
+                        cancelButtonIndex: 0,
+                        destructiveButtonIndex: involved ? 2 : undefined,
+                    },
+                    idx => {
+                        if (!involved) return;
+                        if (idx === 1) setEditingSettlement(s);
+                        else if (idx === 2) confirmDeleteSettlement(s);
+                    },
+                );
+                return;
+            }
+
+            if (!involved) return;
+            Alert.alert(t('settleUp.title'), undefined, [
+                { text: t('settleUp.edit'), onPress: () => setEditingSettlement(s) },
+                {
+                    text: t('settleUp.delete'),
+                    style: 'destructive',
+                    onPress: () => confirmDeleteSettlement(s),
+                },
+                { text: t('common.cancel'), style: 'cancel' },
+            ]);
+        },
+        [confirmDeleteSettlement, currentUserId, t],
+    );
+
+    const handleSettlementEditSubmit = useCallback(
+        async (values: SettleUpFormValues) => {
+            if (!editingSettlement) return;
+            await updateSettlementMutation.mutateAsync({
+                id: editingSettlement.id,
+                dto: {
+                    fromUserId: values.fromUserId,
+                    toUserId: values.toUserId,
+                    amount: values.amount,
+                    currency: values.currency,
+                },
+            });
+            setEditingSettlement(null);
+        },
+        [editingSettlement, updateSettlementMutation],
     );
 
     const handleMessageDelete = useCallback(
@@ -307,7 +411,9 @@ export function GroupDetailScreen() {
                 keyExtractor={item =>
                     item.kind === 'expense'
                         ? `e:${item.expense.id}`
-                        : `m:${item.message.id}`
+                        : item.kind === 'settlement'
+                            ? `s:${item.settlement.id}`
+                            : `m:${item.message.id}`
                 }
                 renderItem={({ item }) => (
                     <View className="px-4">
@@ -318,6 +424,7 @@ export function GroupDetailScreen() {
                             onExpensePress={handleExpensePress}
                             onMessageEdit={handleMessageEdit}
                             onMessageDelete={handleMessageDelete}
+                            onSettlementPress={handleSettlementPress}
                             searchQuery={trimmedQuery || undefined}
                         />
                     </View>
@@ -326,14 +433,14 @@ export function GroupDetailScreen() {
                     <>
                         <GroupHero
                             group={group}
+                            memberCount={memberLites.length}
                             onBack={handleBack}
                             onSettings={handleSettings}
                         />
                         <QuickActionsRow
                             onSettleUp={handleSettleUp}
-                            onBalances={handleSettleUp}
+                            onBalances={handleBalances}
                             onExport={handleExport}
-                            settleUpDisabled={settleUpDisabled}
                         />
                         <View className="px-4 mt-4 mb-2 flex-row items-center">
                             <SearchExpandable
@@ -366,33 +473,26 @@ export function GroupDetailScreen() {
                     </>
                 }
                 ListEmptyComponent={
-                    <View className="mx-4 my-6 bg-white rounded-2xl p-6 items-center border border-gray-100">
-                        <Text className="text-base font-semibold text-gray-900 mb-1">
-                            {t('groups.emptyFeed.title')}
-                        </Text>
-                        <Text className="text-sm text-gray-500 text-center mb-4">
-                            {t('groups.emptyFeed.message')}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={handleAddExpense}
-                            className="h-11 rounded-xl bg-primary px-5 items-center justify-center mb-2"
-                            testID="empty-feed-add"
-                        >
-                            <Text className="text-sm font-semibold text-white">
-                                {t('groups.emptyFeed.action')}
+                    isLoading ? null : (
+                        <View className="mx-4 my-6 bg-white rounded-2xl p-6 items-center border border-gray-100">
+                            <Text className="text-base font-semibold text-gray-900 mb-1">
+                                {t('groups.emptyFeed.title')}
                             </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setAddMembersOpen(true)}
-                            className="h-11 rounded-xl border border-primary px-5 items-center justify-center flex-row"
-                            testID="empty-feed-add-members"
-                        >
-                            <AppIcon name="person-add-outline" size={18} color={colors.primary} />
-                            <Text className="text-sm font-semibold text-primary-dark ml-2">
-                                {t('groups.emptyFeed.addMembers')}
+                            <Text className="text-sm text-gray-500 text-center mb-4">
+                                {t('groups.emptyFeed.message')}
                             </Text>
-                        </TouchableOpacity>
-                    </View>
+                            <TouchableOpacity
+                                onPress={() => setAddMembersOpen(true)}
+                                className="h-11 rounded-xl border border-primary px-5 items-center justify-center flex-row"
+                                testID="empty-feed-add-members"
+                            >
+                                <AppIcon name="person-add-outline" size={18} color={colors.primary} />
+                                <Text className="text-sm font-semibold text-primary-dark ml-2">
+                                    {t('groups.emptyFeed.addMembers')}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )
                 }
                 contentContainerStyle={{ paddingBottom: 120 }}
                 refreshControl={
@@ -468,6 +568,25 @@ export function GroupDetailScreen() {
                     void loadAll();
                 }}
             />
+
+            {editingSettlement && (
+                <SettleUpSheet
+                    visible={Boolean(editingSettlement)}
+                    members={memberLites}
+                    pairwiseDebts={pairwiseDebts}
+                    currentUserId={currentUserId}
+                    initial={{
+                        fromUserId: editingSettlement.fromUserId,
+                        toUserId: editingSettlement.toUserId,
+                        currency: editingSettlement.currency,
+                        amount: editingSettlement.amount,
+                    }}
+                    mode="edit"
+                    submitting={updateSettlementMutation.isPending}
+                    onSubmit={handleSettlementEditSubmit}
+                    onClose={() => setEditingSettlement(null)}
+                />
+            )}
         </View>
     );
 }

@@ -108,6 +108,16 @@ export interface Settlement {
     paymentMethod?: PaymentMethod;
     createdBy: string;  // Profile ID
     createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+}
+
+/** One row in the Settle Up list — a pairwise net debt within a group, per currency. */
+export interface PairwiseDebt {
+    fromUserId: string;  // Debtor
+    toUserId: string;    // Creditor
+    currency: string;
+    amount: number;      // Always > 0
 }
 
 // ============================================
@@ -295,6 +305,16 @@ export interface CreateSettlementDto {
 }
 
 /**
+ * Update Settlement DTO — Settle Up v1 form fields only.
+ */
+export interface UpdateSettlementDto {
+    fromUserId?: string;
+    toUserId?: string;
+    amount?: number;
+    currency?: string;
+}
+
+/**
  * Create Group DTO
  */
 export interface CreateGroupDto {
@@ -452,10 +472,11 @@ export interface ExpenseWithDelta extends ExpenseWithSplits {
     myDeltaState: 'lent' | 'borrowed' | 'settled';
 }
 
-/** A single item in the GroupDetailScreen feed — either an expense or a message. */
+/** A single item in the GroupDetailScreen feed — expense, message, or settlement. */
 export type FeedItem =
     | { kind: 'expense'; sortAt: Date; expense: ExpenseWithDelta }
-    | { kind: 'message'; sortAt: Date; message: GroupMessage };
+    | { kind: 'message'; sortAt: Date; message: GroupMessage }
+    | { kind: 'settlement'; sortAt: Date; settlement: Settlement };
 
 // ============================================
 // 7. PROFILE DASHBOARD (RPC payloads)

@@ -51,7 +51,7 @@ import { AddExpenseScreen } from '../screens/expenses/AddExpenseScreen';
 import { EditExpenseScreen } from '../screens/expenses/EditExpenseScreen';
 import { ExpenseDetailScreen } from '../screens/expenses/ExpenseDetailScreen';
 import { BalancesScreen } from '../screens/balances/BalancesScreen';
-import { SettleUpScreen } from '../screens/balances/SettleUpScreen';
+import { SettleUpListScreen } from '../screens/balances/SettleUpListScreen';
 import { SettlementHistoryScreen } from '../screens/balances/SettlementHistoryScreen';
 import { ActivityFeedScreen } from '../screens/activity/ActivityFeedScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
@@ -139,9 +139,9 @@ function GroupsStack() {
                 options={{ title: t('balances.title') }}
             />
             <Stack.Screen
-                name="SettleUp"
-                component={SettleUpScreen}
-                options={{ title: t('balances.settleUp') }}
+                name="SettleUpList"
+                component={SettleUpListScreen}
+                options={{ title: t('settleUp.title') }}
             />
             <Stack.Screen
                 name="SettlementHistory"

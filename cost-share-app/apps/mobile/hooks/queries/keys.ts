@@ -6,4 +6,6 @@ export const queryKeys = {
     friendRequestsIncoming: ['friend-requests', 'incoming'] as const,
     friendRequestsOutgoing: ['friend-requests', 'outgoing'] as const,
     userSearch: (query: string) => ['user-search', query] as const,
+    groupPairwiseDebts: (groupId: string) => ['groupPairwiseDebts', groupId] as const,
+    groupSettlements: (groupId: string) => ['groupSettlements', groupId] as const,
 };

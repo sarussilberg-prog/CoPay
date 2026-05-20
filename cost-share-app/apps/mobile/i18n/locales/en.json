@@ -173,7 +173,9 @@
             "noSearchResults": "No friends match your search.",
             "mutualHint": "You only see friends you've added each other.",
             "missingSomeoneCta": "Can't find them? Add friends"
-        }
+        },
+        "memberCount_one": "{{count}} person",
+        "memberCount_other": "{{count}} people"
     },
     "expenses": {
         "title": "Expenses",
@@ -311,7 +313,33 @@
         "settlement": "Settlement",
         "addedExpense": "added an expense",
         "settledPayment": "settled a payment",
-        "loadError": "Failed to load activity"
+        "loadError": "Failed to load activity",
+        "youPaid": "You paid {{name}} {{amount}}",
+        "paidYou": "{{name}} paid you {{amount}}",
+        "inGroup": "in {{group}}"
+    },
+    "settleUp": {
+        "title": "Settle up",
+        "empty": "Everyone is settled up",
+        "you": "you",
+        "row": "{{from}} owes {{to}} {{amount}}",
+        "payer": "Payer",
+        "receiver": "Receiver",
+        "currency": "Currency",
+        "amount": "Amount",
+        "submit": "Record payment",
+        "warnPartial": "Partial payment — {{remaining}} will still be owed",
+        "warnOverpay": "More than owed — {{flipAmount}} will be owed back",
+        "edit": "Edit payment",
+        "delete": "Delete payment",
+        "confirmDelete": "Delete this payment?",
+        "toastRecorded": "Payment recorded",
+        "toastUpdated": "Payment updated",
+        "toastDeleted": "Payment deleted",
+        "notInvolved": "You're not in this debt"
+    },
+    "feed": {
+        "settlement": "{{from}} paid {{to}} {{amount}}"
     },
     "history": {
         "title": "History",
