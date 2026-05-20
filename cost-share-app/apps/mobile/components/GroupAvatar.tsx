@@ -3,8 +3,9 @@
  * Shows a group image or a type-based emoji fallback
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Image } from 'react-native';
 import { GroupType } from '@cost-share/shared';
 
 const groupTypeEmoji: Record<string, string> = {

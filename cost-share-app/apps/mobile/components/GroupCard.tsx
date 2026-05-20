@@ -3,8 +3,9 @@
  * Supports highlighted name (search), "incl. matched members" subtitle, and a BalanceChip.
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity, I18nManager } from 'react-native';
+import { View, TouchableOpacity, I18nManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GroupBalance, GroupWithMembers } from '@cost-share/shared';
 import { AppIcon } from './AppIcon';

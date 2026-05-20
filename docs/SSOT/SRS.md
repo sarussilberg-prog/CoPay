@@ -48,6 +48,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 | REQ-PROF-03 | ✅ | User can change app language (EN / HE) | i18n keys used; RTL layout for Hebrew |
 | REQ-PROF-04 | ✅ | Profile dashboard | Hero balance card, stat tiles, friends list; data from `get_user_dashboard` RPC |
 | REQ-PROF-05 | ✅ | Enhanced settings | Grouped sections, legal sheets, rate app, WhatsApp contact, version footer |
+| REQ-PROF-06 | ✅ | User can delete their own account | RPC `delete_my_account` sets `profiles.is_active=false` + `deleted_at=NOW()`; mobile signs out; subsequent sign-in is rejected with the deactivated alert; peers continue to see the user's data unchanged |
 | REQ-AUTH-04 | 🟡 | Web app auth parity with mobile | Web login/callback exists; feature depth TBD |
 
 ### 3.2 Groups
@@ -148,6 +149,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 
 | Date | Change |
 |------|--------|
+| 2026-05-19 | Add REQ-PROF-06 — account self-deletion (soft, type-to-confirm) |
 | 2026-05-19 | Add REQ-PROF-04/05 for profile dashboard & settings redesign (direct-Supabase, no notifications) |
 | 2026-05-19 | RLS recursion fix on `group_members` (SECURITY DEFINER helpers `is_group_member`, `is_group_creator`); patch in `cost-share-app/supabase/fix-rls-group-members-recursion.sql`. Docs/AI-CHECKLIST swept to remove API/backend wording. |
 | 2026-05-19 | Supabase-only backend (NestJS removed) |

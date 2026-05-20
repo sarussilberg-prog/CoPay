@@ -4,8 +4,9 @@
  * Uses NativeWind styling only, supports i18n
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 type SplitType = 'equal' | 'unequal';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 
@@ -21,15 +21,15 @@ jest.mock('../../../services/groups.service', () => ({
 }));
 
 jest.mock('../../../services/users.service', () => ({
-    fetchUsers: jest.fn(),
+    fetchGroupUsers: jest.fn(),
 }));
 
 import { GroupMembersScreen } from '../../../screens/groups/GroupMembersScreen';
 import { getGroupMembers } from '../../../services/groups.service';
-import { fetchUsers } from '../../../services/users.service';
+import { fetchGroupUsers } from '../../../services/users.service';
 
 const mockGetMembers = getGroupMembers as jest.MockedFunction<typeof getGroupMembers>;
-const mockFetchUsers = fetchUsers as jest.MockedFunction<typeof fetchUsers>;
+const mockFetchGroupUsers = fetchGroupUsers as jest.MockedFunction<typeof fetchGroupUsers>;
 
 const user = {
     id: 'u1',
@@ -52,21 +52,21 @@ const member = {
 
 beforeEach(() => {
     mockGetMembers.mockReset();
-    mockFetchUsers.mockReset();
+    mockFetchGroupUsers.mockReset();
 });
 
 describe('GroupMembersScreen', () => {
     it('renders members with their names', async () => {
         mockGetMembers.mockResolvedValueOnce([member]);
-        mockFetchUsers.mockResolvedValueOnce([user]);
-        const { findByText } = render(<GroupMembersScreen />);
+        mockFetchGroupUsers.mockResolvedValueOnce([user]);
+        const { findByText } = renderWithQuery(<GroupMembersScreen />);
         expect(await findByText('Alice')).toBeTruthy();
     });
 
     it('shows empty state when no members', async () => {
         mockGetMembers.mockResolvedValueOnce([]);
-        mockFetchUsers.mockResolvedValueOnce([]);
-        const { findByText } = render(<GroupMembersScreen />);
+        mockFetchGroupUsers.mockResolvedValueOnce([]);
+        const { findByText } = renderWithQuery(<GroupMembersScreen />);
         expect(await findByText('groups.noMembers')).toBeTruthy();
     });
 });

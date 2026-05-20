@@ -6,8 +6,12 @@
 import React from 'react';
 import { TouchableOpacity, I18nManager } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+    createNativeStackNavigator,
+    type NativeStackNavigationOptions,
+} from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { useRtlLayout } from '../hooks/useRtlLayout';
 import { AppIcon, AppIconName } from '../components/AppIcon';
 import { APP_BRAND_TITLE, colors } from '../theme';
 
@@ -57,26 +61,31 @@ import { SettingsScreen } from '../screens/profile/SettingsScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const stackScreenOptions = {
-    animation: 'slide_from_right' as const,
-    animationDuration: 250,
-    headerTintColor: colors.primary,
-    headerBackTitle: '',
-    headerBackTitleVisible: false,
-};
+function stackScreenOptions(isRtl: boolean): NativeStackNavigationOptions {
+    return {
+        animation: isRtl ? 'slide_from_left' : 'slide_from_right',
+        animationDuration: 250,
+        headerTintColor: colors.primary,
+        headerBackTitle: '',
+    };
+}
+
+function buildStackScreenOptions(isRtl: boolean) {
+    const base = stackScreenOptions(isRtl);
+    return ({ navigation }: { navigation: { canGoBack: () => boolean; goBack: () => void } }) => ({
+        ...base,
+        headerLeft: navigation.canGoBack()
+            ? () => <HeaderBackButton onPress={() => navigation.goBack()} />
+            : undefined,
+    });
+}
 
 function GroupsStack() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
 
     return (
-        <Stack.Navigator
-            screenOptions={({ navigation }) => ({
-                ...stackScreenOptions,
-                headerLeft: navigation.canGoBack()
-                    ? () => <HeaderBackButton onPress={() => navigation.goBack()} />
-                    : undefined,
-            })}
-        >
+        <Stack.Navigator screenOptions={buildStackScreenOptions(isRtl)}>
             <Stack.Screen
                 name="GroupsList"
                 component={GroupsListScreen}
@@ -143,16 +152,10 @@ function GroupsStack() {
 
 function ActivityStack() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
 
     return (
-        <Stack.Navigator
-            screenOptions={({ navigation }) => ({
-                ...stackScreenOptions,
-                headerLeft: navigation.canGoBack()
-                    ? () => <HeaderBackButton onPress={() => navigation.goBack()} />
-                    : undefined,
-            })}
-        >
+        <Stack.Navigator screenOptions={buildStackScreenOptions(isRtl)}>
             <Stack.Screen
                 name="ActivityFeed"
                 component={ActivityFeedScreen}
@@ -169,16 +172,10 @@ function ActivityStack() {
 
 function ProfileStack() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
 
     return (
-        <Stack.Navigator
-            screenOptions={({ navigation }) => ({
-                ...stackScreenOptions,
-                headerLeft: navigation.canGoBack()
-                    ? () => <HeaderBackButton onPress={() => navigation.goBack()} />
-                    : undefined,
-            })}
-        >
+        <Stack.Navigator screenOptions={buildStackScreenOptions(isRtl)}>
             <Stack.Screen
                 name="ProfileMain"
                 component={ProfileScreen}

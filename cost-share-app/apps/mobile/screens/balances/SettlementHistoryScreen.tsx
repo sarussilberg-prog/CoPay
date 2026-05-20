@@ -4,14 +4,15 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, RefreshControl } from 'react-native';
+import { View, FlatList, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRoute } from '@react-navigation/native';
-import { Settlement, User } from '@cost-share/shared';
+import { Settlement } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { fetchSettlements } from '../../services/settlements.service';
-import { fetchUsers } from '../../services/users.service';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { MemberAvatar } from '../../components/MemberAvatar';
@@ -24,21 +25,17 @@ export function SettlementHistoryScreen() {
     const { isLoading, startLoading, stopLoading } = useLoading();
 
     const [settlements, setSettlements] = useState<Settlement[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     const loadData = useCallback(async () => {
         startLoading();
-        const [settlementsData, usersData] = await Promise.all([
-            fetchSettlements(groupId),
-            fetchUsers(),
-        ]);
+        const settlementsData = await fetchSettlements(groupId);
         setSettlements(
             settlementsData.sort(
                 (a, b) => new Date(b.settlementDate).getTime() - new Date(a.settlementDate).getTime()
             )
         );
-        setAllUsers(usersData);
         stopLoading();
     }, [groupId, startLoading, stopLoading]);
 

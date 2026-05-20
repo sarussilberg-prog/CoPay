@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
-# Re-open Expo Go on the booted iOS simulator with the current Metro URL.
-# Use when pressing "i" leaves a blank/stale app (simulator already open).
+# Re-open the Kupa dev client on the booted iOS simulator with the current Metro URL.
+# Requires a local dev build: npm run ios:run (once) before using ios:open.
 
 set -euo pipefail
 
 PORT="${EXPO_METRO_PORT:-8081}"
 METRO_STATUS="http://127.0.0.1:${PORT}/status"
-URLS=("exp://127.0.0.1:${PORT}" "exp://localhost:${PORT}")
+BUNDLE_ID="com.kupa.mobile"
+SCHEME="com.kupa.mobile"
+METRO_URL="http://127.0.0.1:${PORT}"
+ENCODED_METRO_URL="$(python3 -c "import urllib.parse; print(urllib.parse.quote('${METRO_URL}', safe=''))")"
+DEV_CLIENT_URL="${SCHEME}://expo-development-client/?url=${ENCODED_METRO_URL}"
 
 if ! xcrun simctl list devices booted 2>/dev/null | grep -q Booted; then
-  echo "No booted iOS simulator. Press i in Expo first, or open Simulator.app."
+  echo "No booted iOS simulator. Run: npm run ios:run -w @cost-share/mobile"
   exit 1
 fi
 
@@ -27,20 +31,19 @@ if [[ $tries -eq 0 ]]; then
   exit 1
 fi
 
-echo "Restarting Expo Go (Metro :${PORT})..."
-xcrun simctl terminate booted host.exp.Exponent 2>/dev/null || true
+echo "Opening Kupa dev client (Metro :${PORT})..."
+xcrun simctl terminate booted "$BUNDLE_ID" 2>/dev/null || true
 sleep 0.5
 
-opened=false
-for url in "${URLS[@]}"; do
-  if xcrun simctl openurl booted "$url" 2>/dev/null; then
-    echo "Opened ${url}"
-    opened=true
-    break
-  fi
-done
-
-if [[ "$opened" != true ]]; then
-  echo "Failed to open Expo Go. Try: xcrun simctl openurl booted exp://127.0.0.1:${PORT}"
-  exit 1
+if xcrun simctl openurl booted "$DEV_CLIENT_URL" 2>/dev/null; then
+  echo "Opened ${DEV_CLIENT_URL}"
+  exit 0
 fi
+
+if xcrun simctl launch booted "$BUNDLE_ID" 2>/dev/null; then
+  echo "Launched ${BUNDLE_ID}"
+  exit 0
+fi
+
+echo "Dev client not installed. Build once with: npm run ios:run -w @cost-share/mobile"
+exit 1

@@ -1,11 +1,12 @@
+import { Text } from '../AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FriendBalance } from '@cost-share/shared';
 import { MemberAvatar } from '../MemberAvatar';
 import { AppIcon } from '../AppIcon';
 import { colors } from '../../theme';
-import { useRtlLayout, rtlRowStyle, rtlTextAlign, rtlTrailingAlign } from '../../hooks/useRtlLayout';
+import { useRtlLayout, rtlRowStyle, rtlTrailingAlign } from '../../hooks/useRtlLayout';
 
 interface Props {
     friend: FriendBalance;
@@ -54,7 +55,6 @@ export function FriendBalanceRow({ friend, onPress, testID, isLast = false }: Pr
             <View style={{ flex: 1, marginHorizontal: 12, minWidth: 0 }}>
                 <Text
                     className="text-base font-medium text-slate-900"
-                    style={{ textAlign: rtlTextAlign(isRtl) }}
                     numberOfLines={1}
                 >
                     {friend.name}

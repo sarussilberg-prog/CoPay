@@ -12,6 +12,8 @@ import en from './locales/en.json';
 import he from './locales/he.json';
 import { useAppStore } from '../store';
 
+I18nManager.allowRTL(true);
+
 const resources = {
     en: { translation: en },
     he: { translation: he },

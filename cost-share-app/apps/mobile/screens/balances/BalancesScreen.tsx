@@ -4,14 +4,15 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl } from 'react-native';
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { UserBalance, DebtSummary, User } from '@cost-share/shared';
+import { UserBalance, DebtSummary } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { getGroupBalances, getGroupDebts } from '../../services/groups.service';
-import { fetchUsers } from '../../services/users.service';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { BalanceCard } from '../../components/BalanceCard';
 import { Button } from '../../components/Button';
@@ -26,19 +27,17 @@ export function BalancesScreen() {
 
     const [balances, setBalances] = useState<UserBalance[]>([]);
     const [debts, setDebts] = useState<DebtSummary[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     const loadData = useCallback(async () => {
         startLoading();
-        const [balancesData, debtsData, usersData] = await Promise.all([
+        const [balancesData, debtsData] = await Promise.all([
             getGroupBalances(groupId),
             getGroupDebts(groupId),
-            fetchUsers(),
         ]);
         setBalances(balancesData);
         setDebts(debtsData);
-        setAllUsers(usersData);
         stopLoading();
     }, [groupId, startLoading, stopLoading]);
 

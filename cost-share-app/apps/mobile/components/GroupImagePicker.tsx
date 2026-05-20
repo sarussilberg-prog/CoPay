@@ -3,8 +3,9 @@
  * Tap to pick or replace a group image from the photo library
  */
 
+import { Text } from './AppText';
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { GroupType } from '@cost-share/shared';

@@ -4,19 +4,19 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList } from 'react-native';
+import { View, FlatList } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRoute } from '@react-navigation/native';
 import { GroupMember, User } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
-import { useAppStore } from '../../store';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import {
     getGroupMembers,
     addGroupMember,
     removeGroupMember,
 } from '../../services/groups.service';
-import { fetchUsers } from '../../services/users.service';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { Button } from '../../components/Button';
@@ -30,17 +30,13 @@ export function GroupMembersScreen() {
     const { isLoading, startLoading, stopLoading } = useLoading();
 
     const [members, setMembers] = useState<GroupMember[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [removeTarget, setRemoveTarget] = useState<string | null>(null);
+    const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     const loadData = useCallback(async () => {
         startLoading();
-        const [membersData, usersData] = await Promise.all([
-            getGroupMembers(groupId),
-            fetchUsers(),
-        ]);
+        const membersData = await getGroupMembers(groupId);
         setMembers(membersData.filter((m) => m.isActive));
-        setAllUsers(usersData);
         stopLoading();
     }, [groupId, startLoading, stopLoading]);
 

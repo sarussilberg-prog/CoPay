@@ -4,8 +4,9 @@
  * Uses NativeWind styling only, supports i18n
  */
 
+import { Text } from './AppText';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { RecentActivity } from '@cost-share/shared';
 import { AppIcon, AppIconName } from './AppIcon';
 import { colors } from '../theme';

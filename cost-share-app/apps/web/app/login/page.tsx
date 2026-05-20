@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
@@ -20,6 +21,14 @@ export default function LoginPage() {
 
   return (
     <main style={styles.container}>
+      <Image
+        src="/icon.png"
+        alt="Kupa"
+        width={128}
+        height={128}
+        priority
+        style={styles.logo}
+      />
       <h1 style={styles.appName}>kupa</h1>
       <p style={styles.subtitle}>Split expenses with friends</p>
 
@@ -43,6 +52,9 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     padding: '24px',
     backgroundColor: '#ffffff',
+  },
+  logo: {
+    marginBottom: '16px',
   },
   appName: {
     fontSize: '3rem',

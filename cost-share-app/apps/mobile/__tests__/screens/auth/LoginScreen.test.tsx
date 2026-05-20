@@ -24,9 +24,10 @@ describe('LoginScreen', () => {
         useAppStore.setState({ language: 'en' });
     });
 
-    it('renders the app name and subtitle', () => {
-        const { getByText } = render(<LoginScreen />);
-        expect(getByText('kupa')).toBeTruthy();
+    it('renders the app logo, name and subtitle', () => {
+        const { getByText, getByTestId } = render(<LoginScreen />);
+        expect(getByTestId('app-logo')).toBeTruthy();
+        expect(getByText('Kupa')).toBeTruthy();
         expect(getByText('auth.subtitle')).toBeTruthy();
     });
 

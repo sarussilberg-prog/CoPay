@@ -6,6 +6,13 @@ import { RecentActivity } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
 
+export const ACTIVITY_PAGE_SIZE = 50;
+
+export interface ActivityPage {
+    items: RecentActivity[];
+    nextCursor?: string;
+}
+
 async function getUserGroupIds(userId: string): Promise<string[]> {
     const { data, error } = await supabase
         .from('group_members')
@@ -32,28 +39,100 @@ async function fetchProfileNames(userIds: string[]): Promise<Map<string, string>
     return names;
 }
 
-export async function fetchRecentActivity(): Promise<RecentActivity[]> {
+function buildExpenseQuery(groupIds: string[], limit: number, before?: string) {
+    let query = supabase
+        .from('expenses')
+        .select(
+            'id, group_id, description, amount, currency, expense_date, created_at, created_by',
+        )
+        .in('group_id', groupIds)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (before) {
+        query = query.lt('created_at', before);
+    }
+    return query;
+}
+
+function buildSettlementQuery(groupIds: string[], limit: number, before?: string) {
+    let query = supabase
+        .from('settlements')
+        .select(
+            'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id',
+        )
+        .in('group_id', groupIds)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+    if (before) {
+        query = query.lt('created_at', before);
+    }
+    return query;
+}
+
+function mapToActivities(
+    expenses: Record<string, unknown>[],
+    settlements: Record<string, unknown>[],
+    namesById: Map<string, string>,
+): RecentActivity[] {
+    const activities: RecentActivity[] = [];
+
+    for (const row of expenses) {
+        const createdBy = row.created_by as string;
+        activities.push({
+            id: row.id as string,
+            activityType: 'expense',
+            groupId: row.group_id as string,
+            description: row.description as string,
+            amount: Number(row.amount),
+            currency: row.currency as string,
+            userId: createdBy,
+            userName: namesById.get(createdBy) ?? 'Unknown',
+            activityDate: new Date(row.expense_date as string),
+            createdAt: new Date(row.created_at as string),
+        });
+    }
+
+    for (const row of settlements) {
+        const fromUserId = row.from_user_id as string;
+        const toUserId = row.to_user_id as string;
+        const fromName = namesById.get(fromUserId) ?? 'Unknown';
+        const toName = namesById.get(toUserId) ?? 'Unknown';
+        activities.push({
+            id: row.id as string,
+            activityType: 'settlement',
+            groupId: row.group_id as string,
+            description: `${fromName} paid ${toName}`,
+            amount: Number(row.amount),
+            currency: row.currency as string,
+            userId: fromUserId,
+            userName: fromName,
+            activityDate: new Date(row.settlement_date as string),
+            createdAt: new Date(row.created_at as string),
+        });
+    }
+
+    return activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+export async function fetchRecentActivity(
+    options: { limit?: number; before?: string } = {},
+): Promise<ActivityPage> {
     const userId = await getCurrentUserId();
-    if (!userId) return [];
+    if (!userId) return { items: [] };
+
+    const limit = options.limit ?? ACTIVITY_PAGE_SIZE;
+    const fetchLimit = limit + 1;
 
     try {
         const groupIds = await getUserGroupIds(userId);
-        if (groupIds.length === 0) return [];
+        if (groupIds.length === 0) return { items: [] };
 
         const [expensesResult, settlementsResult] = await Promise.all([
-            supabase
-                .from('expenses')
-                .select(
-                    'id, group_id, description, amount, currency, expense_date, created_at, created_by',
-                )
-                .in('group_id', groupIds)
-                .eq('is_deleted', false),
-            supabase
-                .from('settlements')
-                .select(
-                    'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id',
-                )
-                .in('group_id', groupIds),
+            buildExpenseQuery(groupIds, fetchLimit, options.before),
+            buildSettlementQuery(groupIds, fetchLimit, options.before),
         ]);
 
         if (expensesResult.error) throw expensesResult.error;
@@ -69,46 +148,25 @@ export async function fetchRecentActivity(): Promise<RecentActivity[]> {
         }
 
         const namesById = await fetchProfileNames([...userIds]);
-        const activities: RecentActivity[] = [];
+        const merged = mapToActivities(
+            (expensesResult.data ?? []) as Record<string, unknown>[],
+            (settlementsResult.data ?? []) as Record<string, unknown>[],
+            namesById,
+        );
 
-        for (const row of expensesResult.data ?? []) {
-            const createdBy = row.created_by as string;
-            activities.push({
-                id: row.id as string,
-                activityType: 'expense',
-                groupId: row.group_id as string,
-                description: row.description as string,
-                amount: Number(row.amount),
-                currency: row.currency as string,
-                userId: createdBy,
-                userName: namesById.get(createdBy) ?? 'Unknown',
-                activityDate: new Date(row.expense_date as string),
-                createdAt: new Date(row.created_at as string),
-            });
-        }
+        const hasMore =
+            merged.length > limit ||
+            (expensesResult.data?.length ?? 0) === fetchLimit ||
+            (settlementsResult.data?.length ?? 0) === fetchLimit;
+        const items = merged.slice(0, limit);
+        const nextCursor =
+            hasMore && items.length > 0
+                ? items[items.length - 1].createdAt.toISOString()
+                : undefined;
 
-        for (const row of settlementsResult.data ?? []) {
-            const fromUserId = row.from_user_id as string;
-            const toUserId = row.to_user_id as string;
-            const fromName = namesById.get(fromUserId) ?? 'Unknown';
-            const toName = namesById.get(toUserId) ?? 'Unknown';
-            activities.push({
-                id: row.id as string,
-                activityType: 'settlement',
-                groupId: row.group_id as string,
-                description: `${fromName} paid ${toName}`,
-                amount: Number(row.amount),
-                currency: row.currency as string,
-                userId: fromUserId,
-                userName: fromName,
-                activityDate: new Date(row.settlement_date as string),
-                createdAt: new Date(row.created_at as string),
-            });
-        }
-
-        return activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        return { items, nextCursor };
     } catch (error) {
         console.error('Failed to fetch activity:', error);
-        return [];
+        return { items: [] };
     }
 }

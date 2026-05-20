@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 jest.mock('@react-navigation/native', () => {
     const actual = jest.requireActual('@react-navigation/native');
@@ -17,7 +17,7 @@ jest.mock('../../../services/settlements.service', () => ({
 }));
 
 jest.mock('../../../services/users.service', () => ({
-    fetchUsers: jest.fn().mockResolvedValue([
+    fetchGroupUsers: jest.fn().mockResolvedValue([
         { id: 'u1', email: 'a@x.com', name: 'Alice', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date() },
         { id: 'u2', email: 'b@x.com', name: 'Bob', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date() },
     ]),
@@ -35,7 +35,7 @@ beforeEach(() => {
 describe('SettlementHistoryScreen', () => {
     it('shows empty state when there are no settlements', async () => {
         mockFetch.mockResolvedValueOnce([]);
-        const { findByText } = render(<SettlementHistoryScreen />);
+        const { findByText } = renderWithQuery(<SettlementHistoryScreen />);
         expect(await findByText('balances.noSettlements')).toBeTruthy();
     });
 
@@ -54,7 +54,7 @@ describe('SettlementHistoryScreen', () => {
                 createdAt: new Date(),
             } as any,
         ]);
-        const { findByText } = render(<SettlementHistoryScreen />);
+        const { findByText } = renderWithQuery(<SettlementHistoryScreen />);
         expect(await findByText(/Alice/)).toBeTruthy();
         expect(await findByText(/USD 100\.00/)).toBeTruthy();
     });

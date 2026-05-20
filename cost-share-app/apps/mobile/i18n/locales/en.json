@@ -257,7 +257,8 @@
         "account": "Account",
         "logout": "Log out",
         "version": "Version {{version}}",
-        "whatsappOpenFailed": "Could not open WhatsApp"
+        "whatsappOpenFailed": "Could not open WhatsApp",
+        "deleteAccount": "Delete account"
     },
     "profile": {
         "title": "Profile",
@@ -336,5 +337,20 @@
         "privacyTitle": "Privacy Policy",
         "privacyBody": "Kupa stores your profile (name, email, avatar) and the groups, expenses, and settlements you create. We use your email only for authentication.\n\nWe do not sell your data. We may share anonymous aggregate analytics. You can request deletion of your data at any time.\n\nContact: support via WhatsApp +972528616878.",
         "close": "Close"
+    },
+    "deleteAccount": {
+        "warningTitle": "Delete account?",
+        "warningBullet1": "You will no longer be able to sign in.",
+        "warningBullet2": "Your name and history remain visible to friends you shared groups with.",
+        "warningBullet3": "Open balances stay open — settle them first if you don't want them to remain.",
+        "warningBullet4": "This cannot be undone. Contact support via WhatsApp to restore.",
+        "continueBtn": "Continue",
+        "confirmTitle": "Type your email to confirm",
+        "typeEmailHint": "To confirm deletion, type:",
+        "deleteBtn": "Delete my account",
+        "deletedToast": "Account deleted",
+        "deleteFailed": "Could not delete account. Please try again.",
+        "deactivatedTitle": "Account deactivated",
+        "deactivatedMessage": "This account has been deleted. Contact support via WhatsApp to restore it."
     }
 }

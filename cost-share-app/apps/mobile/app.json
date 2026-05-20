@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Kupa",
     "slug": "mobile",
     "scheme": "com.kupa.mobile",
     "version": "1.0.0",
@@ -17,10 +17,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kupa.mobile"
+      "bundleIdentifier": "com.kupa.mobile",
+      "infoPlist": {
+        "CFBundleDisplayName": "Kupa"
+      }
     },
     "android": {
       "package": "com.kupa.mobile",
+      "label": "Kupa",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -33,6 +37,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-web-browser",
       [
         "expo-image-picker",

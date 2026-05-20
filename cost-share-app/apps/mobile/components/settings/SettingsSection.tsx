@@ -1,5 +1,6 @@
+import { Text } from '../AppText';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 interface Props { title: string; children: React.ReactNode; }
 

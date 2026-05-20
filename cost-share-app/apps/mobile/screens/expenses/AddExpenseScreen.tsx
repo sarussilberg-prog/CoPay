@@ -4,16 +4,17 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ExpenseCategory, GroupMember, User, ExpenseSplitInput, DEFAULT_CURRENCY } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
 import { useAppStore } from '../../store';
+import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { createExpense } from '../../services/expenses.service';
 import { getGroupMembers } from '../../services/groups.service';
-import { fetchUsers } from '../../services/users.service';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { CategoryPicker } from '../../components/CategoryPicker';
@@ -35,22 +36,17 @@ export function AddExpenseScreen() {
     const [splitType, setSplitType] = useState<'equal' | 'unequal'>('equal');
     const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
     const [members, setMembers] = useState<GroupMember[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [dataLoading, setDataLoading] = useState(true);
+    const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     const [descriptionError, setDescriptionError] = useState('');
     const [amountError, setAmountError] = useState('');
 
     useEffect(() => {
         const loadData = async () => {
-            const [membersData, usersData] = await Promise.all([
-                getGroupMembers(groupId),
-                fetchUsers(),
-            ]);
+            const membersData = await getGroupMembers(groupId);
             const activeMembers = membersData.filter((m) => m.isActive);
             setMembers(activeMembers);
-            setAllUsers(usersData);
-            // Pre-select all members
             setSelectedMemberIds(activeMembers.map((m) => m.userId));
             setDataLoading(false);
         };

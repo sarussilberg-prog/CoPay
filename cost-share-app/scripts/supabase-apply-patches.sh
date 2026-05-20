@@ -27,5 +27,8 @@ supabase db query --linked --agent=no -f "$SUPABASE_DIR/fix-is-group-member-anon
 echo "▶ Applying get_user_dashboard RPC (profile dashboard) ..."
 supabase db query --linked --agent=no -f "$SUPABASE_DIR/get-user-dashboard.sql"
 
+echo "▶ Applying profiles account deactivation (is_active, delete_my_account) ..."
+supabase db query --linked --agent=no -f "$SUPABASE_DIR/fix-profiles-account-deactivation.sql"
+
 echo "▶ Verifying REST probes ..."
 bash "$SCRIPT_DIR/verify-supabase-schema.sh"

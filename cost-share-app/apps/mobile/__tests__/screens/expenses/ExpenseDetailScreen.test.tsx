@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
+import { renderWithQuery } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -21,7 +22,7 @@ jest.mock('../../../services/expenses.service', () => ({
 }));
 
 jest.mock('../../../services/users.service', () => ({
-    fetchUsers: jest.fn().mockResolvedValue([]),
+    fetchGroupUsers: jest.fn().mockResolvedValue([]),
 }));
 
 import { ExpenseDetailScreen } from '../../../screens/expenses/ExpenseDetailScreen';
@@ -53,14 +54,14 @@ beforeEach(() => {
 describe('ExpenseDetailScreen', () => {
     it('renders the expense description and amount', async () => {
         mockGet.mockResolvedValueOnce({ expense, splits: [] });
-        const { findByText } = render(<ExpenseDetailScreen />);
+        const { findByText } = renderWithQuery(<ExpenseDetailScreen />);
         expect(await findByText('Coffee')).toBeTruthy();
         expect(await findByText(/USD 5\.00/)).toBeTruthy();
     });
 
     it('navigates to EditExpense on edit press', async () => {
         mockGet.mockResolvedValueOnce({ expense, splits: [] });
-        const { findByText } = render(<ExpenseDetailScreen />);
+        const { findByText } = renderWithQuery(<ExpenseDetailScreen />);
         fireEvent.press(await findByText('common.edit'));
         expect(mockNavigate).toHaveBeenCalledWith('EditExpense', {
             expenseId: 'e1',

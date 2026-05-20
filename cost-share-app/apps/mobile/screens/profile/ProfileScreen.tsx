@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { View, ScrollView, RefreshControl, TouchableOpacity, Text } from 'react-native';
+import { Text } from '../../components/AppText';
+import React, { useCallback, useLayoutEffect } from 'react';
+import { View, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { UserDashboard, FriendBalance } from '@cost-share/shared';
+import { FriendBalance } from '@cost-share/shared';
 import { useAppStore } from '../../store';
-import { fetchDashboard } from '../../services/dashboard.service';
+import { useDashboardQuery } from '../../hooks/queries/useDashboardQuery';
 import { AppIcon } from '../../components/AppIcon';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
@@ -20,21 +21,11 @@ export function ProfileScreen() {
     const navigation = useNavigation<any>();
     const currentUser = useAppStore((s) => s.currentUser);
 
-    const [dashboard, setDashboard] = useState<UserDashboard | null>(null);
-    const [refreshing, setRefreshing] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const { data: dashboard, isLoading, isRefetching, refetch, isError } = useDashboardQuery();
 
-    const load = useCallback(async () => {
-        const data = await fetchDashboard();
-        if (data) { setDashboard(data); setError(false); } else { setError(true); }
-        setLoading(false);
-        setRefreshing(false);
-    }, []);
-
-    useEffect(() => { void load(); }, [load]);
-
-    const handleRefresh = useCallback(() => { setRefreshing(true); void load(); }, [load]);
+    const handleRefresh = useCallback(() => {
+        void refetch();
+    }, [refetch]);
     const handleOpenSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
     const handleEditProfile = useCallback(() => navigation.navigate('EditProfile'), [navigation]);
 
@@ -63,13 +54,19 @@ export function ProfileScreen() {
 
     const isRtl = useRtlLayout();
 
-    if (loading && !dashboard) return <LoadingIndicator />;
+    if (isLoading && !dashboard) return <LoadingIndicator />;
 
     return (
         <ScrollView
             className="flex-1 bg-slate-100"
             contentContainerClassName="pb-10"
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
+            refreshControl={
+                <RefreshControl
+                    refreshing={isRefetching}
+                    onRefresh={handleRefresh}
+                    tintColor={colors.primary}
+                />
+            }
         >
             <ProfileHeaderRow
                 name={currentUser?.name || t('common.unknown')}
@@ -77,7 +74,7 @@ export function ProfileScreen() {
                 onEditPress={handleEditProfile}
             />
 
-            {error || !dashboard ? (
+            {isError || !dashboard ? (
                 <EmptyState
                     iconName="alert-circle-outline"
                     title={t('dashboard.loadError')}

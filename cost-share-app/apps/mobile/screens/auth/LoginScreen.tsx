@@ -4,9 +4,11 @@
  * Uses NativeWind styling only, full i18n support
  */
 
+import { Text } from '../../components/AppText';
 import React, { useCallback, useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, TouchableOpacity, Alert, Modal } from 'react-native';
 import { AppIcon } from '../../components/AppIcon';
+import { AppLogo } from '../../components/AppLogo';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +18,7 @@ import { Button } from '../../components/Button';
 import Toast from 'react-native-toast-message';
 import { changeLanguage } from '../../i18n';
 import { useAppStore } from '../../store';
-
-/** Brand name — never translated */
-const APP_BRAND_NAME = 'kupa';
+import { APP_BRAND_TITLE } from '../../theme/brand';
 
 export function LoginScreen() {
     const { t } = useTranslation();
@@ -85,14 +85,11 @@ export function LoginScreen() {
             </View>
 
             <View className="flex-1 justify-center items-center px-8">
-                {/* App Icon / Branding */}
-                <View className="w-20 h-20 rounded-2xl bg-primary-extra-light justify-center items-center mb-6">
-                    <AppIcon name="wallet" size={40} color={colors.primary} />
-                </View>
+                <AppLogo size={128} style={{ marginBottom: 24 }} />
 
                 {/* App Name */}
                 <Text className="text-3xl font-bold text-gray-900 mb-2">
-                    {APP_BRAND_NAME}
+                    {APP_BRAND_TITLE}
                 </Text>
 
                 {/* Subtitle */}

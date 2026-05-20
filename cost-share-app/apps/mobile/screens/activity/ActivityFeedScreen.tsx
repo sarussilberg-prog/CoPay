@@ -3,28 +3,20 @@
  * Cross-group activity feed (Supabase)
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-    View,
-    FlatList,
-    RefreshControl,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Modal,
-    Pressable,
-} from 'react-native';
+import { Text } from '../../components/AppText';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, FlatList, RefreshControl, TextInput, TouchableOpacity, Modal, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { RecentActivity } from '@cost-share/shared';
-import { useLoading } from '../../hooks/useLoading';
-import { fetchRecentActivity } from '../../services/activity.service';
+import { useActivityQuery } from '../../hooks/queries/useActivityQuery';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { ActivityItem } from '../../components/ActivityItem';
 import { AppIcon, AppIconName } from '../../components/AppIcon';
 import { APP_BRAND_TITLE, colors } from '../../theme';
+import { resolveAutoTextInputStyle, useRtlLayout } from '../../hooks/useRtlLayout';
 
 type ActivityFilter = 'all' | 'expense' | 'settlement';
 type SortOption = 'dateDesc' | 'dateAsc' | 'amountDesc' | 'amountAsc';
@@ -32,10 +24,18 @@ type SortOption = 'dateDesc' | 'dateAsc' | 'amountDesc' | 'amountAsc';
 export function ActivityFeedScreen() {
     const { t } = useTranslation();
     const navigation = useNavigation<any>();
-    const { isLoading, startLoading, stopLoading } = useLoading();
+    const isRtl = useRtlLayout();
 
-    const [activities, setActivities] = useState<RecentActivity[]>([]);
-    const [refreshing, setRefreshing] = useState(false);
+    const {
+        data,
+        isLoading,
+        isRefetching,
+        isFetchingNextPage,
+        fetchNextPage,
+        hasNextPage,
+        refetch,
+    } = useActivityQuery();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [filter, setFilter] = useState<ActivityFilter>('all');
@@ -43,32 +43,20 @@ export function ActivityFeedScreen() {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [sortModalVisible, setSortModalVisible] = useState(false);
 
-    const fetchActivities = useCallback(async () => {
-        const data = await fetchRecentActivity();
-        setActivities(data);
-    }, []);
-
-    const loadActivity = useCallback(async () => {
-        startLoading();
-        await fetchActivities();
-        stopLoading();
-    }, [fetchActivities, startLoading, stopLoading]);
-
-    useEffect(() => {
-        void loadActivity();
-    }, [loadActivity]);
-
-    useFocusEffect(
-        useCallback(() => {
-            void fetchActivities();
-        }, [fetchActivities]),
+    const activities = useMemo(
+        () => data?.pages.flatMap((page) => page.items) ?? [],
+        [data],
     );
 
     const handleRefresh = useCallback(async () => {
-        setRefreshing(true);
-        await fetchActivities();
-        setRefreshing(false);
-    }, [fetchActivities]);
+        await refetch();
+    }, [refetch]);
+
+    const handleLoadMore = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            void fetchNextPage();
+        }
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
     const displayedActivities = useMemo(() => {
         let list = [...activities];
@@ -180,6 +168,7 @@ export function ActivityFeedScreen() {
                 <View className="px-4 pb-3">
                     <TextInput
                         className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                        style={resolveAutoTextInputStyle(isRtl)}
                         placeholder={t('activity.searchPlaceholder')}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -197,10 +186,17 @@ export function ActivityFeedScreen() {
                 contentContainerClassName="px-4 pb-4"
                 refreshControl={
                     <RefreshControl
-                        refreshing={refreshing}
+                        refreshing={isRefetching}
                         onRefresh={handleRefresh}
                         tintColor={colors.primary}
                     />
+                }
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.3}
+                ListFooterComponent={
+                    isFetchingNextPage ? (
+                        <ActivityIndicator className="py-4" color={colors.primary} />
+                    ) : null
                 }
                 ListEmptyComponent={
                     <EmptyState

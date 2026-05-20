@@ -1,5 +1,6 @@
+import { Text } from '../AppText';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BalanceSummary } from '@cost-share/shared';
 import { AppIcon } from '../AppIcon';
