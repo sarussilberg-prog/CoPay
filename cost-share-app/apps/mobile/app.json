@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kupa.mobile",
+      "associatedDomains": ["applinks:kupa.pro"],
       "infoPlist": {
         "CFBundleDisplayName": "Kupa"
       }
@@ -31,7 +32,18 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "kupa.pro", "pathPattern": "/i/.*" },
+            { "scheme": "https", "host": "kupa.pro", "pathPattern": "/g/.*" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
