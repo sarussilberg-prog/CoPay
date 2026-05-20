@@ -7,6 +7,7 @@
 import { Text } from '../../components/AppText';
 import React, { useCallback, useState, useEffect } from 'react';
 import { View, ScrollView, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GroupType, DEFAULT_CURRENCY, User } from '@cost-share/shared';
@@ -30,13 +31,8 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { AddMembersSheet } from '../../components/AddMembersSheet';
 import { AppIcon } from '../../components/AppIcon';
 import { colors } from '../../theme';
-
-const groupTypes: { key: GroupType; emoji: string }[] = [
-    { key: 'trip', emoji: '✈️' },
-    { key: 'home', emoji: '🏠' },
-    { key: 'couple', emoji: '💑' },
-    { key: 'general', emoji: '👥' },
-];
+import { GroupTypeSelector } from '../../components/GroupTypeSelector';
+import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 
 export function EditGroupScreen() {
     const { t } = useTranslation();
@@ -97,9 +93,16 @@ export function EditGroupScreen() {
 
         if (localImageUri) {
             const uploadedUrl = await uploadGroupImage(groupId, localImageUri);
-            if (uploadedUrl) {
-                nextImageUrl = uploadedUrl;
+            if (!uploadedUrl) {
+                stopLoading();
+                Toast.show({
+                    type: 'error',
+                    text1: t('common.error'),
+                    text2: t('groups.imageUploadError'),
+                });
+                return;
             }
+            nextImageUrl = uploadedUrl;
         }
 
         const result = await updateGroup(groupId, {
@@ -175,33 +178,7 @@ export function EditGroupScreen() {
                     numberOfLines={3}
                 />
 
-                {/* Group Type */}
-                <View className="mb-4">
-                    <Text className="text-sm font-medium text-gray-700 mb-2">
-                        {t('groups.groupType')}
-                    </Text>
-                    <View className="flex-row gap-2">
-                        {groupTypes.map((gt) => (
-                            <TouchableOpacity
-                                key={gt.key}
-                                onPress={() => setGroupType(gt.key)}
-                                activeOpacity={0.7}
-                                className={`flex-1 py-3 rounded-xl items-center ${groupType === gt.key
-                                    ? 'bg-primary-extra-light border border-primary'
-                                    : 'bg-white border border-gray-200'
-                                    }`}
-                            >
-                                <Text className="text-xl mb-1">{gt.emoji}</Text>
-                                <Text
-                                    className={`text-xs font-medium ${groupType === gt.key ? 'text-primary-dark' : 'text-gray-600'
-                                        }`}
-                                >
-                                    {t(`groups.types.${gt.key}`)}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
+                <GroupTypeSelector value={groupType} onChange={setGroupType} />
 
                 {/* Currency */}
                 <CurrencyPicker
@@ -282,6 +259,11 @@ export function EditGroupScreen() {
                         onPress={() => navigation.goBack()}
                         variant="outline"
                     />
+                </View>
+
+                {/* Invite Link Block */}
+                <View className="mt-6">
+                    <InviteLinkBlock kind="group" mode="expanded" groupId={groupId} />
                 </View>
 
                 {/* Danger zone */}

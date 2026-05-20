@@ -34,6 +34,10 @@ jest.mock('../../../components/AddMembersSheet', () => ({
     AddMembersSheet: () => null,
 }));
 
+jest.mock('../../../components/InviteLinkBlock', () => ({
+    InviteLinkBlock: () => null,
+}));
+
 jest.mock('../../../lib/auth', () => ({
     getCurrentUserId: jest.fn().mockResolvedValue('me'),
 }));
@@ -44,14 +48,17 @@ jest.mock('expo-image-picker', () => ({
     MediaTypeOptions: { Images: 'images' },
 }));
 
+
 import { EditGroupScreen } from '../../../screens/groups/EditGroupScreen';
 import {
     getGroupById,
     updateGroup,
 } from '../../../services/groups.service';
+import { uploadGroupImage } from '../../../services/storage.service';
 
 const mockGetGroup = getGroupById as jest.MockedFunction<typeof getGroupById>;
 const mockUpdateGroup = updateGroup as jest.MockedFunction<typeof updateGroup>;
+const mockUploadGroupImage = uploadGroupImage as jest.MockedFunction<typeof uploadGroupImage>;
 
 const existingGroup = {
     id: 'g1',
@@ -71,6 +78,8 @@ beforeEach(() => {
     mockGoBack.mockClear();
     mockGetGroup.mockReset();
     mockUpdateGroup.mockReset();
+    mockUploadGroupImage.mockReset();
+    mockUploadGroupImage.mockResolvedValue('https://cdn.example.com/group.jpg');
 });
 
 describe('EditGroupScreen', () => {
@@ -101,5 +110,25 @@ describe('EditGroupScreen', () => {
         const { findByText } = render(<EditGroupScreen />);
         fireEvent.press(await findByText('common.cancel'));
         expect(mockGoBack).toHaveBeenCalled();
+    });
+
+    it('shows an error and skips update when image upload fails', async () => {
+        mockGetGroup.mockResolvedValueOnce(existingGroup);
+        mockUploadGroupImage.mockResolvedValueOnce(null);
+
+        const ImagePicker = require('expo-image-picker');
+        ImagePicker.launchImageLibraryAsync.mockResolvedValueOnce({
+            canceled: false,
+            assets: [{ uri: 'file:///picked.jpg' }],
+        });
+
+        const { findByDisplayValue, findByText, findByTestId } = render(<EditGroupScreen />);
+        fireEvent.press(await findByTestId('group-image-picker'));
+        fireEvent.changeText(await findByDisplayValue('Old Name'), 'New Name');
+        fireEvent.press(await findByText('common.save'));
+
+        await waitFor(() => expect(mockUploadGroupImage).toHaveBeenCalled());
+        expect(mockUpdateGroup).not.toHaveBeenCalled();
+        expect(mockGoBack).not.toHaveBeenCalled();
     });
 });
