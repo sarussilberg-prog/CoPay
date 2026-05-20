@@ -75,7 +75,8 @@ netBalance = totalPaid - totalOwed + totalSettledReceived - totalSettledPaid
 ```
 
 - Pure functions: `packages/shared/src/calculations/`
-- Data loading: `groups.service.ts` → `getGroupBalances`
+- Debt simplification: `packages/shared/src/calculations/simplifyDebts/` — orchestrator dispatches between an exact backtracking algorithm (≤10 non-zero balances, minimum-transaction guarantee) and a Splitwise-style greedy heuristic (above threshold). Integer-cent arithmetic throughout; result is `SimplifiedDebtsResult` tagged with `algorithm: 'exact' | 'greedy'`. Throws `UnbalancedLedgerError` when input balances do not sum to zero — services catch and render an empty state.
+- Data loading: `groups.service.ts` → `getGroupBalances`, `getGroupDebts`
 
 ### 3.3 Mobile UX stack
 

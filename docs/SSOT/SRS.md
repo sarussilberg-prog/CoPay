@@ -49,6 +49,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 | REQ-PROF-04 | ✅ | Profile dashboard | Hero balance card, stat tiles, friends list; data from `get_user_dashboard` RPC |
 | REQ-PROF-05 | ✅ | Enhanced settings | Grouped sections, legal sheets, rate app, WhatsApp contact, version footer |
 | REQ-PROF-06 | ✅ | User can delete their own account | RPC `delete_my_account` sets `profiles.is_active=false` + `deleted_at=NOW()`; mobile signs out; subsequent sign-in is rejected with the deactivated alert; peers continue to see the user's data unchanged |
+| REQ-PROF-07 | ✅ | Profile balance FX rollup | Profile hero card converts multi-currency `byCurrency` rows to `defaultCurrency` using live rates (Frankfurter API, 24h cache); per-currency breakdown unchanged; groups list unchanged |
 | REQ-AUTH-04 | 🟡 | Web app auth parity with mobile | Web login/callback exists; feature depth TBD |
 
 ### 3.2 Groups
@@ -81,8 +82,8 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 | ID | Status | Requirement | Acceptance criteria |
 |----|--------|-------------|---------------------|
 | REQ-BAL-01 | ✅ | Per-user balances in a group | `GET /groups/:id/balances` matches calculation service |
-| REQ-BAL-02 | ✅ | Pairwise debt summary | `GET /groups/:id/debts` returns simplified owes |
-| REQ-BAL-03 | ✅ | Balances screen (mobile) | Shows who owes whom in group context |
+| REQ-BAL-02 | ✅ | Pairwise debt simplification | `simplifyDebts` returns minimum-transaction list for ≤10 non-zero balances (exact backtracking + memoization) and Splitwise-style sorted matching above the threshold; result tagged `algorithm: 'exact' \| 'greedy'`. `UnbalancedLedgerError` thrown for corrupt ledgers. |
+| REQ-BAL-03 | ✅ | Balances screen (mobile) | Per-member balances + simplified debt list; summary line "N payments to settle everyone" with a "Minimum" badge when the exact algorithm ran. EN + HE with CLDR pluralization, RTL-safe layout. |
 | REQ-SET-01 | ✅ | Record settlement (A pays B) | `CreateSettlementDto`; `from_user_id ≠ to_user_id` |
 | REQ-SET-02 | ✅ | Settlement history | History between two users in group |
 | REQ-SET-03 | ✅ | Settle-up flow (mobile) | Screen to create settlement from balances context |
@@ -91,7 +92,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 
 | ID | Status | Requirement | Acceptance criteria |
 |----|--------|-------------|---------------------|
-| REQ-ACT-01 | ✅ | Activity feed | Expenses + settlements chronologically (screen + data) |
+| REQ-ACT-01 | ✅ | Activity feed | Expenses, settlements, and group chat messages chronologically (screen + data) |
 | REQ-NAV-01 | ✅ | Tab navigation | Groups, Activity, Profile (stacks per feature area) |
 | REQ-EXP-LIST | ✅ | Global / group expense lists | Expense list screens reachable from navigation |
 
@@ -124,7 +125,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 
 ## 5. Out of scope (MVP)
 
-- Multi-currency conversion / FX rates
+- FX conversion outside profile dashboard (group balances stay per-currency; see REQ-PROF-07)
 - In-app payment processing (Stripe, etc.)
 - Expense approval workflows
 - Guest users without auth
@@ -149,6 +150,7 @@ Balance formula (authoritative): see `CalculationsService` and [DATABASE_ARCHITE
 
 | Date | Change |
 |------|--------|
+| 2026-05-20 | REQ-BAL-02 / REQ-BAL-03 — hybrid debt simplification (exact ≤10, greedy >10) + Balances summary line and Minimum badge. Spec: `docs/superpowers/specs/2026-05-20-debt-simplification-design.md`. Plan: `docs/superpowers/plans/2026-05-20-debt-simplification.md`. |
 | 2026-05-19 | Add REQ-PROF-06 — account self-deletion (soft, type-to-confirm) |
 | 2026-05-19 | Add REQ-PROF-04/05 for profile dashboard & settings redesign (direct-Supabase, no notifications) |
 | 2026-05-19 | RLS recursion fix on `group_members` (SECURITY DEFINER helpers `is_group_member`, `is_group_creator`); patch in `cost-share-app/supabase/fix-rls-group-members-recursion.sql`. Docs/AI-CHECKLIST swept to remove API/backend wording. |
