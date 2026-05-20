@@ -87,6 +87,26 @@ describe('activityFilters', () => {
         expect(result.map((i) => i.id)).toEqual(['s1']);
     });
 
+    it('filters by group type', () => {
+        const result = filterAndSortActivities(
+            items,
+            { ...DEFAULT_ACTIVITY_FILTERS, groupTypes: ['trip'] },
+            undefined,
+            { g1: 'trip', g2: 'home' },
+        );
+        expect(result.map((i) => i.id)).toEqual(['e1', 's1', 'm1']);
+    });
+
+    it('excludes items when group type does not match', () => {
+        const result = filterAndSortActivities(
+            items,
+            { ...DEFAULT_ACTIVITY_FILTERS, groupTypes: ['home'] },
+            undefined,
+            { g1: 'trip' },
+        );
+        expect(result).toHaveLength(0);
+    });
+
     it('filters onlyMine by current user', () => {
         const result = filterAndSortActivities(
             items,

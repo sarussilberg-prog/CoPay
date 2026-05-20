@@ -2,7 +2,10 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 
-jest.mock('expo-application', () => ({ nativeApplicationVersion: '1.2.3' }));
+jest.mock('expo-constants', () => ({
+    __esModule: true,
+    default: { expoConfig: { version: '1.0.0' } },
+}));
 jest.mock('expo-store-review', () => ({
     requestReview: jest.fn().mockResolvedValue(undefined),
     isAvailableAsync: jest.fn().mockResolvedValue(true),

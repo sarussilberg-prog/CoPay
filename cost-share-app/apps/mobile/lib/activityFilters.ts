@@ -2,13 +2,14 @@
  * Client-side filter + sort for the cross-group activity feed (REQ-ACT-01).
  */
 
-import { RecentActivity } from '@cost-share/shared';
+import { GroupType, RecentActivity } from '@cost-share/shared';
 
 export type ActivityTypeFilter = 'expense' | 'settlement' | 'message';
 export type ActivitySortOption = 'dateDesc' | 'dateAsc' | 'amountDesc' | 'amountAsc';
 
 export interface ActivityFilters {
     types: ActivityTypeFilter[];
+    groupTypes: GroupType[];
     currencies: string[];
     groupIds: string[];
     onlyMine: boolean;
@@ -19,6 +20,7 @@ export interface ActivityFilters {
 
 export const DEFAULT_ACTIVITY_FILTERS: ActivityFilters = {
     types: [],
+    groupTypes: [],
     currencies: [],
     groupIds: [],
     onlyMine: false,
@@ -28,6 +30,7 @@ export const DEFAULT_ACTIVITY_FILTERS: ActivityFilters = {
 export function isAnyActivityFilterActive(f: ActivityFilters): boolean {
     return (
         f.types.length > 0 ||
+        f.groupTypes.length > 0 ||
         f.currencies.length > 0 ||
         f.groupIds.length > 0 ||
         f.onlyMine ||
@@ -51,6 +54,7 @@ export function filterAndSortActivities(
     items: RecentActivity[],
     filters: ActivityFilters,
     currentUserId?: string | null,
+    groupTypeById?: Record<string, GroupType>,
 ): RecentActivity[] {
     const query = filters;
     let list = [...items];
@@ -69,6 +73,13 @@ export function filterAndSortActivities(
 
     if (query.groupIds.length > 0) {
         list = list.filter((item) => query.groupIds.includes(item.groupId));
+    }
+
+    if (query.groupTypes.length > 0 && groupTypeById) {
+        list = list.filter((item) => {
+            const groupType = groupTypeById[item.groupId];
+            return groupType && query.groupTypes.includes(groupType);
+        });
     }
 
     if (query.onlyMine && currentUserId) {

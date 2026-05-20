@@ -78,6 +78,9 @@
             "home": "Home",
             "couple": "Couple",
             "general": "General",
+            "work": "Work",
+            "event": "Event",
+            "friends": "Friends",
             "other": "Other"
         },
         "search": {
@@ -85,9 +88,20 @@
             "cancel": "Cancel"
         },
         "filters": {
-            "title": "Filters",
+            "title": "Filter & sort",
+            "subtitle": "Narrow the list or change how groups are ordered",
             "apply": "Apply",
             "clearAll": "Clear all",
+            "close": "Close",
+            "sort": {
+                "label": "Sort by",
+                "recentDesc": "Recently updated",
+                "recentAsc": "Oldest updated",
+                "nameAsc": "Name A–Z",
+                "nameDesc": "Name Z–A",
+                "balanceDesc": "Highest balance",
+                "balanceAsc": "Lowest balance"
+            },
             "balance": {
                 "label": "Balance",
                 "all": "All",
@@ -96,7 +110,8 @@
                 "settled": "Settled"
             },
             "type": {
-                "label": "Group type"
+                "label": "Group type",
+                "hint": "Pick one or more — empty means all types"
             },
             "status": {
                 "label": "Status",
@@ -391,9 +406,6 @@
             "subtitle": "Send a link via WhatsApp and more",
             "cta": "Share link",
             "shareMessage": "Hey! Let's split expenses together on Kupa. If you sign up through this link we'll automatically become friends: {{url}}",
-            "linkLabel": "My invite link",
-            "copyButton": "Copy",
-            "copied": "Link copied",
             "rotate": "Rotate link",
             "rotateConfirmTitle": "Rotate invite link?",
             "rotateConfirmBody": "The previous link will stop working. Anyone holding the old link won't be able to become your friend until you send them the new one.",
@@ -405,7 +417,6 @@
         "group": {
             "title": "Share group link",
             "shareMessage": "I added you to the '{{groupName}}' group on Kupa. Join via this link: {{url}}",
-            "linkLabel": "Invite link",
             "rotate": "Rotate link",
             "rotateConfirmTitle": "Rotate group invite link?",
             "rotateConfirmBody": "Anyone holding the current link won't be able to join until you send them the new one. Members already in the group are unaffected.",

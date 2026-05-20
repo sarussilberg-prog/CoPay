@@ -1,7 +1,7 @@
 /**
  * GroupsListScreen
- * Main groups list with expandable search, filter sheet,
- * per-group balance chips, and a pinned bottom Create-a-group CTA.
+ * Main groups list with expandable search, filter/sort sheet,
+ * per-group balance chips, and a floating bottom Create-a-kupa CTA.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -12,10 +12,10 @@ import {
     RefreshControl,
     TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { GroupType, GroupWithMembers } from '@cost-share/shared';
+import { GroupWithMembers } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import { fetchGroups } from '../../services/groups.service';
@@ -30,8 +30,12 @@ import {
     FiltersSheet,
     isAnyFilterActive,
 } from '../../components/FiltersSheet';
+import {
+    passesGroupFilters,
+    sortGroups,
+} from '../../lib/groupListQuery';
 import { AppIcon } from '../../components/AppIcon';
-import { colors } from '../../theme';
+import { colors, shadows } from '../../theme';
 
 function unique<T>(values: T[]): T[] {
     return Array.from(new Set(values));
@@ -45,34 +49,9 @@ function memberMatches(group: GroupWithMembers, q: string): string[] {
         .map(m => m.displayName);
 }
 
-function passesFilters(
-    group: GroupWithMembers,
-    filters: Filters,
-    balanceNet: number | undefined,
-): boolean {
-    if (filters.types.length > 0 && !filters.types.includes(group.groupType)) {
-        return false;
-    }
-    if (
-        filters.currencies.length > 0 &&
-        !filters.currencies.includes(group.defaultCurrency)
-    ) {
-        return false;
-    }
-    if (!filters.includeArchived && !group.isActive) {
-        return false;
-    }
-    if (filters.balanceState !== 'all') {
-        const net = balanceNet ?? 0;
-        if (filters.balanceState === 'owed' && net <= 0.01) return false;
-        if (filters.balanceState === 'owe' && net >= -0.01) return false;
-        if (filters.balanceState === 'settled' && Math.abs(net) >= 0.01) return false;
-    }
-    return true;
-}
-
 export function GroupsListScreen() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const insets = useSafeAreaInsets();
     const navigation = useNavigation<any>();
     const { isLoading, startLoading, stopLoading } = useLoading();
     const groups = useAppStore(s => s.groups);
@@ -112,29 +91,36 @@ export function GroupsListScreen() {
         () => unique(groups.map(g => g.defaultCurrency)),
         [groups],
     );
-    const availableTypes = useMemo<GroupType[]>(
-        () => unique(groups.map(g => g.groupType)),
-        [groups],
-    );
-
     const trimmedQuery = searchQuery.trim();
+    const sortLocale = i18n.language.startsWith('he') ? 'he' : undefined;
 
     const filteredRows = useMemo(() => {
         const lowerQ = trimmedQuery.toLowerCase();
-        return groups
+        const matched = groups
             .map(g => {
-                const matched = memberMatches(g, lowerQ);
+                const matchedNames = memberMatches(g, lowerQ);
                 const nameHit =
                     !lowerQ || g.name.toLowerCase().includes(lowerQ);
-                const searchHit = !lowerQ || nameHit || matched.length > 0;
-                return { group: g, matched, searchHit };
+                const searchHit = !lowerQ || nameHit || matchedNames.length > 0;
+                return { group: g, matched: matchedNames, searchHit };
             })
             .filter(({ group, searchHit }) => {
                 if (!searchHit) return false;
                 const net = groupBalances[group.id]?.net;
-                return passesFilters(group, filters, net);
+                return passesGroupFilters(group, filters, net);
             });
-    }, [groups, trimmedQuery, filters, groupBalances]);
+
+        const sortedGroups = sortGroups(
+            matched.map(r => r.group),
+            filters.sortBy,
+            groupBalances,
+            sortLocale,
+        );
+        const order = new Map(sortedGroups.map((g, i) => [g.id, i]));
+        return [...matched].sort(
+            (a, b) => (order.get(a.group.id) ?? 0) - (order.get(b.group.id) ?? 0),
+        );
+    }, [groups, trimmedQuery, filters, groupBalances, sortLocale]);
 
     const filterActive = isAnyFilterActive(filters);
 
@@ -184,47 +170,59 @@ export function GroupsListScreen() {
                 )}
             </View>
 
-            <FlatList
-                data={filteredRows}
-                keyExtractor={item => item.group.id}
-                renderItem={({ item }) => (
-                    <GroupCard
-                        group={item.group}
-                        balance={groupBalances[item.group.id]}
-                        searchQuery={trimmedQuery || undefined}
-                        matchedMemberNames={
-                            item.matched.length > 0 ? item.matched : undefined
-                        }
-                        onPress={handleGroupPress}
-                    />
-                )}
-                className="flex-1"
-                contentContainerClassName="px-4 pb-24"
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={handleRefresh}
-                        tintColor={colors.primary}
-                    />
-                }
-                ListEmptyComponent={
-                    <EmptyState
-                        iconName="people-outline"
-                        title={t('groups.noGroups')}
-                        message={t('groups.noGroupsMessage')}
-                        actionTitle={t('groups.createGroup')}
-                        onAction={handleCreateGroup}
-                    />
-                }
-            />
+            <View className="flex-1">
+                <FlatList
+                    data={filteredRows}
+                    keyExtractor={item => item.group.id}
+                    renderItem={({ item }) => (
+                        <GroupCard
+                            group={item.group}
+                            balance={groupBalances[item.group.id]}
+                            searchQuery={trimmedQuery || undefined}
+                            matchedMemberNames={
+                                item.matched.length > 0 ? item.matched : undefined
+                            }
+                            onPress={handleGroupPress}
+                        />
+                    )}
+                    className="flex-1"
+                    contentContainerStyle={{
+                        paddingHorizontal: 16,
+                        paddingBottom: insets.bottom + 80,
+                    }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={handleRefresh}
+                            tintColor={colors.primary}
+                        />
+                    }
+                    ListEmptyComponent={
+                        <EmptyState
+                            iconName="people-outline"
+                            title={t('groups.noGroups')}
+                            message={t('groups.noGroupsMessage')}
+                            actionTitle={t('groups.createGroup')}
+                            onAction={handleCreateGroup}
+                        />
+                    }
+                />
 
-            {filteredRows.length > 0 && (
-                <SafeAreaView edges={['bottom']} className="bg-slate-50">
-                    <View className="px-4 pb-2 pt-2 border-t border-gray-100 bg-slate-50">
+                {filteredRows.length > 0 && (
+                    <View
+                        pointerEvents="box-none"
+                        style={{
+                            position: 'absolute',
+                            left: 16,
+                            right: 16,
+                            bottom: insets.bottom + 8,
+                        }}
+                    >
                         <TouchableOpacity
                             onPress={handleCreateGroup}
                             activeOpacity={0.85}
                             className="h-14 rounded-2xl bg-primary items-center justify-center flex-row"
+                            style={shadows.lg}
                             testID="groups-bottom-cta"
                         >
                             <AppIcon name="add" size={22} color="#fff" />
@@ -233,15 +231,14 @@ export function GroupsListScreen() {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </SafeAreaView>
-            )}
+                )}
+            </View>
 
             <FiltersSheet
                 visible={filtersOpen}
                 filters={filters}
-                availableTypes={availableTypes}
                 availableCurrencies={availableCurrencies}
-                onApply={setFilters}
+                onChange={setFilters}
                 onClose={() => setFiltersOpen(false)}
             />
         </SafeAreaView>

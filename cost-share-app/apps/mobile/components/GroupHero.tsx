@@ -14,37 +14,21 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { Group, GroupType } from '@cost-share/shared';
+import { Group } from '@cost-share/shared';
 import { useRtlLayout } from '../hooks/useRtlLayout';
+import { getGroupTypeVisual } from '../lib/groupTypeVisuals';
 import { AppIcon } from './AppIcon';
 import { Text } from './AppText';
-import { colors } from '../theme';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const HERO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.26);
-
-const groupTypeGradient: Record<GroupType, [string, string]> = {
-    trip: ['#60A5FA', '#3B82F6'],
-    home: ['#34D399', '#10B981'],
-    couple: ['#F472B6', '#EC4899'],
-    general: ['#A78BFA', '#7C3AED'],
-    other: ['#94A3B8', '#475569'],
-};
-
-const groupTypeEmoji: Record<GroupType, string> = {
-    trip: '✈️',
-    home: '🏠',
-    couple: '💑',
-    general: '👥',
-    other: '📋',
-};
 
 interface GroupHeroProps {
     group: Group;
     memberCount: number;
     onBack: () => void;
     onSettings: () => void;
-    onOverflow?: () => void;
+    onShare?: () => void;
 }
 
 function HeroChrome({
@@ -52,7 +36,7 @@ function HeroChrome({
     memberCount,
     onBack,
     onSettings,
-    onOverflow,
+    onShare,
     topInset,
 }: GroupHeroProps & { topInset: number }) {
     const { t } = useTranslation();
@@ -114,6 +98,18 @@ function HeroChrome({
                     />
                 </TouchableOpacity>
                 <View className="flex-row items-center gap-2">
+                    {onShare && (
+                        <TouchableOpacity
+                            onPress={onShare}
+                            accessibilityRole="button"
+                            accessibilityLabel="Share invite link"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
+                            testID="hero-share-btn"
+                        >
+                            <AppIcon name="share-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         onPress={onSettings}
                         accessibilityRole="button"
@@ -124,25 +120,13 @@ function HeroChrome({
                     >
                         <AppIcon name="settings-outline" size={20} color="#fff" />
                     </TouchableOpacity>
-                    {onOverflow && (
-                        <TouchableOpacity
-                            onPress={onOverflow}
-                            accessibilityRole="button"
-                            accessibilityLabel="More options"
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            className="mr-2"
-                            testID="group-overflow-button"
-                        >
-                            <AppIcon name="ellipsis-horizontal" size={22} color={colors.gray600} />
-                        </TouchableOpacity>
-                    )}
                 </View>
             </View>
         </>
     );
 }
 
-export function GroupHero({ group, memberCount, onBack, onSettings, onOverflow }: GroupHeroProps) {
+export function GroupHero({ group, memberCount, onBack, onSettings, onShare }: GroupHeroProps) {
     const insets = useSafeAreaInsets();
 
     if (group.imageUrl) {
@@ -158,33 +142,36 @@ export function GroupHero({ group, memberCount, onBack, onSettings, onOverflow }
                     memberCount={memberCount}
                     onBack={onBack}
                     onSettings={onSettings}
-                    onOverflow={onOverflow}
+                    onShare={onShare}
                     topInset={insets.top}
                 />
             </ImageBackground>
         );
     }
 
-    const colorsTuple = groupTypeGradient[group.groupType] ?? groupTypeGradient.general;
+    const visual = getGroupTypeVisual(group.groupType);
     return (
         <LinearGradient
-            colors={colorsTuple}
+            colors={visual.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ width: '100%', height: HERO_HEIGHT }}
             testID="hero-gradient"
         >
             <View className="absolute inset-0 items-center justify-center">
-                <Text className="text-7xl opacity-30">
-                    {groupTypeEmoji[group.groupType] ?? '👥'}
-                </Text>
+                <AppIcon
+                    name={visual.icon}
+                    size={120}
+                    color="rgba(255,255,255,0.25)"
+                    testID="hero-type-icon"
+                />
             </View>
             <HeroChrome
                 group={group}
                 memberCount={memberCount}
                 onBack={onBack}
                 onSettings={onSettings}
-                onOverflow={onOverflow}
+                onShare={onShare}
                 topInset={insets.top}
             />
         </LinearGradient>

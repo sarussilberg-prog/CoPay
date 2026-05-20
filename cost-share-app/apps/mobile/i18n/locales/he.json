@@ -78,6 +78,9 @@
             "home": "בית",
             "couple": "זוג",
             "general": "כללי",
+            "work": "עבודה",
+            "event": "אירוע",
+            "friends": "חברים",
             "other": "אחר"
         },
         "search": {
@@ -85,9 +88,20 @@
             "cancel": "ביטול"
         },
         "filters": {
-            "title": "סינון",
+            "title": "סינון ומיון",
+            "subtitle": "צמצום הרשימה או שינוי סדר הקבוצות",
             "apply": "החל",
             "clearAll": "נקה הכל",
+            "close": "סגור",
+            "sort": {
+                "label": "מיון לפי",
+                "recentDesc": "עדכון אחרון",
+                "recentAsc": "עדכון ישן",
+                "nameAsc": "שם א-ת",
+                "nameDesc": "שם ת-א",
+                "balanceDesc": "יתרה גבוהה",
+                "balanceAsc": "יתרה נמוכה"
+            },
             "balance": {
                 "label": "יתרה",
                 "all": "הכל",
@@ -96,7 +110,8 @@
                 "settled": "מסודר"
             },
             "type": {
-                "label": "סוג קבוצה"
+                "label": "סוג קבוצה",
+                "hint": "אפשר לבחור אחד או יותר — ריק = כל הסוגים"
             },
             "status": {
                 "label": "סטטוס",
@@ -125,7 +140,7 @@
             "matchedMembers": "כולל {{names}}",
             "settled": "מסודר"
         },
-        "bigCreateCta": "צור קבוצה",
+        "bigCreateCta": "צור קופה",
         "settings": "הגדרות קבוצה",
         "dangerZone": "אזור מסוכן",
         "leaveGroup": "עזוב קבוצה",
@@ -391,11 +406,8 @@
         "friend": {
             "title": "הזמן חבר ל-Kupa",
             "subtitle": "שלח קישור דרך וואצאפ ועוד",
-            "cta": "שתף קישור",
+            "cta": "שתף קישור חברות",
             "shareMessage": "היי! בוא נחלק הוצאות יחד דרך Kupa. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {{url}}",
-            "linkLabel": "קישור ההזמנה שלי",
-            "copyButton": "העתק",
-            "copied": "הקישור הועתק",
             "rotate": "שנה קישור",
             "rotateConfirmTitle": "לשנות את קישור ההזמנה?",
             "rotateConfirmBody": "הקישור הקודם יפסיק לעבוד. כל מי שיש לו את הקישור הישן לא יוכל להפוך לחבר שלך עד שתשלח לו את החדש.",
@@ -405,23 +417,22 @@
             "findInviteName": "הזמן את {{name}} ל-Kupa"
         },
         "group": {
-            "title": "שתף קישור לקבוצה",
-            "shareMessage": "הוספתי אותך לקבוצת '{{groupName}}' ב-Kupa. הצטרף דרך הקישור: {{url}}",
-            "linkLabel": "קישור הזמנה",
+            "title": "שתף קישור לקופה",
+            "shareMessage": "הוספתי אותך לקופת '{{groupName}}' ב-Kupa. הצטרף דרך הקישור: {{url}}",
             "rotate": "שנה קישור",
-            "rotateConfirmTitle": "לשנות את קישור הקבוצה?",
-            "rotateConfirmBody": "כל מי שיש לו את הקישור הנוכחי לא יוכל להצטרף עד שתשלח לו את החדש. חברים שכבר בקבוצה לא מושפעים.",
-            "rotated": "קישור הקבוצה עודכן",
-            "emptyStateLink": "או שתף קישור לקבוצה"
+            "rotateConfirmTitle": "לשנות את קישור הקופה?",
+            "rotateConfirmBody": "כל מי שיש לו את הקישור הנוכחי לא יוכל להצטרף עד שתשלח לו את החדש. חברים שכבר בקופה לא מושפעים.",
+            "rotated": "קישור הקופה עודכן",
+            "emptyStateLink": "או שתף קישור לקופה"
         },
         "addMembers": {
             "searchOthers": "חפש משתמשים אחרים",
-            "sendLink": "שלח קישור לקבוצה"
+            "sendLink": "שלח קישור לקופה"
         },
         "redemption": {
             "friendSuccess": "הוספת את {{name}} כחבר",
-            "groupSuccess": "הצטרפת לקבוצת '{{groupName}}'",
-            "alreadyMember": "אתה כבר חבר בקבוצה הזו",
+            "groupSuccess": "הצטרפת לקופת '{{groupName}}'",
+            "alreadyMember": "אתה כבר חבר בקופה הזו",
             "selfInvite": "זה הקישור שלך",
             "invalid": "קישור ההזמנה כבר לא תקף"
         }

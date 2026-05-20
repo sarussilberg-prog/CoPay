@@ -98,14 +98,20 @@ export function ActivityFeedScreen() {
         [groups],
     );
 
+    const groupTypeById = useMemo(
+        () => Object.fromEntries(groups.map((g) => [g.id, g.groupType])),
+        [groups],
+    );
+
     const displayedActivities = useMemo(() => {
         const filtered = filterAndSortActivities(
             activities,
             filters,
             currentUser?.id,
+            groupTypeById,
         );
         return filtered.filter((item) => matchesActivitySearch(item, searchQuery));
-    }, [activities, filters, searchQuery, currentUser?.id]);
+    }, [activities, filters, searchQuery, currentUser?.id, groupTypeById]);
 
     const filterActive = isAnyActivityFilterActive(filters);
 
@@ -239,7 +245,7 @@ export function ActivityFeedScreen() {
                 filters={filters}
                 availableCurrencies={availableCurrencies}
                 availableGroups={availableGroups}
-                onApply={setFilters}
+                onChange={setFilters}
                 onClose={() => setFiltersOpen(false)}
             />
         </SafeAreaView>

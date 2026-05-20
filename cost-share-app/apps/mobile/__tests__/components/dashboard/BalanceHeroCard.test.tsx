@@ -64,4 +64,17 @@ describe('BalanceHeroCard', () => {
         const badge = getByTestId('currency-badge-USD');
         expect(badge).toBeTruthy();
     });
+
+    it('shows zero amount with currency symbol instead of text for empty side', () => {
+        const amdRow = {
+            totalOwed: 0,
+            totalOwedToUser: 5,
+            defaultCurrency: 'AMD',
+            byCurrency: [{ currency: 'AMD', owed: 0, owedToUser: 5 }],
+        };
+        const { getByTestId, getByText } = render(<BalanceHeroCard summary={amdRow as any} />);
+        fireEvent.press(getByTestId('balance-hero-toggle'));
+        expect(getByTestId('breakdown-owe-zero-AMD')).toBeTruthy();
+        expect(getByText(/֏0\.00/)).toBeTruthy();
+    });
 });

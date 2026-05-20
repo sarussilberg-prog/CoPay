@@ -19,20 +19,25 @@ describe('<InviteLinkBlock />', () => {
         mockRotate.mockClear();
     });
 
-    it('renders the URL display', () => {
-        const { getByText } = render(<InviteLinkBlock mode="expanded" kind="friend" />);
-        expect(getByText(/kupa\.pro\/i\/AbCdEfGhIj/)).toBeTruthy();
-    });
-
-    it('calls share() when share button pressed', () => {
+    it('calls share() when share row is pressed', () => {
         const { getByTestId } = render(<InviteLinkBlock mode="expanded" kind="friend" />);
         fireEvent.press(getByTestId('invite-link-share'));
         expect(mockShare).toHaveBeenCalled();
     });
 
-    it('calls rotate() when rotate button pressed', () => {
+    it('renders the rotate row in expanded mode', () => {
         const { getByTestId } = render(<InviteLinkBlock mode="expanded" kind="friend" />);
         fireEvent.press(getByTestId('invite-link-rotate'));
         expect(mockRotate).toHaveBeenCalled();
+    });
+
+    it('hides the rotate row in compact mode', () => {
+        const { queryByTestId } = render(<InviteLinkBlock mode="compact" kind="friend" />);
+        expect(queryByTestId('invite-link-rotate')).toBeNull();
+    });
+
+    it('does not render the raw URL text', () => {
+        const { queryByText } = render(<InviteLinkBlock mode="expanded" kind="friend" />);
+        expect(queryByText(/kupa\.pro/)).toBeNull();
     });
 });

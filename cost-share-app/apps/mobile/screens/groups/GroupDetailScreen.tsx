@@ -280,17 +280,9 @@ export function GroupDetailScreen() {
         await exportGroupCsv(displayGroup, filteredExpenses, memberLites);
     }, [displayGroup, filteredFeed, memberLites]);
 
-    const handleOverflow = useCallback(() => {
-        Alert.alert(
-            '',
-            '',
-            [
-                { text: t('invite.group.title'), onPress: () => { void shareGroupInvite(groupId); } },
-                { text: t('common.cancel'), style: 'cancel' },
-            ],
-            { cancelable: true },
-        );
-    }, [groupId, t]);
+    const handleShare = useCallback(() => {
+        void shareGroupInvite(groupId);
+    }, [groupId]);
 
     const handleMessageEdit = useCallback(
         (m: GroupMessage) =>
@@ -451,7 +443,7 @@ export function GroupDetailScreen() {
                             memberCount={memberLites.length}
                             onBack={handleBack}
                             onSettings={handleSettings}
-                            onOverflow={handleOverflow}
+                            onShare={handleShare}
                         />
                         <QuickActionsRow
                             onSettleUp={handleSettleUp}

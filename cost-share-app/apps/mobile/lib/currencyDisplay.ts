@@ -1,3 +1,5 @@
+import { CURRENCY_LOCALE_NAMES } from './currencyLocaleNames';
+
 const displayNamesCache = new Map<string, Intl.DisplayNames>();
 
 function getDisplayNames(locale: string): Intl.DisplayNames | null {
@@ -13,7 +15,7 @@ function getDisplayNames(locale: string): Intl.DisplayNames | null {
     }
 }
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
+const CURRENCY_SYMBOL_OVERRIDES: Record<string, string> = {
     USD: '$',
     EUR: '€',
     GBP: '£',
@@ -24,8 +26,23 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
     AUD: 'A$',
 };
 
+function symbolFromIntl(code: string): string | null {
+    try {
+        const parts = new Intl.NumberFormat('en', {
+            style: 'currency',
+            currency: code,
+            currencyDisplay: 'narrowSymbol',
+        }).formatToParts(0);
+        const symbol = parts.find((p) => p.type === 'currency')?.value;
+        if (symbol && symbol !== code) return symbol;
+    } catch {
+        // invalid or unsupported ISO code in this runtime
+    }
+    return null;
+}
+
 export function getCurrencySymbol(code: string): string {
-    return CURRENCY_SYMBOLS[code] ?? code;
+    return CURRENCY_SYMBOL_OVERRIDES[code] ?? symbolFromIntl(code) ?? code;
 }
 
 export function formatCurrencyAmount(value: number, currency: string): string {
@@ -45,7 +62,10 @@ export function resolveCurrencyLocale(language: string): string {
 }
 
 export function getLocalizedCurrencyName(code: string, language: string): string | undefined {
-    const locale = resolveCurrencyLocale(language);
+    const locale = resolveCurrencyLocale(language) as keyof typeof CURRENCY_LOCALE_NAMES;
+    const fromStatic = CURRENCY_LOCALE_NAMES[locale]?.[code];
+    if (fromStatic) return fromStatic;
+
     const displayNames = getDisplayNames(locale);
     if (!displayNames) return undefined;
 

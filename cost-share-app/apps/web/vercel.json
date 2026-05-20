@@ -1,6 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
+  "framework": null,
+  "installCommand": "cd ../.. && npm install --include=optional",
+  "buildCommand": "bash scripts/build-app-web.sh",
+  "outputDirectory": "../mobile/dist",
+  "rewrites": [
+    {
+      "source": "/((?!_expo/|favicon\\.ico|.*\\.(?:css|js|png|jpg|jpeg|gif|webp|svg|ttf|woff2?|ico)$).*)",
+      "destination": "/index.html"
+    }
+  ],
   "redirects": [
     {
       "source": "/:path*",

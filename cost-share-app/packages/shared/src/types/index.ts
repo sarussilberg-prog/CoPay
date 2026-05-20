@@ -231,7 +231,15 @@ export interface RecentActivity {
 /**
  * Group types for categorization
  */
-export type GroupType = 'trip' | 'home' | 'couple' | 'general' | 'other';
+export type GroupType =
+    | 'trip'
+    | 'home'
+    | 'couple'
+    | 'general'
+    | 'work'
+    | 'event'
+    | 'friends'
+    | 'other';
 
 /**
  * Expense categories

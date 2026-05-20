@@ -102,15 +102,11 @@ function CurrencyBreakdownRow({
     owed,
     owedToUser,
     isLast,
-    nothingOwedShort,
-    notOwedToYouShort,
 }: {
     currency: string;
     owed: number;
     owedToUser: number;
     isLast: boolean;
-    nothingOwedShort: string;
-    notOwedToYouShort: string;
 }) {
     const isRtl = useRtlLayout();
     const symbol = getCurrencySymbol(currency);
@@ -136,7 +132,11 @@ function CurrencyBreakdownRow({
                         label={`-${formatCurrencyAmount(owed, currency)}`}
                     />
                 ) : (
-                    <AmountChip tone="neutral" label={nothingOwedShort} />
+                    <AmountChip
+                        tone="neutral"
+                        testID={`breakdown-owe-zero-${currency}`}
+                        label={formatCurrencyAmount(0, currency)}
+                    />
                 )}
                 {hasOwed ? (
                     <AmountChip
@@ -145,7 +145,11 @@ function CurrencyBreakdownRow({
                         label={`+${formatCurrencyAmount(owedToUser, currency)}`}
                     />
                 ) : (
-                    <AmountChip tone="neutral" label={notOwedToYouShort} />
+                    <AmountChip
+                        tone="neutral"
+                        testID={`breakdown-owed-zero-${currency}`}
+                        label={formatCurrencyAmount(0, currency)}
+                    />
                 )}
             </View>
         </View>
@@ -234,8 +238,6 @@ export function BalanceHeroCard({ summary, conversion }: Props) {
                             owed={row.owed}
                             owedToUser={row.owedToUser}
                             isLast={index === summary.byCurrency.length - 1}
-                            nothingOwedShort={t('dashboard.nothingOwedShort')}
-                            notOwedToYouShort={t('dashboard.notOwedToYouShort')}
                         />
                     ))}
                 </View>

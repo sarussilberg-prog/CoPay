@@ -124,16 +124,16 @@ export function renderGroupInvite(
     ).join('');
 
     const body = `
-        <h1>הוזמנת לקבוצה ב-Kupa</h1>
+        <h1>הוזמנת לקופה ב-Kupa</h1>
         <h2>${name}</h2>
         <div class="members">${memberAvatars}</div>
         <div class="meta">${g.member_count} חברים · ${escapeHtml(g.currency)}</div>
-        <a class="btn primary" href="com.kupa.mobile://invite/g/${escapeHtml(token)}">הצטרף לקבוצה ב-Kupa</a>
+        <a class="btn primary" href="com.kupa.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-Kupa</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
     return shell({
-        title: `הוזמנת לקבוצת '${g.name}' ב-Kupa`,
+        title: `הוזמנת לקופת '${g.name}' ב-Kupa`,
         description: `${g.member_count} חברים · מטבע ${g.currency} · הצטרף בקלות`,
         canonical: `https://kupa.pro/g/${token}`,
         body,

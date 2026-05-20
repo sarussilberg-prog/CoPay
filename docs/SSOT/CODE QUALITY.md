@@ -45,9 +45,11 @@
 - Types, DTOs, row **mappers** (`mappers/`), pure **calculations** (`calculations/`).
 - DB snake_case in Postgres; TypeScript camelCase in app types.
 
-### 2.3 Web (`apps/web/`)
+### 2.3 Web (`apps/web/` + Expo Web)
 
-- Supabase SSR auth only (light shell). Same Supabase project as mobile.
+- **Production (`kupa.pro`):** Expo Web export from `apps/mobile` (same UI as mobile, phone-frame layout). Deploy via `apps/mobile/vercel.json`.
+- **Legacy Next.js shell (`apps/web/`):** Supabase SSR auth placeholder — kept for future marketing/invite landings; not the primary app surface.
+- Same Supabase project as mobile.
 
 ### 2.4 Dev-only scripts
 
@@ -107,7 +109,6 @@ netBalance = totalPaid - totalOwed + totalSettledReceived - totalSettledPaid
 | Item | Notes |
 |------|-------|
 | [PENDING REFACTOR]: Move balance fetch to Supabase RPC/view | Optional server-side aggregation |
-| [PENDING REFACTOR]: Storage RLS for `group-images` bucket | Document policies in schema or Supabase dashboard |
 | [PENDING REFACTOR]: Prune stale superpowers plans referencing `apps/server` | Historical docs under `docs/superpowers/` |
 
 ---
@@ -126,5 +127,6 @@ netBalance = totalPaid - totalOwed + totalSettledReceived - totalSettledPaid
 
 | Date | Change |
 |------|--------|
+| 2026-05-20 | Added `supabase/group-images-bucket.sql` + `fix-groups-update-members.sql` — group avatar storage + member UPDATE RLS |
 | 2026-05-19 | v0.2 — Removed NestJS; Supabase-only architecture |
 | 2026-05-19 | v0.1 — Initial CODE QUALITY |

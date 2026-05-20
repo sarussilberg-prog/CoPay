@@ -1,238 +1,131 @@
 /**
- * FiltersSheet — bottom-sheet modal with filter sections for the groups list.
- * Built on React Native's Modal (no @gorhom/bottom-sheet dependency).
- * `Apply` is the only commit boundary — local state is reset on close.
+ * FiltersSheet — sort + filter bottom sheet for the groups list.
  */
 
-import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    Modal,
-    Pressable,
-    ScrollView,
-    Switch,
-    TouchableOpacity,
-} from 'react-native';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { GroupType } from '@cost-share/shared';
+import { FilterBottomSheet } from './filters/FilterBottomSheet';
+import { FilterSection } from './filters/FilterSection';
+import { FilterSingleChipGrid } from './filters/FilterSingleChipGrid';
+import { FilterChipGrid } from './filters/FilterChipGrid';
+import { GroupTypeFilterGrid } from './filters/GroupTypeFilterGrid';
+import { FilterToggleRow } from './filters/FilterToggleRow';
+import {
+    DEFAULT_GROUP_LIST_FILTERS,
+    GroupListFilters,
+    GroupSortOption,
+    isAnyGroupListFilterActive,
+} from '../lib/groupListQuery';
+import { getCurrencySymbol } from '../lib/currencyDisplay';
 
-export type BalanceState = 'all' | 'owe' | 'owed' | 'settled';
-
-export interface Filters {
-    balanceState: BalanceState;
-    types: GroupType[];
-    includeArchived: boolean;
-    currencies: string[];
-}
-
-export const DEFAULT_FILTERS: Filters = {
-    balanceState: 'all',
-    types: [],
-    includeArchived: false,
-    currencies: [],
-};
-
-export function isAnyFilterActive(f: Filters): boolean {
-    return (
-        f.balanceState !== 'all' ||
-        f.types.length > 0 ||
-        f.includeArchived ||
-        f.currencies.length > 0
-    );
-}
+export type { BalanceState } from '../lib/groupListQuery';
+export type Filters = GroupListFilters;
+export const DEFAULT_FILTERS = DEFAULT_GROUP_LIST_FILTERS;
+export const isAnyFilterActive = isAnyGroupListFilterActive;
 
 interface FiltersSheetProps {
     visible: boolean;
-    filters: Filters;
-    availableTypes: GroupType[];
+    filters: GroupListFilters;
     availableCurrencies: string[];
-    onApply: (next: Filters) => void;
+    onChange: (next: GroupListFilters) => void;
     onClose: () => void;
-}
-
-function Chip({
-    label,
-    active,
-    onPress,
-}: {
-    label: string;
-    active: boolean;
-    onPress: () => void;
-}) {
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            className={
-                active
-                    ? 'px-3 py-1.5 rounded-full bg-primary mr-2 mb-2'
-                    : 'px-3 py-1.5 rounded-full bg-gray-100 mr-2 mb-2'
-            }
-        >
-            <Text
-                className={
-                    active
-                        ? 'text-sm font-medium text-white'
-                        : 'text-sm font-medium text-gray-700'
-                }
-            >
-                {label}
-            </Text>
-        </TouchableOpacity>
-    );
-}
-
-function toggle<T>(list: T[], value: T): T[] {
-    return list.includes(value) ? list.filter(v => v !== value) : [...list, value];
 }
 
 export function FiltersSheet({
     visible,
     filters,
-    availableTypes,
     availableCurrencies,
-    onApply,
+    onChange,
     onClose,
 }: FiltersSheetProps) {
     const { t } = useTranslation();
-    const [draft, setDraft] = useState<Filters>(filters);
 
-    useEffect(() => {
-        if (visible) setDraft(filters);
-    }, [visible, filters]);
-
-    const balanceOptions: { key: BalanceState; label: string }[] = [
-        { key: 'all', label: t('groups.filters.balance.all') },
-        { key: 'owe', label: t('groups.filters.balance.owe') },
-        { key: 'owed', label: t('groups.filters.balance.owed') },
-        { key: 'settled', label: t('groups.filters.balance.settled') },
+    const sortOptions: { key: GroupSortOption; label: string }[] = [
+        { key: 'recentDesc', label: t('groups.filters.sort.recentDesc') },
+        { key: 'recentAsc', label: t('groups.filters.sort.recentAsc') },
+        { key: 'nameAsc', label: t('groups.filters.sort.nameAsc') },
+        { key: 'nameDesc', label: t('groups.filters.sort.nameDesc') },
+        { key: 'balanceDesc', label: t('groups.filters.sort.balanceDesc') },
+        { key: 'balanceAsc', label: t('groups.filters.sort.balanceAsc') },
     ];
 
+    const balanceOptions = [
+        { key: 'all' as const, label: t('groups.filters.balance.all') },
+        { key: 'owe' as const, label: t('groups.filters.balance.owe') },
+        { key: 'owed' as const, label: t('groups.filters.balance.owed') },
+        { key: 'settled' as const, label: t('groups.filters.balance.settled') },
+    ];
+
+    const currencyOptions = availableCurrencies.map((c) => ({
+        key: c,
+        label: getCurrencySymbol(c),
+    }));
+
     return (
-        <Modal
+        <FilterBottomSheet
             visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
+            filters={filters}
+            title={t('groups.filters.title')}
+            subtitle={t('groups.filters.subtitle')}
+            onChange={onChange}
+            onClose={onClose}
+            onClear={() => DEFAULT_GROUP_LIST_FILTERS}
         >
-            <Pressable
-                onPress={onClose}
-                className="flex-1 bg-black/40 justify-end"
-            >
-                <Pressable
-                    onPress={() => {}}
-                    className="bg-white rounded-t-3xl"
-                >
-                    <View className="px-5 pt-3 pb-2">
-                        <View className="self-center w-10 h-1 rounded-full bg-gray-300 mb-3" />
-                        <Text className="text-lg font-semibold text-gray-900">
-                            {t('groups.filters.title')}
-                        </Text>
-                    </View>
-
-                    <ScrollView
-                        className="px-5"
-                        contentContainerClassName="pb-2"
-                        showsVerticalScrollIndicator={false}
+            {({ filters: f, patch }) => (
+                <>
+                    <FilterSection
+                        first
+                        label={t('groups.filters.sort.label')}
                     >
-                        <Text className="text-xs font-semibold uppercase text-gray-500 mt-3 mb-2">
-                            {t('groups.filters.balance.label')}
-                        </Text>
-                        <View className="flex-row flex-wrap">
-                            {balanceOptions.map(opt => (
-                                <Chip
-                                    key={opt.key}
-                                    label={opt.label}
-                                    active={draft.balanceState === opt.key}
-                                    onPress={() =>
-                                        setDraft(d => ({ ...d, balanceState: opt.key }))
-                                    }
-                                />
-                            ))}
-                        </View>
+                        <FilterSingleChipGrid
+                            value={f.sortBy}
+                            options={sortOptions}
+                            onChange={(sortBy) => patch({ sortBy })}
+                        />
+                    </FilterSection>
 
-                        {availableTypes.length > 0 && (
-                            <>
-                                <Text className="text-xs font-semibold uppercase text-gray-500 mt-4 mb-2">
-                                    {t('groups.filters.type.label')}
-                                </Text>
-                                <View className="flex-row flex-wrap">
-                                    {availableTypes.map(type => (
-                                        <Chip
-                                            key={type}
-                                            label={t(`groups.types.${type}`, { defaultValue: type })}
-                                            active={draft.types.includes(type)}
-                                            onPress={() =>
-                                                setDraft(d => ({
-                                                    ...d,
-                                                    types: toggle(d.types, type),
-                                                }))
-                                            }
-                                        />
-                                    ))}
-                                </View>
-                            </>
-                        )}
+                    <FilterSection label={t('groups.filters.balance.label')}>
+                        <FilterSingleChipGrid
+                            value={f.balanceState}
+                            options={balanceOptions}
+                            onChange={(balanceState) => patch({ balanceState })}
+                        />
+                    </FilterSection>
 
-                        {availableCurrencies.length > 0 && (
-                            <>
-                                <Text className="text-xs font-semibold uppercase text-gray-500 mt-4 mb-2">
-                                    {t('groups.filters.currency.label')}
-                                </Text>
-                                <View className="flex-row flex-wrap">
-                                    {availableCurrencies.map(c => (
-                                        <Chip
-                                            key={c}
-                                            label={c}
-                                            active={draft.currencies.includes(c)}
-                                            onPress={() =>
-                                                setDraft(d => ({
-                                                    ...d,
-                                                    currencies: toggle(d.currencies, c),
-                                                }))
-                                            }
-                                        />
-                                    ))}
-                                </View>
-                            </>
-                        )}
+                    <FilterSection
+                        label={t('groups.filters.type.label')}
+                        hint={t('groups.filters.type.hint')}
+                    >
+                        <GroupTypeFilterGrid
+                            allLabel={t('groups.filters.balance.all')}
+                            selected={f.types}
+                            onChange={(types) => patch({ types })}
+                        />
+                    </FilterSection>
 
-                        <View className="flex-row items-center justify-between mt-5 mb-1">
-                            <Text className="text-sm font-medium text-gray-700">
-                                {t('groups.filters.status.includeArchived')}
-                            </Text>
-                            <Switch
-                                value={draft.includeArchived}
-                                onValueChange={v =>
-                                    setDraft(d => ({ ...d, includeArchived: v }))
-                                }
+                    {availableCurrencies.length > 0 && (
+                        <FilterSection label={t('groups.filters.currency.label')}>
+                            <FilterChipGrid
+                                allLabel={t('groups.filters.balance.all')}
+                                selected={f.currencies}
+                                allValues={availableCurrencies}
+                                options={currencyOptions}
+                                onChange={(currencies) => patch({ currencies })}
                             />
-                        </View>
-                    </ScrollView>
+                        </FilterSection>
+                    )}
 
-                    <View className="flex-row px-5 pt-3 pb-6 border-t border-gray-100">
-                        <TouchableOpacity
-                            onPress={() => setDraft(DEFAULT_FILTERS)}
-                            className="flex-1 mr-2 h-11 rounded-xl bg-gray-100 items-center justify-center"
-                        >
-                            <Text className="text-sm font-medium text-gray-700">
-                                {t('groups.filters.clearAll')}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => {
-                                onApply(draft);
-                                onClose();
-                            }}
-                            className="flex-1 ml-2 h-11 rounded-xl bg-primary items-center justify-center"
-                        >
-                            <Text className="text-sm font-semibold text-white">
-                                {t('groups.filters.apply')}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </Pressable>
-            </Pressable>
-        </Modal>
+                    <FilterSection label={t('groups.filters.status.label')}>
+                        <FilterToggleRow
+                            label={t('groups.filters.status.includeArchived')}
+                            value={f.includeArchived}
+                            onValueChange={(includeArchived) =>
+                                patch({ includeArchived })
+                            }
+                        />
+                    </FilterSection>
+                </>
+            )}
+        </FilterBottomSheet>
     );
 }

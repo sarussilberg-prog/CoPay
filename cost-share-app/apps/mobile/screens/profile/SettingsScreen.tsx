@@ -2,7 +2,7 @@ import { Text } from '../../components/AppText';
 import React, { useCallback, useState } from 'react';
 import { View, ScrollView, Linking, Platform, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
 import { Language, DEFAULT_CURRENCY } from '@cost-share/shared';
 import { useAppStore } from '../../store';
@@ -23,6 +23,7 @@ import currencyCodes from 'currency-codes';
 import { getCurrencyDisplayName } from '../../lib/currencyDisplay';
 import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 const WHATSAPP_NUMBER = (process.env.EXPO_PUBLIC_SUPPORT_WHATSAPP_NUMBER || '+972528616878').replace(/[^\d]/g, '');
 const APP_STORE_URL = process.env.EXPO_PUBLIC_APP_STORE_URL;
 const PLAY_STORE_URL = process.env.EXPO_PUBLIC_PLAY_STORE_URL;
@@ -164,7 +165,7 @@ export function SettingsScreen() {
                 </SettingsSection>
 
                 <Text className="text-center text-xs text-gray-400 mb-8">
-                    {t('settings.version', { version: Application.nativeApplicationVersion ?? '?' })}
+                    {t('settings.version', { version: APP_VERSION })}
                 </Text>
             </View>
 

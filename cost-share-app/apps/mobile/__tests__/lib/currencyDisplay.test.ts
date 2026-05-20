@@ -16,6 +16,10 @@ describe('currencyDisplay', () => {
             expect(getCurrencySymbol('ILS')).toBe('₪');
         });
 
+        it('returns dram symbol for AMD', () => {
+            expect(getCurrencySymbol('AMD')).toBe('֏');
+        });
+
         it('falls back to code for unknown currency', () => {
             expect(getCurrencySymbol('XYZ')).toBe('XYZ');
         });
