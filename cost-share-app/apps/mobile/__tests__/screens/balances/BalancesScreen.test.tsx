@@ -42,31 +42,78 @@ beforeEach(() => {
 describe('BalancesScreen', () => {
     it('shows "all settled" message when there are no debts', async () => {
         mockBalances.mockResolvedValueOnce([]);
-        mockDebts.mockResolvedValueOnce([]);
-        const { findByText } = renderWithQuery(<BalancesScreen />);
+        mockDebts.mockResolvedValueOnce({
+            debts: [],
+            transactionCount: 0,
+            algorithm: 'exact',
+        });
+        const { findByText, queryByTestId } = renderWithQuery(<BalancesScreen />);
         expect(await findByText('balances.allSettled')).toBeTruthy();
+        // Summary line is hidden when there are no debts.
+        expect(queryByTestId('debts-summary')).toBeNull();
     });
 
-    it('renders debts with simplified summary', async () => {
+    it('renders debts with the simplified summary line and a Minimum badge for exact results', async () => {
         mockBalances.mockResolvedValueOnce([]);
-        mockDebts.mockResolvedValueOnce([
-            {
-                fromUserId: 'u1',
-                fromUserName: 'Alice',
-                toUserId: 'u2',
-                toUserName: 'Bob',
-                amount: 25,
-                currency: 'USD',
-            } as any,
-        ]);
-        const { findByText } = renderWithQuery(<BalancesScreen />);
+        mockDebts.mockResolvedValueOnce({
+            debts: [
+                {
+                    fromUserId: 'u1',
+                    fromUserName: 'Alice',
+                    toUserId: 'u2',
+                    toUserName: 'Bob',
+                    amount: 25,
+                    currency: 'USD',
+                },
+            ],
+            transactionCount: 1,
+            algorithm: 'exact',
+        });
+        const { findByText, findByTestId } = renderWithQuery(<BalancesScreen />);
         expect(await findByText('Alice')).toBeTruthy();
         expect(await findByText(/USD 25\.00/)).toBeTruthy();
+        // Summary text is the i18n key — t() returns the key in tests.
+        const summary = await findByTestId('debts-summary');
+        expect(summary).toBeTruthy();
+        expect(await findByTestId('minimum-badge')).toBeTruthy();
+    });
+
+    it('hides the Minimum badge for greedy results but keeps the summary', async () => {
+        mockBalances.mockResolvedValueOnce([]);
+        mockDebts.mockResolvedValueOnce({
+            debts: [
+                {
+                    fromUserId: 'u1',
+                    fromUserName: 'Alice',
+                    toUserId: 'u2',
+                    toUserName: 'Bob',
+                    amount: 10,
+                    currency: 'USD',
+                },
+                {
+                    fromUserId: 'u3',
+                    fromUserName: 'Carol',
+                    toUserId: 'u2',
+                    toUserName: 'Bob',
+                    amount: 5,
+                    currency: 'USD',
+                },
+            ],
+            transactionCount: 2,
+            algorithm: 'greedy',
+        });
+        const { findByTestId, queryByTestId } = renderWithQuery(<BalancesScreen />);
+        expect(await findByTestId('debts-summary')).toBeTruthy();
+        expect(queryByTestId('minimum-badge')).toBeNull();
     });
 
     it('navigates to SettlementHistory when the history button is pressed', async () => {
         mockBalances.mockResolvedValueOnce([]);
-        mockDebts.mockResolvedValueOnce([]);
+        mockDebts.mockResolvedValueOnce({
+            debts: [],
+            transactionCount: 0,
+            algorithm: 'exact',
+        });
         const { findByText } = renderWithQuery(<BalancesScreen />);
         fireEvent.press(await findByText('balances.settlementHistory'));
         expect(mockNavigate).toHaveBeenCalledWith('SettlementHistory', {
