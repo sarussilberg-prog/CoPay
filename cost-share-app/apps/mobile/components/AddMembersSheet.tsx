@@ -22,6 +22,7 @@ import { AppIcon } from './AppIcon';
 import { colors } from '../theme';
 import { useFriendsQuery } from '../hooks/queries/useFriendsQueries';
 import { addGroupMember } from '../services/groups.service';
+import { shareGroupInvite } from '../services/invite.service';
 
 interface AddMembersSheetProps {
     visible: boolean;
@@ -202,26 +203,52 @@ export function AddMembersSheet({
                         )}
                     </ScrollView>
 
-                    {eligible.length > 0 && (
-                        <View className="px-4 pb-4 pt-2 border-t border-gray-100">
-                            <TouchableOpacity
-                                onPress={handleAdd}
-                                disabled={addDisabled}
-                                style={{ opacity: addDisabled ? 0.4 : 1 }}
-                                className="h-12 rounded-xl bg-primary items-center justify-center flex-row"
-                                testID="add-members-confirm"
-                            >
-                                {submitting && (
-                                    <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
-                                )}
-                                <Text className="text-base font-semibold text-white">
-                                    {selectedIds.length > 0
-                                        ? `${t('common.confirm')} (${selectedIds.length})`
-                                        : t('common.confirm')}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                    <View className="mt-4 border-t border-slate-100 pt-2 px-4 pb-4">
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('Profile', { screen: 'FindFriends' })}
+                            className="flex-row items-center py-3 px-2"
+                            testID="add-members-search-others"
+                        >
+                            <AppIcon name="search-outline" size={20} color={colors.primary} />
+                            <Text className="flex-1 ml-3 text-sm font-medium text-gray-800">
+                                {t('invite.addMembers.searchOthers')}
+                            </Text>
+                            <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => { void shareGroupInvite(groupId); }}
+                            className="flex-row items-center py-3 px-2"
+                            testID="add-members-share-link"
+                        >
+                            <AppIcon name="share-outline" size={20} color={colors.primary} />
+                            <Text className="flex-1 ml-3 text-sm font-medium text-gray-800">
+                                {t('invite.addMembers.sendLink')}
+                            </Text>
+                            <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
+                        </TouchableOpacity>
+
+                        {eligible.length > 0 && (
+                            <View className="mt-4 pt-2 border-t border-gray-100">
+                                <TouchableOpacity
+                                    onPress={handleAdd}
+                                    disabled={addDisabled}
+                                    style={{ opacity: addDisabled ? 0.4 : 1 }}
+                                    className="h-12 rounded-xl bg-primary items-center justify-center flex-row"
+                                    testID="add-members-confirm"
+                                >
+                                    {submitting && (
+                                        <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
+                                    )}
+                                    <Text className="text-base font-semibold text-white">
+                                        {selectedIds.length > 0
+                                            ? `${t('common.confirm')} (${selectedIds.length})`
+                                            : t('common.confirm')}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
                 </Pressable>
             </Pressable>
         </Modal>
