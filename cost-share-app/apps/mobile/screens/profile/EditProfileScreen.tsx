@@ -16,6 +16,7 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import { ProfileImagePicker } from '../../components/ProfileImagePicker';
+import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 import { DEFAULT_CURRENCY } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 
@@ -135,6 +136,11 @@ export function EditProfileScreen() {
                     onChange={setCurrency}
                     label={t('profile.defaultCurrency')}
                 />
+
+                {/* Invite Link Block */}
+                <View className="pt-4">
+                    <InviteLinkBlock kind="friend" mode="expanded" />
+                </View>
 
                 {/* Actions */}
                 <View className="mt-4 gap-2">
