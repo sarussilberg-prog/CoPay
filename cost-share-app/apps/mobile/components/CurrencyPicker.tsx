@@ -21,9 +21,18 @@ interface CurrencyPickerProps {
     /** Controlled mode: hide the field trigger and drive the modal externally */
     visible?: boolean;
     onClose?: () => void;
+    /** Compact trigger: code-only chip with fixed height, suitable for inline use beside another field */
+    compact?: boolean;
 }
 
-export function CurrencyPicker({ value, onChange, label, visible, onClose }: CurrencyPickerProps) {
+export function CurrencyPicker({
+    value,
+    onChange,
+    label,
+    visible,
+    onClose,
+    compact = false,
+}: CurrencyPickerProps) {
     const { t, i18n } = useTranslation();
     const isRtl = useRtlLayout();
     const [internalVisible, setInternalVisible] = useState(false);
@@ -77,18 +86,27 @@ export function CurrencyPicker({ value, onChange, label, visible, onClose }: Cur
     };
 
     return (
-        <View className={isControlled ? undefined : 'mb-4'}>
-            {!isControlled && label && (
+        <View className={isControlled || compact ? undefined : 'mb-4'}>
+            {!isControlled && !compact && label && (
                 <Text className="text-sm font-medium text-gray-700 mb-2">{label}</Text>
             )}
 
             {!isControlled && (
                 <TouchableOpacity
                     onPress={openModal}
-                    className="bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center"
+                    style={compact ? { height: 64 } : undefined}
+                    className={
+                        compact
+                            ? 'bg-white border border-gray-300 rounded-xl px-3 flex-row items-center justify-center'
+                            : 'bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center'
+                    }
                 >
-                    <Text className="text-base">{selectedLabel}</Text>
-                    <Text className="text-gray-400">▼</Text>
+                    <Text className={compact ? 'text-base font-semibold text-gray-900' : 'text-base'}>
+                        {compact
+                            ? (selectedCurrency?.code ?? value ?? '—')
+                            : selectedLabel}
+                    </Text>
+                    <Text className={compact ? 'text-gray-400 ml-1 text-xs' : 'text-gray-400'}>▼</Text>
                 </TouchableOpacity>
             )}
 

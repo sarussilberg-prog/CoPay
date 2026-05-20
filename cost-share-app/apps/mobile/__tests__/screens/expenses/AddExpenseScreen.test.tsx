@@ -24,6 +24,11 @@ jest.mock('../../../services/groups.service', () => ({
     getGroupMembers: jest.fn().mockResolvedValue([
         { id: 'm1', groupId: 'g1', userId: 'u1', role: 'member', isActive: true, joinedAt: new Date() },
     ]),
+    getGroupById: jest.fn().mockResolvedValue({
+        id: 'g1',
+        name: 'Test Group',
+        defaultCurrency: 'USD',
+    }),
 }));
 
 jest.mock('../../../services/users.service', () => ({

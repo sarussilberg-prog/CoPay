@@ -1,6 +1,6 @@
 /**
  * GroupsListScreen
- * Main groups list with expandable search, filter sheet, balance summary,
+ * Main groups list with expandable search, filter sheet,
  * per-group balance chips, and a pinned bottom Create-a-group CTA.
  */
 
@@ -19,12 +19,10 @@ import { GroupType, GroupWithMembers } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import { fetchGroups } from '../../services/groups.service';
-import { fetchBalanceSummary } from '../../services/users.service';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupCard } from '../../components/GroupCard';
 import { SearchExpandable } from '../../components/SearchExpandable';
-import { BalanceSummaryHeader } from '../../components/BalanceSummaryHeader';
 import {
     DEFAULT_FILTERS,
     Filters,
@@ -77,7 +75,6 @@ export function GroupsListScreen() {
     const navigation = useNavigation<any>();
     const { isLoading, startLoading, stopLoading } = useLoading();
     const groups = useAppStore(s => s.groups);
-    const summary = useAppStore(s => s.balanceSummary);
     const groupBalances = useAppStore(s => s.groupBalances);
 
     const [refreshing, setRefreshing] = useState(false);
@@ -87,7 +84,7 @@ export function GroupsListScreen() {
     const [filtersOpen, setFiltersOpen] = useState(false);
 
     const loadAll = useCallback(async () => {
-        await Promise.all([fetchGroups(), fetchBalanceSummary()]);
+        await fetchGroups();
     }, []);
 
     useEffect(() => {
@@ -185,8 +182,6 @@ export function GroupsListScreen() {
                     </>
                 )}
             </View>
-
-            <BalanceSummaryHeader rows={summary} />
 
             <FlatList
                 data={filteredRows}

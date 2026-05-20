@@ -6,7 +6,8 @@
 
 import { Text } from '../../components/AppText';
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, TextInput } from 'react-native';
+import { resolveAutoTextInputStyle, useRtlLayout } from '../../hooks/useRtlLayout';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ExpenseCategory, GroupMember, User, ExpenseSplitInput, DEFAULT_CURRENCY } from '@cost-share/shared';
@@ -14,16 +15,18 @@ import { useLoading } from '../../hooks/useLoading';
 import { useAppStore } from '../../store';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { createExpense } from '../../services/expenses.service';
-import { getGroupMembers } from '../../services/groups.service';
+import { getGroupById, getGroupMembers } from '../../services/groups.service';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { CategoryPicker } from '../../components/CategoryPicker';
+import { CurrencyPicker } from '../../components/CurrencyPicker';
 import { SplitTypeSelector } from '../../components/SplitTypeSelector';
 import { MemberSelector } from '../../components/MemberSelector';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 
 export function AddExpenseScreen() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { groupId } = route.params;
@@ -32,6 +35,7 @@ export function AddExpenseScreen() {
 
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
+    const [currency, setCurrency] = useState<string>(DEFAULT_CURRENCY);
     const [category, setCategory] = useState<ExpenseCategory>('other');
     const [splitType, setSplitType] = useState<'equal' | 'unequal'>('equal');
     const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
@@ -44,10 +48,14 @@ export function AddExpenseScreen() {
 
     useEffect(() => {
         const loadData = async () => {
-            const membersData = await getGroupMembers(groupId);
+            const [membersData, group] = await Promise.all([
+                getGroupMembers(groupId),
+                getGroupById(groupId),
+            ]);
             const activeMembers = membersData.filter((m) => m.isActive);
             setMembers(activeMembers);
             setSelectedMemberIds(activeMembers.map((m) => m.userId));
+            if (group?.defaultCurrency) setCurrency(group.defaultCurrency);
             setDataLoading(false);
         };
         void loadData();
@@ -95,7 +103,7 @@ export function AddExpenseScreen() {
             groupId,
             description: description.trim(),
             amount: parsedAmount,
-            currency: DEFAULT_CURRENCY, // TODO: use group currency
+            currency,
             category,
             paidBy: currentUser.id,
             splits,
@@ -134,18 +142,39 @@ export function AddExpenseScreen() {
                     error={descriptionError}
                 />
 
-                {/* Amount */}
-                <Input
-                    label={t('expenses.amount')}
-                    placeholder="0.00"
-                    value={amount}
-                    onChangeText={(text) => {
-                        setAmount(text);
-                        if (amountError) setAmountError('');
-                    }}
-                    error={amountError}
-                    keyboardType="decimal-pad"
-                />
+                {/* Amount + Currency */}
+                <View className="mb-4">
+                    <Text className="text-sm font-medium text-gray-700 mb-2">
+                        {t('expenses.amount')}
+                    </Text>
+                    <View className="flex-row items-center" style={{ gap: 8 }}>
+                        <TextInput
+                            className={`flex-1 bg-white border rounded-xl px-4 text-3xl font-semibold text-gray-900 ${amountError ? 'border-red-500' : 'border-gray-300'}`}
+                            style={[
+                                resolveAutoTextInputStyle(isRtl),
+                                { height: 64, textAlign: 'center' },
+                            ]}
+                            placeholder="0.00"
+                            placeholderTextColor="#9CA3AF"
+                            value={amount}
+                            onChangeText={(text) => {
+                                setAmount(text);
+                                if (amountError) setAmountError('');
+                            }}
+                            keyboardType="decimal-pad"
+                        />
+                        <View style={{ width: 96 }}>
+                            <CurrencyPicker
+                                value={currency}
+                                onChange={setCurrency}
+                                compact
+                            />
+                        </View>
+                    </View>
+                    {amountError ? (
+                        <Text className="text-sm text-red-500 mt-1">{amountError}</Text>
+                    ) : null}
+                </View>
 
                 {/* Category */}
                 <CategoryPicker

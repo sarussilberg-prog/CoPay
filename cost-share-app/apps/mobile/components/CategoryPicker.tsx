@@ -1,6 +1,6 @@
 /**
  * CategoryPicker Component
- * Expense category selector with emoji icons
+ * Expense category selector
  * Uses NativeWind styling only, supports i18n
  */
 
@@ -16,15 +16,15 @@ interface CategoryPickerProps {
     label?: string;
 }
 
-const categories: { key: ExpenseCategory; emoji: string }[] = [
-    { key: 'food', emoji: '🍕' },
-    { key: 'transport', emoji: '🚗' },
-    { key: 'accommodation', emoji: '🏨' },
-    { key: 'utilities', emoji: '💡' },
-    { key: 'entertainment', emoji: '🎬' },
-    { key: 'shopping', emoji: '🛍️' },
-    { key: 'healthcare', emoji: '💊' },
-    { key: 'other', emoji: '📦' },
+const categories: ExpenseCategory[] = [
+    'food',
+    'transport',
+    'accommodation',
+    'utilities',
+    'entertainment',
+    'shopping',
+    'healthcare',
+    'other',
 ];
 
 const categoryTranslationKeys: Record<ExpenseCategory, string> = {
@@ -52,20 +52,19 @@ export function CategoryPicker({ value, onChange, label }: CategoryPickerProps) 
                 <View className="flex-row gap-2">
                     {categories.map((cat) => (
                         <TouchableOpacity
-                            key={cat.key}
-                            onPress={() => onChange(cat.key)}
+                            key={cat}
+                            onPress={() => onChange(cat)}
                             activeOpacity={0.7}
-                            className={`px-4 py-2 rounded-xl flex-row items-center ${value === cat.key
+                            className={`px-4 py-2 rounded-xl ${value === cat
                                     ? 'bg-primary-extra-light border border-primary'
                                     : 'bg-gray-50 border border-gray-200'
                                 }`}
                         >
-                            <Text className="text-base mr-1">{cat.emoji}</Text>
                             <Text
-                                className={`text-sm font-medium ${value === cat.key ? 'text-primary-dark' : 'text-gray-600'
+                                className={`text-sm font-medium ${value === cat ? 'text-primary-dark' : 'text-gray-600'
                                     }`}
                             >
-                                {t(categoryTranslationKeys[cat.key])}
+                                {t(categoryTranslationKeys[cat])}
                             </Text>
                         </TouchableOpacity>
                     ))}
