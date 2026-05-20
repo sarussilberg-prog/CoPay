@@ -1,4 +1,7 @@
--- Idempotent: profile dashboard RPC (fixes REST 404 on /rpc/get_user_dashboard)
+-- Idempotent: profile dashboard RPC.
+-- Totals, byCurrency, active/closed counts, AND friend balances all derive
+-- from the same pairwise-debt logic as get_group_pairwise_debts so the profile
+-- summary matches the Settle Up screen exactly.
 -- Apply: supabase db query --linked -f supabase/get-user-dashboard.sql
 
 CREATE OR REPLACE FUNCTION get_user_dashboard(p_user_id UUID)
@@ -15,199 +18,119 @@ DECLARE
     v_friends JSONB;
     v_stats JSONB;
     v_currency_count INT;
+    v_active_count INT;
+    v_closed_count INT;
 BEGIN
     SELECT COALESCE(default_currency, 'ILS') INTO v_default_currency FROM profiles WHERE id = p_user_id;
     IF v_default_currency IS NULL THEN v_default_currency := 'ILS'; END IF;
 
+    -- Single pairwise-debt computation feeds totals, stats, and friends.
     WITH user_groups AS (
-        SELECT gm.group_id, g.default_currency
-        FROM group_members gm JOIN groups g ON g.id = gm.group_id
+        SELECT gm.group_id
+        FROM group_members gm
+        JOIN groups g ON g.id = gm.group_id
         WHERE gm.user_id = p_user_id AND gm.is_active = TRUE AND g.is_active = TRUE
     ),
-    user_paid AS (
-        SELECT e.group_id, SUM(e.amount) AS amount FROM expenses e
-        WHERE e.paid_by = p_user_id AND e.is_deleted = FALSE
-          AND e.group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY e.group_id
+    expense_debts AS (
+        SELECT e.group_id, es.user_id AS debtor, e.paid_by AS creditor, e.currency,
+               SUM(es.amount) AS amount
+        FROM expense_splits es
+        JOIN expenses e ON e.id = es.expense_id
+        WHERE e.group_id IN (SELECT group_id FROM user_groups)
+          AND e.is_deleted = FALSE
+          AND es.user_id <> e.paid_by
+        GROUP BY e.group_id, es.user_id, e.paid_by, e.currency
     ),
-    user_owed AS (
-        SELECT e.group_id, SUM(es.amount) AS amount
-        FROM expense_splits es JOIN expenses e ON e.id = es.expense_id
-        WHERE es.user_id = p_user_id AND e.is_deleted = FALSE
-          AND e.group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY e.group_id
+    settlement_debts AS (
+        SELECT s.group_id, s.from_user_id AS debtor, s.to_user_id AS creditor, s.currency,
+               SUM(s.amount) AS amount
+        FROM settlements s
+        WHERE s.group_id IN (SELECT group_id FROM user_groups)
+          AND s.deleted_at IS NULL
+        GROUP BY s.group_id, s.from_user_id, s.to_user_id, s.currency
     ),
-    user_settled_received AS (
-        SELECT group_id, SUM(amount) AS amount FROM settlements
-        WHERE to_user_id = p_user_id AND group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY group_id
+    pair_combos AS (
+        SELECT group_id, debtor, creditor, currency FROM expense_debts
+        UNION
+        SELECT group_id, creditor, debtor, currency FROM expense_debts
+        UNION
+        SELECT group_id, debtor, creditor, currency FROM settlement_debts
+        UNION
+        SELECT group_id, creditor, debtor, currency FROM settlement_debts
     ),
-    user_settled_paid AS (
-        SELECT group_id, SUM(amount) AS amount FROM settlements
-        WHERE from_user_id = p_user_id AND group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY group_id
-    ),
-    per_group AS (
+    directed_net AS (
         SELECT
-            ug.group_id, ug.default_currency AS currency,
-            COALESCE(up.amount, 0) - COALESCE(uo.amount, 0)
-              + COALESCE(usr.amount, 0) - COALESCE(usp.amount, 0) AS net_balance
-        FROM user_groups ug
-        LEFT JOIN user_paid up ON up.group_id = ug.group_id
-        LEFT JOIN user_owed uo ON uo.group_id = ug.group_id
-        LEFT JOIN user_settled_received usr ON usr.group_id = ug.group_id
-        LEFT JOIN user_settled_paid usp ON usp.group_id = ug.group_id
+            pc.group_id, pc.debtor, pc.creditor, pc.currency,
+            COALESCE((SELECT ed.amount FROM expense_debts ed
+                      WHERE ed.group_id = pc.group_id
+                        AND ed.debtor = pc.debtor
+                        AND ed.creditor = pc.creditor
+                        AND ed.currency = pc.currency), 0)
+            - COALESCE((SELECT sd.amount FROM settlement_debts sd
+                      WHERE sd.group_id = pc.group_id
+                        AND sd.debtor = pc.debtor
+                        AND sd.creditor = pc.creditor
+                        AND sd.currency = pc.currency), 0)
+            AS gross
+        FROM pair_combos pc
+    ),
+    pair_net AS (
+        SELECT
+            dn.group_id,
+            LEAST(dn.debtor, dn.creditor) AS u_lo,
+            GREATEST(dn.debtor, dn.creditor) AS u_hi,
+            dn.currency,
+            SUM(CASE WHEN dn.debtor < dn.creditor THEN dn.gross ELSE -dn.gross END) AS lo_to_hi
+        FROM directed_net dn
+        GROUP BY dn.group_id,
+                 LEAST(dn.debtor, dn.creditor),
+                 GREATEST(dn.debtor, dn.creditor),
+                 dn.currency
+    ),
+    user_pairwise AS (
+        SELECT
+            pn.group_id,
+            pn.currency,
+            CASE WHEN pn.lo_to_hi > 0 THEN pn.u_lo ELSE pn.u_hi END AS from_user_id,
+            CASE WHEN pn.lo_to_hi > 0 THEN pn.u_hi ELSE pn.u_lo END AS to_user_id,
+            ABS(pn.lo_to_hi) AS amount,
+            CASE WHEN pn.u_lo = p_user_id THEN pn.u_hi ELSE pn.u_lo END AS friend_id,
+            -- net_toward_user > 0 → friend owes user; < 0 → user owes friend
+            CASE WHEN pn.u_lo = p_user_id THEN -pn.lo_to_hi ELSE pn.lo_to_hi END AS net_toward_user
+        FROM pair_net pn
+        WHERE ABS(pn.lo_to_hi) >= 0.01
+          AND (pn.u_lo = p_user_id OR pn.u_hi = p_user_id)
     ),
     per_currency AS (
         SELECT currency,
-            SUM(CASE WHEN net_balance < 0 THEN -net_balance ELSE 0 END) AS owed,
-            SUM(CASE WHEN net_balance > 0 THEN net_balance ELSE 0 END) AS owed_to_user
-        FROM per_group GROUP BY currency
-    )
-    SELECT
-        COALESCE(jsonb_agg(jsonb_build_object(
-            'currency', currency,
-            'owed', ROUND(owed::numeric, 2),
-            'owedToUser', ROUND(owed_to_user::numeric, 2)
-        )), '[]'::jsonb),
-        COUNT(*)
-    INTO v_by_currency, v_currency_count
-    FROM per_currency;
-
-    IF v_currency_count = 1 THEN
+            SUM(CASE WHEN from_user_id = p_user_id THEN amount ELSE 0 END) AS owed,
+            SUM(CASE WHEN to_user_id   = p_user_id THEN amount ELSE 0 END) AS owed_to_user
+        FROM user_pairwise
+        GROUP BY currency
+    ),
+    by_currency_agg AS (
         SELECT
-            (elem->>'owed')::numeric,
-            (elem->>'owedToUser')::numeric
-        INTO v_total_owed, v_total_owed_to_user
-        FROM jsonb_array_elements(v_by_currency) elem
-        LIMIT 1;
-    ELSE
-        v_total_owed := NULL;
-        v_total_owed_to_user := NULL;
-    END IF;
-
-    WITH user_groups AS (
-        SELECT gm.group_id FROM group_members gm JOIN groups g ON g.id = gm.group_id
-        WHERE gm.user_id = p_user_id AND gm.is_active = TRUE AND g.is_active = TRUE
+            COALESCE(jsonb_agg(jsonb_build_object(
+                'currency', currency,
+                'owed', ROUND(owed::numeric, 2),
+                'owedToUser', ROUND(owed_to_user::numeric, 2)
+            )), '[]'::jsonb) AS by_currency_json,
+            COUNT(*) AS currency_count
+        FROM per_currency
     ),
-    gma AS (
-        SELECT gm.group_id, gm.user_id FROM group_members gm
-        WHERE gm.is_active = TRUE AND gm.group_id IN (SELECT group_id FROM user_groups)
-    ),
-    mp AS (
-        SELECT e.group_id, e.paid_by AS user_id, SUM(e.amount) AS amount
-        FROM expenses e
-        WHERE e.is_deleted = FALSE AND e.group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY e.group_id, e.paid_by
-    ),
-    mo AS (
-        SELECT e.group_id, es.user_id, SUM(es.amount) AS amount
-        FROM expense_splits es JOIN expenses e ON e.id = es.expense_id
-        WHERE e.is_deleted = FALSE AND e.group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY e.group_id, es.user_id
-    ),
-    msr AS (
-        SELECT group_id, to_user_id AS user_id, SUM(amount) AS amount
-        FROM settlements
-        WHERE group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY group_id, to_user_id
-    ),
-    msp AS (
-        SELECT group_id, from_user_id AS user_id, SUM(amount) AS amount
-        FROM settlements
-        WHERE group_id IN (SELECT group_id FROM user_groups)
-        GROUP BY group_id, from_user_id
-    ),
-    member_bal AS (
-        SELECT gma.group_id, gma.user_id,
-            COALESCE(mp.amount, 0) - COALESCE(mo.amount, 0)
-              + COALESCE(msr.amount, 0) - COALESCE(msp.amount, 0) AS net
-        FROM gma
-        LEFT JOIN mp ON mp.group_id = gma.group_id AND mp.user_id = gma.user_id
-        LEFT JOIN mo ON mo.group_id = gma.group_id AND mo.user_id = gma.user_id
-        LEFT JOIN msr ON msr.group_id = gma.group_id AND msr.user_id = gma.user_id
-        LEFT JOIN msp ON msp.group_id = gma.group_id AND msp.user_id = gma.user_id
-    ),
-    group_status AS (
-        SELECT group_id, BOOL_AND(ABS(net) < 0.01) AS is_closed FROM member_bal GROUP BY group_id
-    )
-    SELECT jsonb_build_object(
-        'closedGroupsCount', COALESCE(COUNT(*) FILTER (WHERE is_closed), 0),
-        'activeGroupsCount', COALESCE(COUNT(*) FILTER (WHERE NOT is_closed), 0)
-    ) INTO v_stats FROM group_status;
-
-    WITH user_groups_all AS (
-        SELECT gm.group_id FROM group_members gm JOIN groups g ON g.id = gm.group_id
-        WHERE gm.user_id = p_user_id AND gm.is_active = TRUE AND g.is_active = TRUE
-    ),
-    gma AS (
-        SELECT gm.group_id, gm.user_id FROM group_members gm
-        WHERE gm.is_active = TRUE AND gm.group_id IN (SELECT group_id FROM user_groups_all)
-    ),
-    mp AS (
-        SELECT e.group_id, e.paid_by AS user_id, SUM(e.amount) AS amount
-        FROM expenses e
-        WHERE e.is_deleted = FALSE AND e.group_id IN (SELECT group_id FROM user_groups_all)
-        GROUP BY e.group_id, e.paid_by
-    ),
-    mo AS (
-        SELECT e.group_id, es.user_id, SUM(es.amount) AS amount
-        FROM expense_splits es JOIN expenses e ON e.id = es.expense_id
-        WHERE e.is_deleted = FALSE AND e.group_id IN (SELECT group_id FROM user_groups_all)
-        GROUP BY e.group_id, es.user_id
-    ),
-    msr AS (
-        SELECT group_id, to_user_id AS user_id, SUM(amount) AS amount
-        FROM settlements
-        WHERE group_id IN (SELECT group_id FROM user_groups_all)
-        GROUP BY group_id, to_user_id
-    ),
-    msp AS (
-        SELECT group_id, from_user_id AS user_id, SUM(amount) AS amount
-        FROM settlements
-        WHERE group_id IN (SELECT group_id FROM user_groups_all)
-        GROUP BY group_id, from_user_id
-    ),
-    member_bal AS (
-        SELECT gma.group_id, gma.user_id,
-            COALESCE(mp.amount, 0) - COALESCE(mo.amount, 0)
-              + COALESCE(msr.amount, 0) - COALESCE(msp.amount, 0) AS net
-        FROM gma
-        LEFT JOIN mp ON mp.group_id = gma.group_id AND mp.user_id = gma.user_id
-        LEFT JOIN mo ON mo.group_id = gma.group_id AND mo.user_id = gma.user_id
-        LEFT JOIN msr ON msr.group_id = gma.group_id AND msr.user_id = gma.user_id
-        LEFT JOIN msp ON msp.group_id = gma.group_id AND msp.user_id = gma.user_id
-    ),
-    co_members AS (
-        SELECT DISTINCT gm.user_id FROM group_members gm
-        WHERE gm.group_id IN (SELECT group_id FROM user_groups_all)
-          AND gm.is_active = TRUE AND gm.user_id <> p_user_id
-    ),
-    pair_per_group AS (
+    counts AS (
         SELECT
-            mb_friend.user_id AS friend_id,
-            mb_friend.group_id,
-            g.default_currency AS currency,
-            mb_friend.net AS friend_net,
-            mb_user.net AS user_net
-        FROM co_members cm
-        JOIN member_bal mb_friend ON mb_friend.user_id = cm.user_id
-        JOIN member_bal mb_user
-            ON mb_user.group_id = mb_friend.group_id
-           AND mb_user.user_id = p_user_id
-        JOIN groups g ON g.id = mb_friend.group_id
+            (SELECT COUNT(DISTINCT group_id) FROM user_pairwise) AS active_count,
+            (SELECT COUNT(*) FROM user_groups)
+              - (SELECT COUNT(DISTINCT group_id) FROM user_pairwise) AS closed_count
     ),
     friend_by_currency AS (
         SELECT friend_id, currency,
-            SUM(LEAST(GREATEST(user_net, 0), GREATEST(-friend_net, 0)))
-              - SUM(LEAST(GREATEST(-user_net, 0), GREATEST(friend_net, 0))) AS net_toward_user,
+            SUM(net_toward_user) AS net_toward_user,
             ARRAY_AGG(DISTINCT group_id) AS group_ids
-        FROM pair_per_group
+        FROM user_pairwise
         GROUP BY friend_id, currency
-        HAVING ABS(
-            SUM(LEAST(GREATEST(user_net, 0), GREATEST(-friend_net, 0)))
-              - SUM(LEAST(GREATEST(-user_net, 0), GREATEST(friend_net, 0)))
-        ) >= 0.01
+        HAVING ABS(SUM(net_toward_user)) >= 0.01
     ),
     friends_merged AS (
         SELECT fbc.friend_id,
@@ -225,15 +148,45 @@ BEGIN
             ) AS shared_group_ids
         FROM friend_by_currency fbc
         GROUP BY fbc.friend_id
+    ),
+    friends_agg AS (
+        SELECT COALESCE(jsonb_agg(jsonb_build_object(
+            'userId', fm.friend_id,
+            'name', p.name,
+            'avatarUrl', p.avatar_url,
+            'byCurrency', fm.by_currency,
+            'sharedGroupIds', fm.shared_group_ids
+        ) ORDER BY p.name), '[]'::jsonb) AS friends_json
+        FROM friends_merged fm JOIN profiles p ON p.id = fm.friend_id
     )
-    SELECT COALESCE(jsonb_agg(jsonb_build_object(
-        'userId', fm.friend_id,
-        'name', p.name,
-        'avatarUrl', p.avatar_url,
-        'byCurrency', fm.by_currency,
-        'sharedGroupIds', fm.shared_group_ids
-    ) ORDER BY p.name), '[]'::jsonb) INTO v_friends
-    FROM friends_merged fm JOIN profiles p ON p.id = fm.friend_id;
+    SELECT
+        b.by_currency_json,
+        b.currency_count,
+        c.active_count,
+        c.closed_count,
+        f.friends_json
+    INTO v_by_currency, v_currency_count, v_active_count, v_closed_count, v_friends
+    FROM by_currency_agg b, counts c, friends_agg f;
+
+    IF v_currency_count = 1 THEN
+        SELECT
+            (elem->>'owed')::numeric,
+            (elem->>'owedToUser')::numeric
+        INTO v_total_owed, v_total_owed_to_user
+        FROM jsonb_array_elements(v_by_currency) elem
+        LIMIT 1;
+    ELSIF v_currency_count = 0 THEN
+        v_total_owed := 0;
+        v_total_owed_to_user := 0;
+    ELSE
+        v_total_owed := NULL;
+        v_total_owed_to_user := NULL;
+    END IF;
+
+    v_stats := jsonb_build_object(
+        'closedGroupsCount', COALESCE(v_closed_count, 0),
+        'activeGroupsCount', COALESCE(v_active_count, 0)
+    );
 
     RETURN jsonb_build_object(
         'balanceSummary', jsonb_build_object(

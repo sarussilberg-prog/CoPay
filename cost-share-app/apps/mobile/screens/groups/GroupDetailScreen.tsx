@@ -371,11 +371,10 @@ export function GroupDetailScreen() {
 
     const handleSettlementPress = useCallback(
         (s: Settlement) => {
-            const involved =
-                s.fromUserId === currentUserId || s.toUserId === currentUserId;
             const options = [
                 t('common.cancel'),
-                ...(involved ? [t('settleUp.edit'), t('settleUp.delete')] : []),
+                t('settleUp.edit'),
+                t('settleUp.delete'),
             ];
 
             if (Platform.OS === 'ios') {
@@ -383,10 +382,9 @@ export function GroupDetailScreen() {
                     {
                         options,
                         cancelButtonIndex: 0,
-                        destructiveButtonIndex: involved ? 2 : undefined,
+                        destructiveButtonIndex: 2,
                     },
                     idx => {
-                        if (!involved) return;
                         if (idx === 1) setEditingSettlement(s);
                         else if (idx === 2) confirmDeleteSettlement(s);
                     },
@@ -394,7 +392,6 @@ export function GroupDetailScreen() {
                 return;
             }
 
-            if (!involved) return;
             Alert.alert(t('settleUp.title'), undefined, [
                 { text: t('settleUp.edit'), onPress: () => setEditingSettlement(s) },
                 {
@@ -405,7 +402,7 @@ export function GroupDetailScreen() {
                 { text: t('common.cancel'), style: 'cancel' },
             ]);
         },
-        [confirmDeleteSettlement, currentUserId, t],
+        [confirmDeleteSettlement, t],
     );
 
     const handleSettlementEditSubmit = useCallback(
