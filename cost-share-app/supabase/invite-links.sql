@@ -37,6 +37,7 @@ UPDATE profiles SET invite_token = generate_invite_token() WHERE invite_token IS
 
 -- Enforce constraints
 ALTER TABLE profiles ALTER COLUMN invite_token SET NOT NULL;
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_invite_token_unique;
 ALTER TABLE profiles ADD CONSTRAINT profiles_invite_token_unique UNIQUE (invite_token);
 
 -- Default on insert via trigger (column-level DEFAULT can't call a VOLATILE func with the SECURITY guard we want)
@@ -63,6 +64,7 @@ ALTER TABLE groups ADD COLUMN IF NOT EXISTS invite_token TEXT;
 UPDATE groups SET invite_token = generate_invite_token() WHERE invite_token IS NULL;
 
 ALTER TABLE groups ALTER COLUMN invite_token SET NOT NULL;
+ALTER TABLE groups DROP CONSTRAINT IF EXISTS groups_invite_token_unique;
 ALTER TABLE groups ADD CONSTRAINT groups_invite_token_unique UNIQUE (invite_token);
 
 CREATE OR REPLACE FUNCTION default_group_invite_token() RETURNS TRIGGER
