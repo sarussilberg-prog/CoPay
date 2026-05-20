@@ -31,7 +31,7 @@ export function parseIncomingUrl(rawUrl: string): InviteLink {
     }
 
     // https://kupa.pro/i/<token> | /g/<token>
-    if (parsed.protocol === 'https:' && parsed.host === 'kupa.pro') {
+    if (parsed.protocol === 'https:' && parsed.hostname === 'kupa.pro') {
         const m = parsed.pathname.match(/^\/(i|g)\/([^/?#]+)\/?$/);
         if (m && TOKEN_RE.test(m[2])) {
             return m[1] === 'i'
@@ -41,7 +41,7 @@ export function parseIncomingUrl(rawUrl: string): InviteLink {
     }
 
     // com.kupa.mobile://invite/i/<token> | /g/<token>
-    if (parsed.protocol === 'com.kupa.mobile:' && parsed.host === 'invite') {
+    if (parsed.protocol === 'com.kupa.mobile:' && parsed.hostname === 'invite') {
         const m = parsed.pathname.match(/^\/(i|g)\/([^/?#]+)\/?$/);
         if (m && TOKEN_RE.test(m[2])) {
             return m[1] === 'i'
