@@ -16,11 +16,31 @@ export {
 } from './friendBalanceDisplay';
 
 export {
+    collectGroupFxCurrencies,
+    resolveGroupBalanceDisplay,
+    type GroupBalanceDisplay,
+} from './groupBalanceDisplay';
+
+export {
     simplifyDebts,
     simplifyDebtsExact,
     simplifyDebtsGreedy,
     UnbalancedLedgerError,
 } from './simplifyDebts';
+
+export {
+    calculateMemberContributions,
+    calculateUserBalancesByCurrencyFromData,
+    type CurrencyAmount,
+    type PaidByMatrixRow,
+    type MemberContributionTotals,
+    type MemberContributionsResult,
+    type UserBalanceByCurrency,
+    type UserBalanceByCurrencyRow,
+    type BalanceExpenseRowWithCurrency,
+    type BalanceSplitRowInput,
+    type BalanceSettlementRowWithCurrency,
+} from './memberContributions';
 
 export function calculateEqualSplit(totalAmount: number, numPeople: number): number[] {
     const baseAmount = Math.floor((totalAmount * 100) / numPeople) / 100;

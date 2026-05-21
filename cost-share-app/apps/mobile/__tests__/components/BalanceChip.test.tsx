@@ -3,26 +3,26 @@ import { render } from '@testing-library/react-native';
 import { BalanceChip } from '../../components/BalanceChip';
 
 describe('BalanceChip', () => {
-    it('shows Settled label when balance is undefined', () => {
+    it('shows Settled label when display is undefined', () => {
         const { getByText } = render(<BalanceChip defaultCurrency="USD" />);
         expect(getByText('groups.card.settled')).toBeTruthy();
     });
 
-    it('shows Settled label when balance.net rounds to zero', () => {
+    it('shows Settled label when net rounds to zero', () => {
         const { getByText } = render(
             <BalanceChip
                 defaultCurrency="USD"
-                balance={{ groupId: 'g', currency: 'USD', net: 0.004 }}
+                display={{ net: 0.004, currency: 'USD', isConverted: false }}
             />,
         );
         expect(getByText('groups.card.settled')).toBeTruthy();
     });
 
-    it('formats a positive balance with + and the currency', () => {
+    it('formats a positive balance with + and the display currency', () => {
         const { getByText } = render(
             <BalanceChip
                 defaultCurrency="USD"
-                balance={{ groupId: 'g', currency: 'ILS', net: 17 }}
+                display={{ net: 17, currency: 'ILS', isConverted: true }}
             />,
         );
         expect(getByText('+ILS 17.00')).toBeTruthy();
@@ -32,7 +32,7 @@ describe('BalanceChip', () => {
         const { getByText } = render(
             <BalanceChip
                 defaultCurrency="USD"
-                balance={{ groupId: 'g', currency: 'USD', net: -8.5 }}
+                display={{ net: -8.5, currency: 'USD', isConverted: false }}
             />,
         );
         expect(getByText('−USD 8.50')).toBeTruthy();

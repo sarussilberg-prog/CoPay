@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 
 const GROUP_IMAGES_BUCKET = 'group-images';
 const PROFILE_IMAGES_BUCKET = 'profile-images';
+const EXPENSE_RECEIPTS_BUCKET = 'expense-receipts';
 
 function extensionFromUri(uri: string): string {
     const match = uri.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
@@ -112,5 +113,21 @@ export async function uploadProfileImage(
         `${userId}/avatar.${ext}`,
         localUri,
         'profile image',
+    );
+}
+
+export async function uploadExpenseReceipt(
+    groupId: string,
+    localUri: string,
+): Promise<string | null> {
+    // Unique filename per upload — replacing a receipt creates a new object
+    // instead of overwriting, so previous URLs stay valid in the audit trail.
+    const ext = extensionFromUri(localUri);
+    const filename = `${Date.now()}-${Math.floor(Math.random() * 1e9)}.${ext}`;
+    return uploadImageToBucket(
+        EXPENSE_RECEIPTS_BUCKET,
+        `${groupId}/${filename}`,
+        localUri,
+        'expense receipt',
     );
 }

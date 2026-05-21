@@ -6,7 +6,7 @@
 
 import { Text } from '../../components/AppText';
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Image, Modal, Pressable, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Expense, ExpenseSplit, User } from '@cost-share/shared';
@@ -18,6 +18,8 @@ import { EmptyState } from '../../components/EmptyState';
 import { Button } from '../../components/Button';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { AppIcon } from '../../components/AppIcon';
+import { colors } from '../../theme';
 
 const categoryEmoji: Record<string, string> = {
     food: '🍕',
@@ -40,6 +42,7 @@ export function ExpenseDetailScreen() {
     const [expense, setExpense] = useState<Expense | null>(null);
     const [splits, setSplits] = useState<ExpenseSplit[]>([]);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
     const { data: allUsers = [] } = useGroupUsersQuery(groupId);
 
     useEffect(() => {
@@ -147,6 +150,26 @@ export function ExpenseDetailScreen() {
                 ))}
             </View>
 
+            {/* Receipt */}
+            {expense.receiptUrl ? (
+                <View className="bg-white mx-4 rounded-xl p-4 mb-4">
+                    <Text className="text-sm font-medium text-gray-500 mb-3">
+                        {t('expenses.receipt')}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => setShowReceiptModal(true)}
+                        activeOpacity={0.8}
+                        testID="expense-receipt-thumbnail"
+                    >
+                        <Image
+                            source={{ uri: expense.receiptUrl }}
+                            className="w-full h-56 rounded-xl bg-gray-100"
+                            resizeMode="cover"
+                        />
+                    </TouchableOpacity>
+                </View>
+            ) : null}
+
             {/* Actions */}
             <View className="px-4 mb-8 gap-2">
                 <Button
@@ -160,6 +183,35 @@ export function ExpenseDetailScreen() {
                     variant="danger"
                 />
             </View>
+
+            {/* Receipt Lightbox — fills the whole screen */}
+            <Modal
+                visible={showReceiptModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowReceiptModal(false)}
+            >
+                <Pressable
+                    onPress={() => setShowReceiptModal(false)}
+                    className="flex-1 bg-black"
+                    testID="expense-receipt-modal"
+                >
+                    {expense.receiptUrl ? (
+                        <Image
+                            source={{ uri: expense.receiptUrl }}
+                            style={{ width: '100%', height: '100%' }}
+                            resizeMode="cover"
+                        />
+                    ) : null}
+                    <TouchableOpacity
+                        onPress={() => setShowReceiptModal(false)}
+                        className="absolute top-12 right-6 w-10 h-10 rounded-full bg-white/20 items-center justify-center"
+                    >
+                        <AppIcon name="close" size={24} color={colors.white} />
+                    </TouchableOpacity>
+                </Pressable>
+            </Modal>
+
 
             {/* Delete Confirmation */}
             <ConfirmDialog

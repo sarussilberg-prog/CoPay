@@ -37,6 +37,15 @@ jest.mock('expo-image-picker', () => ({
 
 jest.mock('../../../services/users.service', () => ({
     fetchUsers: jest.fn().mockResolvedValue([]),
+    fetchGroupUsers: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock('../../../services/settlements.service', () => ({
+    fetchGroupPairwiseDebts: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock('../../../components/AddMembersSheet', () => ({
+    AddMembersSheet: () => null,
 }));
 
 import { CreateGroupScreen } from '../../../screens/groups/CreateGroupScreen';
@@ -66,10 +75,10 @@ beforeEach(() => {
 
 describe('CreateGroupScreen', () => {
     it('renders form fields', async () => {
-        const { findByText } = render(<CreateGroupScreen />);
+        const { findByText, queryByText } = render(<CreateGroupScreen />);
         expect(await findByText('groups.groupName')).toBeTruthy();
-        expect(await findByText('groups.description')).toBeTruthy();
         expect(await findByText('groups.groupType')).toBeTruthy();
+        expect(queryByText('groups.description')).toBeNull();
     });
 
     it('shows validation error for empty name on submit', async () => {

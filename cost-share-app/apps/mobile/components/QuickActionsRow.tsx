@@ -11,6 +11,7 @@ import { colors } from '../theme';
 interface QuickActionsRowProps {
     onSettleUp: () => void;
     onBalances: () => void;
+    onNote: () => void;
     settleUpDisabled?: boolean;
 }
 
@@ -50,6 +51,7 @@ function ActionChip({ label, icon, onPress, disabled, testID }: ChipProps) {
 export function QuickActionsRow({
     onSettleUp,
     onBalances,
+    onNote,
     settleUpDisabled,
 }: QuickActionsRowProps) {
     const { t } = useTranslation();
@@ -74,6 +76,12 @@ export function QuickActionsRow({
                 icon="bar-chart-outline"
                 onPress={onBalances}
                 testID="qa-balances"
+            />
+            <ActionChip
+                label={t('groups.actions.note')}
+                icon="document-text-outline"
+                onPress={onNote}
+                testID="qa-note"
             />
         </View>
     );

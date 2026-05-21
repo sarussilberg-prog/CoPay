@@ -46,8 +46,8 @@ function tabBarIcon(
 import { GroupsListScreen } from '../screens/groups/GroupsListScreen';
 import { GroupDetailScreen } from '../screens/groups/GroupDetailScreen';
 import { CreateGroupScreen } from '../screens/groups/CreateGroupScreen';
-import { EditGroupScreen } from '../screens/groups/EditGroupScreen';
 import { GroupMembersScreen } from '../screens/groups/GroupMembersScreen';
+import { GroupNoteScreen } from '../screens/groups/GroupNoteScreen';
 import { ExpenseListScreen } from '../screens/expenses/ExpenseListScreen';
 import { AddExpenseScreen } from '../screens/expenses/AddExpenseScreen';
 import { ExpenseDetailScreen } from '../screens/expenses/ExpenseDetailScreen';
@@ -106,13 +106,18 @@ function GroupsStack() {
             />
             <Stack.Screen
                 name="EditGroup"
-                component={EditGroupScreen}
+                component={CreateGroupScreen}
                 options={{ title: t('groups.editGroup') }}
             />
             <Stack.Screen
                 name="GroupMembers"
                 component={GroupMembersScreen}
                 options={{ title: t('groups.members.title') }}
+            />
+            <Stack.Screen
+                name="GroupNote"
+                component={GroupNoteScreen}
+                options={{ title: t('groups.note.title') }}
             />
             <Stack.Screen
                 name="ExpenseList"

@@ -33,6 +33,7 @@ export const groupFromRow = (r: Row): Group => ({
     id: r.id as string,
     name: r.name as string,
     description: (r.description as string) ?? undefined,
+    note: (r.note as string) ?? undefined,
     imageUrl: (r.image_url as string) ?? undefined,
     groupType: r.group_type as Group['groupType'],
     defaultCurrency: r.default_currency as string,

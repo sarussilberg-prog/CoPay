@@ -90,6 +90,22 @@ export async function getExpenseById(id: string): Promise<Expense | null> {
     return expenseFromRow(data);
 }
 
+export async function getExpenseWithSplitsById(
+    id: string,
+): Promise<ExpenseWithSplits | null> {
+    const { data, error } = await supabase
+        .from('expenses')
+        .select('*, expense_splits(*)')
+        .eq('id', id)
+        .eq('is_deleted', false)
+        .maybeSingle();
+    if (error || !data) return null;
+    const expense = expenseFromRow(data);
+    const splitRows = Array.isArray(data.expense_splits) ? data.expense_splits : [];
+    const splits = splitRows.map(expenseSplitFromRow);
+    return { ...expense, splits };
+}
+
 export async function createExpense(dto: CreateExpenseDto): Promise<Expense | null> {
     const createdBy = await getCurrentUserId();
     if (!createdBy) return null;
@@ -205,6 +221,7 @@ export async function updateExpense(id: string, dto: UpdateExpenseDto): Promise<
             patch.expense_date = dto.expenseDate.toISOString().slice(0, 10);
         }
         if (dto.receiptUrl !== undefined) patch.receipt_url = dto.receiptUrl;
+        if (dto.paidBy !== undefined) patch.paid_by = dto.paidBy;
 
         if (Object.keys(patch).length === 0) {
             return existing;

@@ -118,7 +118,7 @@ function HeroChrome({
                         className="w-10 h-10 rounded-full bg-black/40 items-center justify-center"
                         testID="hero-menu-btn"
                     >
-                        <AppIcon name="ellipsis-horizontal" size={20} color="#fff" />
+                        <AppIcon name="ellipsis-vertical" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>

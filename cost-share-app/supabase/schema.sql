@@ -33,6 +33,7 @@ CREATE TABLE groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    note TEXT,
     image_url TEXT,
     group_type VARCHAR(50) DEFAULT 'general',
     default_currency VARCHAR(3) DEFAULT 'ILS',

@@ -74,6 +74,14 @@ jest.mock('../../../hooks/useGroupMessagesRealtime', () => ({
     useGroupMessagesRealtime: jest.fn(),
 }));
 
+jest.mock('../../../hooks/useGroupExpensesRealtime', () => ({
+    useGroupExpensesRealtime: jest.fn(),
+}));
+
+jest.mock('../../../hooks/useGroupSettlementsRealtime', () => ({
+    useGroupSettlementsRealtime: jest.fn(),
+}));
+
 jest.mock('react-native-toast-message', () => ({
     __esModule: true,
     default: { show: jest.fn() },
@@ -171,10 +179,10 @@ describe('GroupDetailScreen', () => {
         expect(mockNavigate).toHaveBeenCalledWith('EditGroup', { groupId: 'g1' });
     });
 
-    it('invokes exportGroupCsv when Export is chosen from the group menu', async () => {
-        const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
-        fireEvent.press(await findByTestId('hero-menu-btn'));
-        fireEvent.press(await findByText('groups.actions.export'));
+    it('invokes exportGroupCsv when Export is chosen from the share sheet', async () => {
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
+        fireEvent.press(await findByTestId('hero-share-btn'));
+        fireEvent.press(await findByTestId('share-sheet-export'));
         await waitFor(() => expect(mockExport).toHaveBeenCalled());
     });
 

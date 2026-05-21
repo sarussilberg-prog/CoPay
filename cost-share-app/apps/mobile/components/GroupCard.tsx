@@ -8,7 +8,7 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useRtlLayout, rtlRowStyle } from '../hooks/useRtlLayout';
 import { useTranslation } from 'react-i18next';
-import { GroupBalance, GroupWithMembers } from '@cost-share/shared';
+import { GroupBalanceDisplay, GroupWithMembers } from '@cost-share/shared';
 import { AppIcon } from './AppIcon';
 import { GroupAvatar } from './GroupAvatar';
 import { BalanceChip } from './BalanceChip';
@@ -17,7 +17,7 @@ import { colors } from '../theme';
 
 interface GroupCardProps {
     group: GroupWithMembers;
-    balance?: GroupBalance;
+    balanceDisplay?: GroupBalanceDisplay;
     searchQuery?: string;
     matchedMemberNames?: string[];
     onPress: (groupId: string) => void;
@@ -25,7 +25,7 @@ interface GroupCardProps {
 
 export function GroupCard({
     group,
-    balance,
+    balanceDisplay,
     searchQuery,
     matchedMemberNames,
     onPress,
@@ -107,7 +107,7 @@ export function GroupCard({
                 </View>
 
                 <BalanceChip
-                    balance={balance}
+                    display={balanceDisplay}
                     defaultCurrency={group.defaultCurrency}
                 />
 

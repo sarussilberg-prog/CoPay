@@ -14,11 +14,16 @@ import {
     UpdateGroupDto,
     DEFAULT_CURRENCY,
 } from '@cost-share/shared';
+import type {
+    MemberContributionsResult,
+    UserBalanceByCurrency,
+} from '@cost-share/shared';
 import {
     groupFromRow,
     groupWithMembersFromRow,
     groupMemberFromRow,
-    calculateUserBalancesFromData,
+    calculateMemberContributions,
+    calculateUserBalancesByCurrencyFromData,
     simplifyDebts,
     UnbalancedLedgerError,
 } from '@cost-share/shared';
@@ -32,8 +37,12 @@ async function loadBalanceData(groupId: string, userId?: string) {
     const [groupRes, membersRes, expensesRes, settlementsRes] = await Promise.all([
         supabase.from('groups').select('default_currency').eq('id', groupId).maybeSingle(),
         supabase.from('group_members').select('user_id').eq('group_id', groupId).eq('is_active', true),
-        supabase.from('expenses').select('id, paid_by, amount').eq('group_id', groupId).eq('is_deleted', false),
-        supabase.from('settlements').select('from_user_id, to_user_id, amount').eq('group_id', groupId),
+        supabase.from('expenses').select('id, paid_by, amount, currency').eq('group_id', groupId).eq('is_deleted', false),
+        supabase
+            .from('settlements')
+            .select('from_user_id, to_user_id, amount, currency')
+            .eq('group_id', groupId)
+            .is('deleted_at', null),
     ]);
 
     if (groupRes.error) throw groupRes.error;
@@ -46,6 +55,7 @@ async function loadBalanceData(groupId: string, userId?: string) {
         id: e.id as string,
         paidBy: e.paid_by as string,
         amount: Number(e.amount),
+        currency: (e.currency as string) ?? defaultCurrency,
     }));
 
     const expenseIds = expenses.map(e => e.id);
@@ -67,6 +77,7 @@ async function loadBalanceData(groupId: string, userId?: string) {
         fromUserId: s.from_user_id as string,
         toUserId: s.to_user_id as string,
         amount: Number(s.amount),
+        currency: (s.currency as string) ?? defaultCurrency,
     }));
 
     const userIds = userId
@@ -249,6 +260,7 @@ export async function updateGroup(id: string, dto: UpdateGroupDto): Promise<Grou
     const patch: Record<string, unknown> = {};
     if (dto.name !== undefined) patch.name = dto.name;
     if (dto.description !== undefined) patch.description = dto.description;
+    if (dto.note !== undefined) patch.note = dto.note;
     if (dto.imageUrl !== undefined) patch.image_url = dto.imageUrl;
     if (dto.groupType !== undefined) patch.group_type = dto.groupType;
     if (dto.defaultCurrency !== undefined) patch.default_currency = dto.defaultCurrency;
@@ -391,38 +403,50 @@ export async function removeGroupMember(groupId: string, userId: string): Promis
     return true;
 }
 
-export async function getGroupBalances(groupId: string, userId?: string): Promise<UserBalance[]> {
+export async function getGroupContributions(
+    groupId: string,
+): Promise<MemberContributionsResult> {
     try {
-        const { defaultCurrency, expenses, splits, settlements, userIds } =
-            await loadBalanceData(groupId, userId);
-        return calculateUserBalancesFromData(
+        const { expenses, splits, userIds } = await loadBalanceData(groupId);
+        return calculateMemberContributions({ userIds, expenses, splits });
+    } catch (error) {
+        console.error('Failed to fetch member contributions:', error);
+        return { totals: [], matrix: [] };
+    }
+}
+
+export async function getGroupBalancesByCurrency(
+    groupId: string,
+): Promise<UserBalanceByCurrency[]> {
+    try {
+        const { expenses, splits, settlements, userIds } = await loadBalanceData(groupId);
+        return calculateUserBalancesByCurrencyFromData({
             groupId,
-            defaultCurrency,
             userIds,
             expenses,
             splits,
             settlements,
-        );
+        });
     } catch (error) {
-        console.error('Failed to fetch balances:', error);
+        console.error('Failed to fetch per-currency balances:', error);
         return [];
     }
 }
 
-export async function getGroupDebts(
-    groupId: string,
-    balances?: UserBalance[],
-): Promise<SimplifiedDebtsResult> {
-    const empty: SimplifiedDebtsResult = {
-        debts: [],
-        transactionCount: 0,
-        algorithm: 'exact',
-    };
-    try {
-        const balanceList = balances ?? (await getGroupBalances(groupId));
-        const userIds = Array.from(new Set(balanceList.map(b => b.userId)));
-        const nameById = new Map<string, string>();
+export interface SimplifiedDebtsByCurrencyEntry {
+    currency: string;
+    result: SimplifiedDebtsResult;
+}
 
+export async function getGroupSimplifiedDebtsByCurrency(
+    groupId: string,
+): Promise<SimplifiedDebtsByCurrencyEntry[]> {
+    try {
+        const balancesByCurrency = await getGroupBalancesByCurrency(groupId);
+        if (balancesByCurrency.length === 0) return [];
+
+        const userIds = Array.from(new Set(balancesByCurrency.map(b => b.userId)));
+        const nameById = new Map<string, string>();
         if (userIds.length > 0) {
             const { data, error } = await supabase
                 .from('profiles')
@@ -432,14 +456,45 @@ export async function getGroupDebts(
             (data ?? []).forEach(p => nameById.set(p.id as string, p.name as string));
         }
 
-        return simplifyDebts(balanceList, nameById);
-    } catch (error) {
-        if (error instanceof UnbalancedLedgerError) {
-            console.warn('Skipping debt simplification: unbalanced ledger', error.message);
-            return empty;
+        // Pivot: currency -> [{ userId, currency, netBalance, ... }]
+        const byCurrency = new Map<string, UserBalance[]>();
+        for (const entry of balancesByCurrency) {
+            for (const row of entry.byCurrency) {
+                const bucket = byCurrency.get(row.currency) ?? [];
+                bucket.push({
+                    groupId,
+                    userId: entry.userId,
+                    currency: row.currency,
+                    totalPaid: row.totalPaid,
+                    totalOwed: row.totalOwed,
+                    totalSettledPaid: row.totalSettledPaid,
+                    totalSettledReceived: row.totalSettledReceived,
+                    netBalance: row.netBalance,
+                });
+                byCurrency.set(row.currency, bucket);
+            }
         }
-        console.error('Failed to fetch debts:', error);
-        return empty;
+
+        const out: SimplifiedDebtsByCurrencyEntry[] = [];
+        for (const [currency, balances] of byCurrency) {
+            try {
+                out.push({ currency, result: simplifyDebts(balances, nameById) });
+            } catch (err) {
+                if (err instanceof UnbalancedLedgerError) {
+                    console.warn(
+                        `Skipping simplification for ${currency}: ${err.message}`,
+                    );
+                    continue;
+                }
+                throw err;
+            }
+        }
+        // Sort currencies alphabetically for stable rendering.
+        out.sort((a, b) => a.currency.localeCompare(b.currency));
+        return out;
+    } catch (error) {
+        console.error('Failed to fetch simplified debts by currency:', error);
+        return [];
     }
 }
 

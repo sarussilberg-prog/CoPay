@@ -13,6 +13,8 @@ import {
     getCurrencyDisplayName,
     matchesCurrencySearch,
 } from '../lib/currencyDisplay';
+import { AppIcon } from './AppIcon';
+import { colors } from '../theme';
 
 interface CurrencyPickerProps {
     value: string;
@@ -91,22 +93,51 @@ export function CurrencyPicker({
             )}
 
             {!isControlled && (
-                <TouchableOpacity
-                    onPress={openModal}
-                    style={compact ? { height: 64 } : undefined}
-                    className={
-                        compact
-                            ? 'bg-white border border-gray-300 rounded-xl px-3 flex-row items-center justify-center'
-                            : 'bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center'
-                    }
-                >
-                    <Text className={compact ? 'text-base font-semibold text-gray-900' : 'text-base'}>
-                        {compact
-                            ? (selectedCurrency?.code ?? value ?? '—')
-                            : selectedLabel}
-                    </Text>
-                    <Text className={compact ? 'text-gray-400 ml-1 text-xs' : 'text-gray-400'}>▼</Text>
-                </TouchableOpacity>
+                compact ? (
+                    <TouchableOpacity
+                        onPress={openModal}
+                        activeOpacity={0.7}
+                        style={{
+                            height: 64,
+                            backgroundColor: '#F9FAFB',
+                            borderWidth: 1,
+                            borderColor: '#D1D5DB',
+                            borderRadius: 12,
+                            paddingHorizontal: 8,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Text
+                            numberOfLines={1}
+                            style={{
+                                fontSize: 18,
+                                fontWeight: '600',
+                                color: '#111827',
+                                textAlign: 'center',
+                            }}
+                        >
+                            {selectedCurrency?.code ?? value ?? '—'}
+                        </Text>
+                        <View style={{ marginLeft: 4 }}>
+                            <AppIcon
+                                name="chevron-down"
+                                size={14}
+                                color={colors.gray500}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        onPress={openModal}
+                        activeOpacity={0.7}
+                        className="bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center"
+                    >
+                        <Text className="text-base">{selectedLabel}</Text>
+                        <Text className="text-gray-400">▼</Text>
+                    </TouchableOpacity>
+                )
             )}
 
             <Modal

@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, waitFor, fireEvent } from '@testing-library/react-native';
+import { waitFor, fireEvent } from '@testing-library/react-native';
+import { renderWithQuery as render } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();

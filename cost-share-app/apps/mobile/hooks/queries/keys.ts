@@ -12,4 +12,7 @@ export const queryKeys = {
         id ? (['invite-link', kind, id] as const) : (['invite-link', kind] as const),
     groupPairwiseDebts: (groupId: string) => ['groupPairwiseDebts', groupId] as const,
     groupSettlements: (groupId: string) => ['groupSettlements', groupId] as const,
+    groupContributions: (groupId: string) => ['group-contributions', groupId] as const,
+    groupSimplifiedDebtsByCurrency: (groupId: string) =>
+        ['group-simplified-debts-by-currency', groupId] as const,
 };

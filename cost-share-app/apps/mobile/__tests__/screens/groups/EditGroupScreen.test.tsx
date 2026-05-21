@@ -20,6 +20,7 @@ jest.mock('@react-navigation/native', () => {
 });
 
 jest.mock('../../../services/groups.service', () => ({
+    createGroup: jest.fn(),
     getGroupById: jest.fn(),
     updateGroup: jest.fn(),
     deleteGroup: jest.fn().mockResolvedValue(true),
@@ -32,6 +33,10 @@ jest.mock('../../../services/storage.service', () => ({
 
 jest.mock('../../../services/users.service', () => ({
     fetchGroupUsers: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock('../../../services/settlements.service', () => ({
+    fetchGroupPairwiseDebts: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('../../../components/AddMembersSheet', () => ({
@@ -53,7 +58,7 @@ jest.mock('expo-image-picker', () => ({
 }));
 
 
-import { EditGroupScreen } from '../../../screens/groups/EditGroupScreen';
+import { CreateGroupScreen as EditGroupScreen } from '../../../screens/groups/CreateGroupScreen';
 import {
     getGroupById,
     updateGroup,
@@ -89,9 +94,9 @@ beforeEach(() => {
 describe('EditGroupScreen', () => {
     it('loads existing group data into form', async () => {
         mockGetGroup.mockResolvedValueOnce(existingGroup);
-        const { findByDisplayValue } = render(<EditGroupScreen />);
+        const { findByDisplayValue, queryByDisplayValue } = render(<EditGroupScreen />);
         expect(await findByDisplayValue('Old Name')).toBeTruthy();
-        expect(await findByDisplayValue('Old desc')).toBeTruthy();
+        expect(queryByDisplayValue('Old desc')).toBeNull();
     });
 
     it('calls updateGroup with the new values', async () => {
