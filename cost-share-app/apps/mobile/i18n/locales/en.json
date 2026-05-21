@@ -19,7 +19,9 @@
         "retry": "Retry",
         "search": "Search",
         "submit": "Submit",
-        "done": "Done"
+        "done": "Done",
+        "close": "Close",
+        "you": "You"
     },
     "tabs": {
         "groups": "Groups",
@@ -173,9 +175,22 @@
             "settleUp": "Settle up",
             "balances": "Balances",
             "message": "Message",
+            "note": "Note",
             "export": "Export"
         },
+        "note": {
+            "title": "Group note",
+            "placeholder": "Write a shared note for everyone in this group…",
+            "saving": "Saving…",
+            "saved": "Saved",
+            "saveError": "Couldn't save"
+        },
         "share": {
+            "menuTitle": "Share group",
+            "inviteOption": "Invite a friend to join",
+            "inviteDescription": "Send a link to add someone to this group",
+            "exportOption": "Export to file",
+            "exportDescription": "Save group activity and balances as a file",
             "exportTitle": "Share group report (PDF)",
             "exportTitleHtml": "Share group report",
             "exportError": "Couldn't generate the file",
@@ -286,6 +301,16 @@
         "loadError": "Failed to load expenses",
         "createError": "Failed to create expense",
         "updateError": "Failed to update expense",
+        "receipt": "Receipt",
+        "addReceipt": "Add a receipt photo",
+        "replaceReceipt": "Replace",
+        "removeReceipt": "Remove",
+        "takePhoto": "Take photo",
+        "chooseFromLibrary": "Choose from library",
+        "receiptUploadError": "Failed to upload receipt",
+        "receiptPermissionTitle": "Permission needed",
+        "receiptCameraPermissionMessage": "Allow camera access to take a receipt photo.",
+        "receiptLibraryPermissionMessage": "Allow photo library access to choose a receipt.",
         "categories": {
             "food": "Food",
             "transport": "Transport",
@@ -304,6 +329,25 @@
         "getsBack": "Gets back",
         "owes": "Owes",
         "paid": "Paid",
+        "modeToggle": {
+            "paid": "Paid",
+            "spentOn": "Spent on"
+        },
+        "paidMode": {
+            "row": "{{name}} paid",
+            "rowYou": "You paid",
+            "detailSection": "Paid for {{name}}",
+            "detailSectionYou": "Paid for you"
+        },
+        "spentOnMode": {
+            "row": "Spent on {{name}}",
+            "rowYou": "Spent on you",
+            "detailSection": "{{name}} paid for {{owner}}",
+            "detailSectionNameYou": "You paid for {{owner}}",
+            "detailSectionOwnerYou": "{{name}} paid for you"
+        },
+        "noActivityInMode": "No activity",
+        "memberContributionTitle": "Breakdown",
         "simplifiedDebts": "Simplified Debts",
         "paymentsToSettle_one": "1 payment to settle everyone",
         "paymentsToSettle_other": "{{count}} payments to settle everyone",
@@ -421,6 +465,8 @@
         },
         "noActivity": "No activity yet",
         "noActivityMessage": "Your recent expenses, settlements, and group messages will appear here",
+        "noSearchResults": "No matching activity",
+        "noSearchResultsMessage": "No results match your search. Try a different term or clear the search.",
         "expense": "Expense",
         "settlement": "Settlement",
         "message": "Message",
@@ -433,6 +479,7 @@
     },
     "settleUp": {
         "title": "Settle up",
+        "openDebts": "Open debts left to settle",
         "empty": "Everyone is settled up",
         "you": "you",
         "row": "{{from}} owes {{to}} {{amount}}",
@@ -526,7 +573,9 @@
         "youOweFriend": "you owe",
         "friendConverted": "combined currencies",
         "friendConversionFailed": "rates unavailable",
-        "noFriendsYet": "No shared groups yet"
+        "noFriendsYet": "No shared groups yet",
+        "friendBreakdownTitle": "Per-group breakdown",
+        "friendBreakdownEmpty": "No shared groups with this friend."
     },
     "legal": {
         "termsTitle": "Terms of Service",
@@ -546,6 +595,8 @@
             "reject": "Reject",
             "remove": "Remove",
             "removeConfirm": "Remove this friend? You'll need to send a new request to re-friend.",
+            "removeFriendship": "Remove friendship",
+            "createGroupWith": "Create a group with this friend",
             "sendRequest": "Send request",
             "pending": "Pending",
             "friends": "Friends"

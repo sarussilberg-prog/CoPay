@@ -19,7 +19,9 @@
         "retry": "נסה שוב",
         "search": "חיפוש",
         "submit": "שלח",
-        "done": "סיום"
+        "done": "סיום",
+        "close": "סגור",
+        "you": "את/ה"
     },
     "tabs": {
         "groups": "קופות",
@@ -173,9 +175,22 @@
             "settleUp": "סגירת חשבון",
             "balances": "יתרות",
             "message": "הודעה",
+            "note": "פתק",
             "export": "ייצוא"
         },
+        "note": {
+            "title": "פתק קבוצה",
+            "placeholder": "כתוב פתק משותף לכל חברי הקופה…",
+            "saving": "שומר…",
+            "saved": "נשמר",
+            "saveError": "השמירה נכשלה"
+        },
         "share": {
+            "menuTitle": "שיתוף קופה",
+            "inviteOption": "הזמנת חבר להצטרפות",
+            "inviteDescription": "שלח קישור להוספת חבר לקופה",
+            "exportOption": "ייצוא לקובץ",
+            "exportDescription": "שמור את פעילות הקופה והיתרות כקובץ",
             "exportTitle": "שיתוף דוח קופה (PDF)",
             "exportTitleHtml": "שיתוף דוח קופה",
             "exportError": "לא ניתן ליצור את הקובץ",
@@ -286,6 +301,16 @@
         "loadError": "טעינת ההוצאות נכשלה",
         "createError": "יצירת ההוצאה נכשלה",
         "updateError": "עדכון ההוצאה נכשל",
+        "receipt": "קבלה",
+        "addReceipt": "הוסף תמונת קבלה",
+        "replaceReceipt": "החלף",
+        "removeReceipt": "הסר",
+        "takePhoto": "צלם תמונה",
+        "chooseFromLibrary": "בחר מהגלריה",
+        "receiptUploadError": "העלאת הקבלה נכשלה",
+        "receiptPermissionTitle": "נדרשת הרשאה",
+        "receiptCameraPermissionMessage": "נדרשת גישה למצלמה כדי לצלם קבלה.",
+        "receiptLibraryPermissionMessage": "נדרשת גישה לגלריה כדי לבחור קבלה.",
         "categories": {
             "food": "אוכל",
             "transport": "תחבורה",
@@ -304,6 +329,25 @@
         "getsBack": "מקבל בחזרה",
         "owes": "חייב",
         "paid": "שילם",
+        "modeToggle": {
+            "paid": "שילם",
+            "spentOn": "הוצא על"
+        },
+        "paidMode": {
+            "row": "{{name}} שילם",
+            "rowYou": "שילמת",
+            "detailSection": "שילם עבור {{name}}",
+            "detailSectionYou": "שילם עבורך"
+        },
+        "spentOnMode": {
+            "row": "הוצא על {{name}}",
+            "rowYou": "הוצא עליך",
+            "detailSection": "{{name}} שילם עבור {{owner}}",
+            "detailSectionNameYou": "שילמת עבור {{owner}}",
+            "detailSectionOwnerYou": "{{name}} שילם עבורך"
+        },
+        "noActivityInMode": "אין פעילות",
+        "memberContributionTitle": "פירוט",
         "simplifiedDebts": "חובות מפושטים",
         "paymentsToSettle_one": "תשלום אחד לסגירת כל החובות",
         "paymentsToSettle_two": "{{count}} תשלומים לסגירת כל החובות",
@@ -423,6 +467,8 @@
         },
         "noActivity": "אין פעילות עדיין",
         "noActivityMessage": "הוצאות, תשלומים והודעות מקופות יופיעו כאן",
+        "noSearchResults": "לא נמצאו תוצאות",
+        "noSearchResultsMessage": "אין פעילות שמתאימה לחיפוש שלך. נסו מונח אחר או נקו את החיפוש.",
         "expense": "הוצאה",
         "settlement": "תשלום",
         "message": "הודעה",
@@ -435,6 +481,7 @@
     },
     "settleUp": {
         "title": "סגירת חשבון",
+        "openDebts": "חשבונות פתוחים שנותר לסגור",
         "empty": "כולם מסודרים",
         "you": "את/ה",
         "row": "{{from}} חייב/ת ל-{{to}} {{amount}}",
@@ -528,7 +575,9 @@
         "youOweFriend": "אתה חייב",
         "friendConverted": "שקלול מטבעות",
         "friendConversionFailed": "שערים לא זמינים",
-        "noFriendsYet": "אין קופות משותפות"
+        "noFriendsYet": "אין קופות משותפות",
+        "friendBreakdownTitle": "פירוט לפי קופה",
+        "friendBreakdownEmpty": "אין קופות משותפות עם החבר הזה."
     },
     "legal": {
         "termsTitle": "תנאי שירות",
@@ -548,6 +597,8 @@
             "reject": "דחה",
             "remove": "הסר",
             "removeConfirm": "להסיר את החבר? יהיה צורך לשלוח בקשה חדשה כדי לחבר מחדש.",
+            "removeFriendship": "מחיקת חברות",
+            "createGroupWith": "יצירת קופה עם חבר זה",
             "sendRequest": "שלח בקשה",
             "pending": "ממתין",
             "friends": "חברים"

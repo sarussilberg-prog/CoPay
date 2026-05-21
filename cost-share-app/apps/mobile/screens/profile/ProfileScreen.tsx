@@ -1,5 +1,5 @@
 import { Text } from '../../components/AppText';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +16,11 @@ import { ProfileHeaderRow } from '../../components/dashboard/ProfileHeaderRow';
 import { BalanceHeroCard } from '../../components/dashboard/BalanceHeroCard';
 import { StatTile, StatGroup, StatDivider } from '../../components/dashboard/StatTile';
 import { FriendBalanceRow } from '../../components/dashboard/FriendBalanceRow';
+import { FriendGroupBalancesSheet } from '../../components/dashboard/FriendGroupBalancesSheet';
 import { colors, shadows } from '../../theme';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 import { useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQueries';
+import { getCurrentUserId } from '../../lib/auth';
 
 export function ProfileScreen() {
     const { t } = useTranslation();
@@ -40,10 +42,22 @@ export function ProfileScreen() {
     const handleOpenSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
     const handleEditProfile = useCallback(() => navigation.navigate('EditProfile'), [navigation]);
 
+    const [selectedFriend, setSelectedFriend] = useState<FriendBalance | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        void getCurrentUserId().then(setCurrentUserId);
+    }, []);
+
     const handleFriendPress = useCallback((friend: FriendBalance) => {
-        const firstGroup = friend.sharedGroupIds[0];
-        if (!firstGroup) return;
-        navigation.navigate('Groups', { screen: 'GroupDetail', params: { groupId: firstGroup } });
+        setSelectedFriend(friend);
+    }, []);
+
+    const handleCloseFriendSheet = useCallback(() => setSelectedFriend(null), []);
+
+    const handleSelectGroup = useCallback((groupId: string) => {
+        setSelectedFriend(null);
+        navigation.navigate('Groups', { screen: 'GroupDetail', params: { groupId } });
     }, [navigation]);
 
     const isRtl = useRtlLayout();
@@ -154,7 +168,7 @@ export function ProfileScreen() {
 
                     {dashboard.friends.length > 0 ? (
                         <View className="mx-4 mb-8">
-                            <View style={rtlRowStyle(isRtl)} className="items-baseline justify-between px-1 mb-2">
+                            <View className="items-center mb-2">
                                 <Text className="text-xs text-slate-400">{dashboard.friends.length}</Text>
                                 <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                                     {t('dashboard.friends')}
@@ -184,6 +198,13 @@ export function ProfileScreen() {
                 </>
             )}
             </ScrollView>
+            <FriendGroupBalancesSheet
+                visible={selectedFriend !== null}
+                friend={selectedFriend}
+                currentUserId={currentUserId}
+                onClose={handleCloseFriendSheet}
+                onSelectGroup={handleSelectGroup}
+            />
         </SafeAreaView>
     );
 }

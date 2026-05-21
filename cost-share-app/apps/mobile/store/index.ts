@@ -109,7 +109,11 @@ export const useAppStore = create<AppState>((set) => ({
     // Expenses state
     expenses: [],
     setExpenses: (expenses) => set({ expenses }),
-    addExpense: (expense) => set((state) => ({ expenses: [...state.expenses, expense] })),
+    addExpense: (expense) => set((state) =>
+        state.expenses.some((e) => e.id === expense.id)
+            ? state
+            : { expenses: [...state.expenses, expense] },
+    ),
     updateExpense: (expense) => set((state) => ({
         expenses: state.expenses.map((e) => (e.id === expense.id ? expense : e)),
     })),

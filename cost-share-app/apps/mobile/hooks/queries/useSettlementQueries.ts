@@ -46,6 +46,12 @@ function useInvalidateAfterSettlementChange(groupId: string) {
         void queryClient.invalidateQueries({
             queryKey: queryKeys.groupSettlements(groupId),
         });
+        void queryClient.invalidateQueries({
+            queryKey: queryKeys.groupContributions(groupId),
+        });
+        void queryClient.invalidateQueries({
+            queryKey: queryKeys.groupSimplifiedDebtsByCurrency(groupId),
+        });
         void queryClient.invalidateQueries({ queryKey: queryKeys.activity });
         void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
         void fetchBalanceSummary();

@@ -175,6 +175,16 @@ export function ActivityFeedScreen() {
             );
         }
 
+        if (searchQuery.trim().length > 0) {
+            return (
+                <EmptyState
+                    iconName="search-outline"
+                    title={t('activity.noSearchResults')}
+                    message={t('activity.noSearchResultsMessage')}
+                />
+            );
+        }
+
         return (
             <EmptyState
                 iconName="list-outline"
@@ -182,7 +192,7 @@ export function ActivityFeedScreen() {
                 message={t('activity.noActivityMessage')}
             />
         );
-    }, [showInitialSkeleton, isError, t, handleRefresh]);
+    }, [showInitialSkeleton, isError, t, handleRefresh, searchQuery]);
 
     return (
         <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>

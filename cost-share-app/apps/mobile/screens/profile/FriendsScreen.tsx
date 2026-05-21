@@ -1,6 +1,6 @@
 /**
  * FriendsScreen — incoming requests + friends list.
- * Long-press a friend row to remove.
+ * Tap the row's overflow icon to open a per-friend action menu.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -10,6 +10,8 @@ import {
     RefreshControl,
     TouchableOpacity,
     ActivityIndicator,
+    Modal,
+    Pressable,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -42,6 +44,7 @@ export function FriendsScreen() {
     const removeM = useRemoveFriendMutation();
 
     const [confirmRemove, setConfirmRemove] = useState<User | null>(null);
+    const [actionsFor, setActionsFor] = useState<User | null>(null);
 
     const refreshing = friendsQ.isRefetching || incomingQ.isRefetching;
     const onRefresh = useCallback(() => {
@@ -85,6 +88,22 @@ export function FriendsScreen() {
         }
     }, [confirmRemove, removeM, t]);
 
+    const handleCreateGroupWith = useCallback(
+        (friend: User) => {
+            setActionsFor(null);
+            navigation.navigate('Groups', {
+                screen: 'CreateGroup',
+                params: { initialMembers: [friend] },
+            });
+        },
+        [navigation],
+    );
+
+    const handleRemoveFromMenu = useCallback((friend: User) => {
+        setActionsFor(null);
+        setConfirmRemove(friend);
+    }, []);
+
     const incoming = incomingQ.data ?? [];
     const friends = friendsQ.data ?? [];
 
@@ -113,9 +132,6 @@ export function FriendsScreen() {
                     <View className="flex-1 ml-3">
                         <Text className="text-sm font-semibold text-gray-800">
                             {t('invite.friend.title')}
-                        </Text>
-                        <Text className="text-xs text-slate-500">
-                            {t('invite.friend.subtitle')}
                         </Text>
                     </View>
                     <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
@@ -201,11 +217,8 @@ export function FriendsScreen() {
                     ) : (
                         <View className="bg-white rounded-xl border border-slate-200/80 overflow-hidden">
                             {friends.map((f, idx) => (
-                                <TouchableOpacity
+                                <View
                                     key={f.id}
-                                    onLongPress={() => setConfirmRemove(f)}
-                                    delayLongPress={400}
-                                    activeOpacity={0.7}
                                     className={`flex-row items-center px-3 py-3 ${
                                         idx < friends.length - 1 ? 'border-b border-slate-100' : ''
                                     }`}
@@ -221,8 +234,15 @@ export function FriendsScreen() {
                                             </Text>
                                         ) : null}
                                     </View>
-                                    <AppIcon name="ellipsis-horizontal" size={18} color={colors.gray400} />
-                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => setActionsFor(f)}
+                                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                        accessibilityRole="button"
+                                        testID={`friend-actions-${f.id}`}
+                                    >
+                                        <AppIcon name="ellipsis-horizontal" size={20} color={colors.gray500} />
+                                    </TouchableOpacity>
+                                </View>
                             ))}
                         </View>
                     )}
@@ -239,6 +259,44 @@ export function FriendsScreen() {
                 onCancel={() => setConfirmRemove(null)}
                 destructive
             />
+
+            <Modal
+                visible={actionsFor !== null}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setActionsFor(null)}
+            >
+                <Pressable
+                    onPress={() => setActionsFor(null)}
+                    className="flex-1 bg-black/40 justify-center px-8"
+                >
+                    <Pressable
+                        onPress={() => { }}
+                        className="bg-white rounded-2xl overflow-hidden"
+                    >
+                        <TouchableOpacity
+                            onPress={() => actionsFor && handleCreateGroupWith(actionsFor)}
+                            className="flex-row items-center px-4 py-4 border-b border-slate-100"
+                            testID="friend-action-create-group"
+                        >
+                            <AppIcon name="people-outline" size={20} color={colors.primary} />
+                            <Text className="ml-3 text-sm font-medium text-gray-800">
+                                {t('friends.actions.createGroupWith')}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => actionsFor && handleRemoveFromMenu(actionsFor)}
+                            className="flex-row items-center px-4 py-4"
+                            testID="friend-action-remove"
+                        >
+                            <AppIcon name="trash-outline" size={20} color={colors.error} />
+                            <Text className="ml-3 text-sm font-medium text-red-600">
+                                {t('friends.actions.removeFriendship')}
+                            </Text>
+                        </TouchableOpacity>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </View>
     );
 }

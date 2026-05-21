@@ -23,6 +23,8 @@ import { fetchGroups } from '../../services/groups.service';
 import { fetchBalanceSummary } from '../../services/users.service';
 import { prefetchActivityFeed } from '../../hooks/queries/useActivityQuery';
 import { prefetchGroupDetail } from '../../hooks/queries/prefetchGroupDetail';
+import { useUserGroupMembershipsRealtime } from '../../hooks/useUserGroupMembershipsRealtime';
+import { useGroupBalancesDisplay } from '../../hooks/useGroupBalancesDisplay';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupCard } from '../../components/GroupCard';
@@ -62,6 +64,19 @@ export function GroupsListScreen() {
     const { isLoading, startLoading, stopLoading } = useLoading();
     const groups = useAppStore(s => s.groups);
     const groupBalances = useAppStore(s => s.groupBalances);
+    const currentUserId = useAppStore(s => s.currentUser?.id ?? null);
+    const defaultCurrency = useAppStore(s => s.currentUser?.defaultCurrency);
+
+    useUserGroupMembershipsRealtime(currentUserId);
+
+    const balanceDisplays = useGroupBalancesDisplay(groupBalances, defaultCurrency);
+    const balanceNetsByGroup = useMemo(() => {
+        const out: Record<string, { net: number }> = {};
+        balanceDisplays.forEach((display, groupId) => {
+            out[groupId] = { net: display.net };
+        });
+        return out;
+    }, [balanceDisplays]);
 
     const [refreshing, setRefreshing] = useState(false);
     const [loadError, setLoadError] = useState(false);
@@ -133,21 +148,21 @@ export function GroupsListScreen() {
             })
             .filter(({ group, searchHit }) => {
                 if (!searchHit) return false;
-                const net = groupBalances[group.id]?.net;
+                const net = balanceNetsByGroup[group.id]?.net;
                 return passesGroupFilters(group, filters, net);
             });
 
         const sortedGroups = sortGroups(
             matched.map(r => r.group),
             filters.sortBy,
-            groupBalances,
+            balanceNetsByGroup,
             sortLocale,
         );
         const order = new Map(sortedGroups.map((g, i) => [g.id, i]));
         return [...matched].sort(
             (a, b) => (order.get(a.group.id) ?? 0) - (order.get(b.group.id) ?? 0),
         );
-    }, [groups, trimmedQuery, filters, groupBalances, sortLocale]);
+    }, [groups, trimmedQuery, filters, balanceNetsByGroup, sortLocale]);
 
     const filterActive = isAnyFilterActive(filters);
 
@@ -225,7 +240,7 @@ export function GroupsListScreen() {
                     renderItem={({ item }) => (
                         <GroupCard
                             group={item.group}
-                            balance={groupBalances[item.group.id]}
+                            balanceDisplay={balanceDisplays.get(item.group.id)}
                             searchQuery={trimmedQuery || undefined}
                             matchedMemberNames={
                                 item.matched.length > 0 ? item.matched : undefined

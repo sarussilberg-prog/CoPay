@@ -1,15 +1,18 @@
 /**
  * BalanceChip — small pill summarising a single group's net balance for the user.
  * Variants by sign: positive = owed (green), negative = owe (red), zero/undefined = settled (gray).
+ * The `display` prop carries the amount already resolved to the user's default currency
+ * (with a `conversionFailed` fallback to the group's own currency when FX is unavailable).
  */
 
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { GroupBalance } from '@cost-share/shared';
+import { GroupBalanceDisplay } from '@cost-share/shared';
 
 interface BalanceChipProps {
-    balance?: GroupBalance;
+    display?: GroupBalanceDisplay;
+    /** Currency to use in the "settled" / no-data state. Usually the group's default currency. */
     defaultCurrency: string;
 }
 
@@ -17,12 +20,11 @@ function formatAmount(amount: number, currency: string): string {
     return `${currency} ${Math.abs(amount).toFixed(2)}`;
 }
 
-export function BalanceChip({ balance, defaultCurrency }: BalanceChipProps) {
+export function BalanceChip({ display, defaultCurrency }: BalanceChipProps) {
     const { t } = useTranslation();
-    const net = balance?.net ?? 0;
-    const currency = balance?.currency ?? defaultCurrency;
+    const net = display?.net ?? 0;
 
-    if (!balance || Math.abs(net) < 0.01) {
+    if (!display || Math.abs(net) < 0.01) {
         return (
             <View className="rounded-full bg-gray-100 px-2.5 py-1 max-w-[120px]">
                 <Text
@@ -48,7 +50,7 @@ export function BalanceChip({ balance, defaultCurrency }: BalanceChipProps) {
     return (
         <View className={containerClass}>
             <Text className={textClass} numberOfLines={1} ellipsizeMode="tail">
-                {`${prefix}${formatAmount(net, currency)}`}
+                {`${prefix}${formatAmount(net, display.currency || defaultCurrency)}`}
             </Text>
         </View>
     );

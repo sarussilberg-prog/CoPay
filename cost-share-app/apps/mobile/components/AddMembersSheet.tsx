@@ -12,6 +12,7 @@ import {
     ScrollView,
     ActivityIndicator,
     TextInput,
+    Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -26,10 +27,13 @@ import { shareGroupInvite } from '../services/invite.service';
 
 interface AddMembersSheetProps {
     visible: boolean;
-    groupId: string;
+    groupId?: string;
     currentMemberIds: string[];
     onClose: () => void;
     onAdded?: () => void;
+    // When provided, the sheet operates in selection-only mode (no groupId required):
+    // selected users are returned to the caller instead of being persisted via addGroupMember.
+    onConfirmSelection?: (users: User[]) => void;
 }
 
 export function AddMembersSheet({
@@ -38,6 +42,7 @@ export function AddMembersSheet({
     currentMemberIds,
     onClose,
     onAdded,
+    onConfirmSelection,
 }: AddMembersSheetProps) {
     const { t } = useTranslation();
     const navigation = useNavigation<any>();
@@ -80,6 +85,13 @@ export function AddMembersSheet({
         if (selectedIds.length === 0 || submitting) return;
         setSubmitting(true);
         try {
+            if (onConfirmSelection) {
+                const selectedUsers = (friends ?? []).filter(f => selectedIds.includes(f.id));
+                onConfirmSelection(selectedUsers);
+                onClose();
+                return;
+            }
+            if (!groupId) return;
             for (const userId of selectedIds) {
                 await addGroupMember(groupId, userId);
             }
@@ -88,7 +100,7 @@ export function AddMembersSheet({
         } finally {
             setSubmitting(false);
         }
-    }, [selectedIds, submitting, groupId, onAdded, onClose]);
+    }, [selectedIds, submitting, groupId, onAdded, onClose, onConfirmSelection, friends]);
 
     const handleFindFriends = useCallback(() => {
         onClose();
@@ -100,7 +112,7 @@ export function AddMembersSheet({
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <Pressable onPress={onClose} className="flex-1 bg-black/40 justify-center px-4">
-                <Pressable onPress={() => {}} className="bg-white rounded-2xl h-3/4">
+                <Pressable onPress={() => { }} className="bg-white rounded-2xl h-3/4">
                     <View className="px-4 pt-4 pb-2 flex-row items-center justify-between">
                         <Text className="text-base font-semibold text-gray-900">
                             {t('groups.members.addMembers')}
@@ -112,26 +124,6 @@ export function AddMembersSheet({
                         >
                             <AppIcon name="close" size={22} color={colors.gray500} />
                         </TouchableOpacity>
-                    </View>
-
-                    <View className="mx-4 mb-3 mt-1 rounded-xl bg-primary-extra-light border border-primary/30 px-3 py-2.5">
-                        <View className="flex-row items-start">
-                            <AppIcon name="information-circle" size={18} color={colors.primary} />
-                            <View className="flex-1 ml-2">
-                                <Text className="text-sm text-primary-dark font-medium">
-                                    {t('groups.members.mutualHint')}
-                                </Text>
-                                <TouchableOpacity
-                                    onPress={handleFindFriends}
-                                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                                    testID="add-members-find-friends-link"
-                                >
-                                    <Text className="text-sm font-semibold text-primary mt-1 underline">
-                                        {t('groups.members.missingSomeoneCta')}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
                     </View>
 
                     {eligible.length > 0 && (
@@ -201,35 +193,48 @@ export function AddMembersSheet({
                                 />
                             </View>
                         )}
+
+                        <View
+                            style={{ width: '85%' }}
+                            className="mt-4 rounded-xl bg-primary-extra-light border border-primary/30 px-3 py-2.5"
+                        >
+                            <View className="flex-row items-start">
+                                <AppIcon name="information-circle" size={18} color={colors.primary} />
+                                <View className="flex-1 ml-2">
+                                    <Text className="text-sm text-primary-dark font-medium">
+                                        {t('groups.members.mutualHint')}
+                                    </Text>
+                                    <TouchableOpacity
+                                        onPress={handleFindFriends}
+                                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                        testID="add-members-find-friends-link"
+                                    >
+                                        <Text className="text-sm font-semibold text-primary mt-1 underline">
+                                            {t('groups.members.missingSomeoneCta')}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
                     </ScrollView>
 
-                    <View className="mt-4 border-t border-slate-100 pt-2 px-4 pb-4">
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Profile', { screen: 'FindFriends' })}
-                            className="flex-row items-center py-3 px-2"
-                            testID="add-members-search-others"
-                        >
-                            <AppIcon name="search-outline" size={20} color={colors.primary} />
-                            <Text className="flex-1 ml-3 text-sm font-medium text-gray-800">
-                                {t('invite.addMembers.searchOthers')}
-                            </Text>
-                            <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={() => { void shareGroupInvite(groupId); }}
-                            className="flex-row items-center py-3 px-2"
-                            testID="add-members-share-link"
-                        >
-                            <AppIcon name="share-outline" size={20} color={colors.primary} />
-                            <Text className="flex-1 ml-3 text-sm font-medium text-gray-800">
-                                {t('invite.addMembers.sendLink')}
-                            </Text>
-                            <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
-                        </TouchableOpacity>
+                    <View className="px-4 pb-4">
+                        {groupId && (
+                            <TouchableOpacity
+                                onPress={() => { void shareGroupInvite(groupId); }}
+                                className="flex-row items-center py-3 px-2"
+                                testID="add-members-share-link"
+                            >
+                                <AppIcon name="share-outline" size={20} color={colors.primary} />
+                                <Text className="flex-1 ml-3 text-sm font-medium text-gray-800">
+                                    {t('invite.addMembers.sendLink')}
+                                </Text>
+                                <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
+                            </TouchableOpacity>
+                        )}
 
                         {eligible.length > 0 && (
-                            <View className="mt-4 pt-2 border-t border-gray-100">
+                            <View className="mt-2">
                                 <TouchableOpacity
                                     onPress={handleAdd}
                                     disabled={addDisabled}
@@ -240,7 +245,16 @@ export function AddMembersSheet({
                                     {submitting && (
                                         <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
                                     )}
-                                    <Text className="text-base font-semibold text-white">
+                                    <Text
+                                        className="text-base font-semibold text-white"
+                                        style={Platform.select({
+                                            ios: { transform: [{ translateY: 1.5 }] },
+                                            android: {
+                                                includeFontPadding: false,
+                                                textAlignVertical: 'center',
+                                            },
+                                        })}
+                                    >
                                         {selectedIds.length > 0
                                             ? `${t('common.confirm')} (${selectedIds.length})`
                                             : t('common.confirm')}

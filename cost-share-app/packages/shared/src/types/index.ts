@@ -40,6 +40,7 @@ export interface Group {
     id: string;  // UUID
     name: string;
     description?: string;
+    note?: string;  // Shared free-text note editable by any group member
     imageUrl?: string;
     groupType: GroupType;
     defaultCurrency: string;
@@ -313,6 +314,7 @@ export interface UpdateExpenseDto {
     category?: ExpenseCategory;
     expenseDate?: Date;
     receiptUrl?: string;
+    paidBy?: string;
     splits?: ExpenseSplitInput[];
 }
 
@@ -357,6 +359,7 @@ export interface CreateGroupDto {
 export interface UpdateGroupDto {
     name?: string;
     description?: string;
+    note?: string;
     groupType?: GroupType;
     defaultCurrency?: string;
     imageUrl?: string;

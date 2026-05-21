@@ -31,10 +31,23 @@ jest.mock('../../../components/SettleUpSheet', () => {
 const mockPairwiseQuery = jest.fn();
 jest.mock('../../../hooks/queries/useSettlementQueries', () => ({
     useGroupPairwiseDebtsQuery: (...args: any[]) => mockPairwiseQuery(...args),
+    useGroupSettlementsQuery: () => ({ data: [], refetch: jest.fn() }),
     useCreateSettlementMutation: () => ({
         mutateAsync: jest.fn().mockResolvedValue(undefined),
         isPending: false,
     }),
+    useUpdateSettlementMutation: () => ({
+        mutateAsync: jest.fn().mockResolvedValue(undefined),
+        isPending: false,
+    }),
+    useDeleteSettlementMutation: () => ({
+        mutateAsync: jest.fn().mockResolvedValue(undefined),
+        isPending: false,
+    }),
+}));
+
+jest.mock('../../../hooks/useGroupSettlementsRealtime', () => ({
+    useGroupSettlementsRealtime: jest.fn(),
 }));
 
 const mockGroupUsers = jest.fn();

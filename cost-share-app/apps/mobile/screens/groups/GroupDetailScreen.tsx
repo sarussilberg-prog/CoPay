@@ -49,6 +49,8 @@ import { exportGroupCsv } from '../../services/group-share.service';
 import { shareGroupInvite } from '../../services/invite.service';
 import { buildFeed } from '../../services/feed';
 import { useGroupMessagesRealtime } from '../../hooks/useGroupMessagesRealtime';
+import { useGroupExpensesRealtime } from '../../hooks/useGroupExpensesRealtime';
+import { useGroupSettlementsRealtime } from '../../hooks/useGroupSettlementsRealtime';
 import {
     hasStoreGroupMembers,
     isGroupExpensesHydrated,
@@ -158,6 +160,7 @@ export function GroupDetailScreen() {
         null,
     );
     const [menuOpen, setMenuOpen] = useState(false);
+    const [shareSheetOpen, setShareSheetOpen] = useState(false);
     const [archiveBusy, setArchiveBusy] = useState(false);
     const [exporting, setExporting] = useState(false);
 
@@ -174,6 +177,8 @@ export function GroupDetailScreen() {
     );
 
     useGroupMessagesRealtime(groupId);
+    useGroupExpensesRealtime(groupId);
+    useGroupSettlementsRealtime(groupId);
 
     const groupExpenses = useMemo(
         () => expenses.filter(e => e.groupId === groupId),
@@ -311,6 +316,12 @@ export function GroupDetailScreen() {
     }, [navigation, groupId]);
     const handleArchiveToggle = useCallback(async () => {
         setMenuOpen(false);
+        if (!isArchivedByMe && hasOpenBalance) {
+            Alert.alert(t('groups.archive.disabledReason'), undefined, [
+                { text: t('common.ok'), style: 'default' },
+            ]);
+            return;
+        }
         setArchiveBusy(true);
         try {
             if (isArchivedByMe) {
@@ -321,9 +332,15 @@ export function GroupDetailScreen() {
         } finally {
             setArchiveBusy(false);
         }
-    }, [isArchivedByMe, groupId]);
+    }, [isArchivedByMe, hasOpenBalance, groupId, t]);
     const handleLeaveGroup = useCallback(() => {
         setMenuOpen(false);
+        if (hasOpenBalance) {
+            Alert.alert(t('groups.archive.disabledReason'), undefined, [
+                { text: t('common.ok'), style: 'default' },
+            ]);
+            return;
+        }
         Alert.alert(t('groups.leaveGroup'), t('groups.leaveGroupConfirm'), [
             { text: t('common.cancel'), style: 'cancel' },
             {
@@ -338,7 +355,7 @@ export function GroupDetailScreen() {
                 },
             },
         ]);
-    }, [groupId, currentUserId, navigation, t]);
+    }, [groupId, currentUserId, navigation, t, hasOpenBalance]);
     const handleDeleteGroup = useCallback(() => {
         setMenuOpen(false);
         Alert.alert(t('groups.deleteGroup'), t('groups.deleteGroupConfirm'), [
@@ -356,7 +373,7 @@ export function GroupDetailScreen() {
         ]);
     }, [groupId, navigation, t]);
     const handleExport = useCallback(async () => {
-        setMenuOpen(false);
+        setShareSheetOpen(false);
         if (!displayGroup || exporting) return;
         setExporting(true);
         Toast.show({
@@ -381,6 +398,10 @@ export function GroupDetailScreen() {
         () => navigation.navigate('Balances', { groupId }),
         [navigation, groupId],
     );
+    const handleNote = useCallback(
+        () => navigation.navigate('GroupNote', { groupId }),
+        [navigation, groupId],
+    );
     const handleAddExpense = useCallback(() => {
         prefetchAddExpense(groupId);
         navigation.navigate('AddExpense', { groupId });
@@ -403,6 +424,11 @@ export function GroupDetailScreen() {
     );
 
     const handleShare = useCallback(() => {
+        setShareSheetOpen(true);
+    }, []);
+
+    const handleShareInvite = useCallback(() => {
+        setShareSheetOpen(false);
         void shareGroupInvite(groupId);
     }, [groupId]);
 
@@ -554,6 +580,7 @@ export function GroupDetailScreen() {
                         <QuickActionsRow
                             onSettleUp={handleSettleUp}
                             onBalances={handleBalances}
+                            onNote={handleNote}
                         />
                         <View className="px-4 mt-3 mb-2 flex-row items-center">
                             <View className="flex-1 flex-row items-center rounded-full bg-gray-100 px-3 h-9">
@@ -782,13 +809,6 @@ export function GroupDetailScreen() {
                             elevation: 6,
                         }}
                     >
-                        {hasOpenBalance && !isArchivedByMe && (
-                            <View className="px-4 py-2 border-b border-gray-100">
-                                <Text className="text-xs text-amber-700">
-                                    {t('groups.archive.disabledReason')}
-                                </Text>
-                            </View>
-                        )}
                         <DetailMenuRow
                             label={t('groups.editGroup')}
                             onPress={handleEditGroup}
@@ -800,17 +820,11 @@ export function GroupDetailScreen() {
                                     : t('groups.archive.archiveCta')
                             }
                             onPress={handleArchiveToggle}
-                            disabled={archiveBusy || (!isArchivedByMe && hasOpenBalance)}
-                        />
-                        <DetailMenuRow
-                            label={t('groups.actions.export')}
-                            onPress={handleExport}
-                            disabled={exporting}
+                            disabled={archiveBusy}
                         />
                         <DetailMenuRow
                             label={t('groups.leaveGroup')}
                             onPress={handleLeaveGroup}
-                            disabled={hasOpenBalance}
                         />
                         <View className="h-px bg-gray-100 my-1" />
                         <DetailMenuRow
@@ -820,6 +834,51 @@ export function GroupDetailScreen() {
                         />
                     </View>
                 </Pressable>
+            </Modal>
+
+            <Modal
+                visible={shareSheetOpen}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShareSheetOpen(false)}
+            >
+                <View className="flex-1 justify-end bg-black/45">
+                    <Pressable
+                        className="flex-1"
+                        onPress={() => setShareSheetOpen(false)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('groups.filters.close')}
+                    />
+                    <View
+                        className="bg-white rounded-t-3xl px-5 pt-3"
+                        style={{ paddingBottom: insets.bottom + 16 }}
+                        testID="share-sheet"
+                    >
+                        <View className="self-center w-12 h-1 rounded-full bg-gray-200 mb-4" />
+                        <Text className="text-lg font-bold text-gray-900 mb-3">
+                            {t('groups.share.menuTitle')}
+                        </Text>
+                        <ShareSheetOption
+                            iconName="person-add-outline"
+                            iconBg="bg-primary-extra-light"
+                            iconColor={colors.primary}
+                            title={t('groups.share.inviteOption')}
+                            description={t('groups.share.inviteDescription')}
+                            onPress={handleShareInvite}
+                            testID="share-sheet-invite"
+                        />
+                        <ShareSheetOption
+                            iconName="document-text-outline"
+                            iconBg="bg-gray-100"
+                            iconColor={colors.gray600}
+                            title={t('groups.share.exportOption')}
+                            description={t('groups.share.exportDescription')}
+                            onPress={handleExport}
+                            disabled={exporting}
+                            testID="share-sheet-export"
+                        />
+                    </View>
+                </View>
             </Modal>
         </View>
     );
@@ -851,6 +910,56 @@ function DetailMenuRow({ label, onPress, disabled, destructive }: DetailMenuRowP
             >
                 {label}
             </Text>
+        </TouchableOpacity>
+    );
+}
+
+interface ShareSheetOptionProps {
+    iconName: React.ComponentProps<typeof AppIcon>['name'];
+    iconBg: string;
+    iconColor: string;
+    title: string;
+    description: string;
+    onPress: () => void;
+    disabled?: boolean;
+    testID?: string;
+}
+
+function ShareSheetOption({
+    iconName,
+    iconBg,
+    iconColor,
+    title,
+    description,
+    onPress,
+    disabled,
+    testID,
+}: ShareSheetOptionProps) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={disabled}
+            activeOpacity={0.6}
+            className="flex-row items-center py-3"
+            testID={testID}
+        >
+            <View
+                className={`w-11 h-11 rounded-full items-center justify-center ${iconBg}`}
+            >
+                <AppIcon name={iconName} size={22} color={iconColor} />
+            </View>
+            <View className="flex-1 mx-3">
+                <Text
+                    className={
+                        disabled
+                            ? 'text-base font-semibold text-gray-400'
+                            : 'text-base font-semibold text-gray-900'
+                    }
+                >
+                    {title}
+                </Text>
+                <Text className="text-xs text-gray-500 mt-0.5">{description}</Text>
+            </View>
         </TouchableOpacity>
     );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { GroupCard } from '../../components/GroupCard';
-import type { GroupWithMembers, GroupBalance } from '@cost-share/shared';
+import type { GroupBalanceDisplay, GroupWithMembers } from '@cost-share/shared';
 
 const baseGroup: GroupWithMembers = {
     id: 'g1',
@@ -45,18 +45,18 @@ describe('GroupCard', () => {
         expect(getByText('groups.card.settled')).toBeTruthy();
     });
 
-    it('renders an "owed" chip when balance.net > 0', () => {
-        const balance: GroupBalance = { groupId: 'g1', currency: 'EUR', net: 42.5 };
+    it('renders an "owed" chip when display.net > 0', () => {
+        const display: GroupBalanceDisplay = { net: 42.5, currency: 'EUR', isConverted: false };
         const { getByText } = render(
-            <GroupCard group={baseGroup} balance={balance} onPress={() => {}} />,
+            <GroupCard group={baseGroup} balanceDisplay={display} onPress={() => {}} />,
         );
         expect(getByText(/\+EUR\s*42\.50/)).toBeTruthy();
     });
 
-    it('renders an "owe" chip when balance.net < 0', () => {
-        const balance: GroupBalance = { groupId: 'g1', currency: 'EUR', net: -10 };
+    it('renders an "owe" chip when display.net < 0', () => {
+        const display: GroupBalanceDisplay = { net: -10, currency: 'EUR', isConverted: false };
         const { getByText } = render(
-            <GroupCard group={baseGroup} balance={balance} onPress={() => {}} />,
+            <GroupCard group={baseGroup} balanceDisplay={display} onPress={() => {}} />,
         );
         expect(getByText(/EUR\s*10\.00/)).toBeTruthy();
     });

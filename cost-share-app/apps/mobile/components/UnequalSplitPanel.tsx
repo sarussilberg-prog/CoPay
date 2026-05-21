@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: colors.gray500,
+        textAlign: 'center',
     },
     modeTextSelected: {
         color: colors.primaryDark,
