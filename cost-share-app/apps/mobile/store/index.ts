@@ -53,6 +53,12 @@ interface AppState {
     // Pending invite — set when an invite link arrives before sign-in.
     pendingInvite: PendingInvite | null;
     setPendingInvite: (invite: PendingInvite | null) => void;
+
+    // Deactivation notice — set when assertProfileActive detects a deactivated
+    // (deleted) profile during sign-in. LoginScreen watches this flag and shows
+    // an Alert once the user has been routed back. Reset after display.
+    pendingDeactivationNotice: boolean;
+    setPendingDeactivationNotice: (value: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -160,4 +166,8 @@ export const useAppStore = create<AppState>((set) => ({
     // Pending invite state
     pendingInvite: null,
     setPendingInvite: (invite) => set({ pendingInvite: invite }),
+
+    // Deactivation notice flag
+    pendingDeactivationNotice: false,
+    setPendingDeactivationNotice: (value) => set({ pendingDeactivationNotice: value }),
 }));
