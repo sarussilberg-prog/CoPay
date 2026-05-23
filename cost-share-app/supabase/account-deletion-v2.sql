@@ -143,3 +143,33 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION delete_my_account() TO authenticated;
+
+-- ============================================
+-- check_email_not_deleted() — BEFORE INSERT ON auth.users
+-- Defense-in-depth: even if the app skips its own check, this rejects
+-- re-signups for emails whose hash is in deleted_account_emails.
+-- ============================================
+CREATE OR REPLACE FUNCTION public.check_email_not_deleted()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_hash TEXT;
+BEGIN
+    IF NEW.email IS NULL THEN
+        RETURN NEW;
+    END IF;
+    v_hash := encode(digest(lower(trim(NEW.email)), 'sha256'), 'hex');
+    IF EXISTS (SELECT 1 FROM deleted_account_emails WHERE email_hash = v_hash) THEN
+        RAISE EXCEPTION 'email_was_deleted' USING ERRCODE = 'P0001';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS block_deleted_email_signup ON auth.users;
+CREATE TRIGGER block_deleted_email_signup
+    BEFORE INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.check_email_not_deleted();
