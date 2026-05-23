@@ -31,6 +31,13 @@ jest.mock('../../../lib/openMailto', () => ({
     DEFAULT_SUPPORT_EMAIL: 'sarussilberg@gmail.com',
 }));
 
+// LegalDocumentSheet depends on react-query (QueryClientProvider) which is not
+// wired up in these unit tests. Replace it with a no-op stub — the legal sheet
+// itself is covered by its own component tests.
+jest.mock('../../../components/settings/LegalDocumentSheet', () => ({
+    LegalDocumentSheet: () => null,
+}));
+
 import { SettingsScreen } from '../../../screens/profile/SettingsScreen';
 import { useAppStore } from '../../../store';
 import { updateUser } from '../../../services/users.service';

@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { SettingsSection } from '../../components/settings/SettingsSection';
 import { SettingsRow } from '../../components/settings/SettingsRow';
 import { ContactSupportRow } from '../../components/settings/ContactSupportRow';
-import { LegalSheet } from '../../components/settings/LegalSheet';
+import { LegalDocumentSheet } from '../../components/settings/LegalDocumentSheet';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import Toast from 'react-native-toast-message';
@@ -192,8 +192,8 @@ export function SettingsScreen() {
                 onClose={() => setShowCurrency(false)}
             />
 
-            <LegalSheet visible={showTerms} title={t('legal.termsTitle')} body={t('legal.termsBody')} onClose={() => setShowTerms(false)} />
-            <LegalSheet visible={showPrivacy} title={t('legal.privacyTitle')} body={t('legal.privacyBody')} onClose={() => setShowPrivacy(false)} />
+            <LegalDocumentSheet visible={showTerms} slug="terms" onClose={() => setShowTerms(false)} />
+            <LegalDocumentSheet visible={showPrivacy} slug="privacy" onClose={() => setShowPrivacy(false)} />
 
             <DeleteAccountWarningSheet
                 visible={showDeleteWarning}
