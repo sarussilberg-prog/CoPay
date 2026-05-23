@@ -38,4 +38,37 @@ describe('DeleteAccountWarningSheet', () => {
         fireEvent.press(getByText('deleteAccount.continueBtn'));
         expect(onContinue).toHaveBeenCalled();
     });
+
+    it('renders the open-balances banner when openBalances.hasOpenBalances=true', () => {
+        const onClose = jest.fn();
+        const onContinue = jest.fn();
+        const onSettleUp = jest.fn();
+        const { getByText, getByTestId } = render(
+            <DeleteAccountWarningSheet
+                visible
+                openBalances={{ hasOpenBalances: true, totalOwed: 100, totalOwing: 30, currency: 'ILS' }}
+                onClose={onClose}
+                onContinue={onContinue}
+                onSettleUp={onSettleUp}
+            />,
+        );
+
+        expect(getByText('deleteAccount.openBalancesWarningTitle')).toBeTruthy();
+        fireEvent.press(getByTestId('delete-account-settle-up-btn'));
+        expect(onSettleUp).toHaveBeenCalledTimes(1);
+    });
+
+    it('omits the banner when openBalances.hasOpenBalances=false', () => {
+        const { queryByText } = render(
+            <DeleteAccountWarningSheet
+                visible
+                openBalances={{ hasOpenBalances: false, totalOwed: 0, totalOwing: 0, currency: 'ILS' }}
+                onClose={jest.fn()}
+                onContinue={jest.fn()}
+                onSettleUp={jest.fn()}
+            />,
+        );
+
+        expect(queryByText('deleteAccount.openBalancesWarningTitle')).toBeNull();
+    });
 });
