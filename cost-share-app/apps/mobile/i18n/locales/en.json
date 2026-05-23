@@ -590,10 +590,16 @@
     },
     "legal": {
         "termsTitle": "Terms of Service",
-        "termsBody": "By using Kupa you agree to share expenses responsibly. We do not process payments — we only track balances between users.\n\nYour data is stored securely and is never sold to third parties. You may delete your account at any time by contacting support.\n\nKupa is provided as-is, without warranty.",
         "privacyTitle": "Privacy Policy",
-        "privacyBody": "Kupa stores your profile (name, email, avatar) and the groups, expenses, and settlements you create. We use your email only for authentication.\n\nWe do not sell your data. We may share anonymous aggregate analytics. You can request deletion of your data at any time.\n\nContact: support via WhatsApp +972528616878.",
-        "close": "Close"
+        "close": "Close",
+        "loading": "Loading…",
+        "errorTitle": "Couldn't load document",
+        "errorBody": "Check your connection and try again.",
+        "retry": "Try again",
+        "cachedNotice": "Showing saved version",
+        "lastUpdated": "Updated: {{date}}",
+        "versionLabel": "v{{version}}",
+        "understood": "I understand"
     },
     "friends": {
         "title": "Friends",
