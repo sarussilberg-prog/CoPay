@@ -5,7 +5,7 @@
  */
 
 import { Text } from '../../components/AppText';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, TouchableOpacity, Alert, Modal } from 'react-native';
 import { AppIcon } from '../../components/AppIcon';
 import { AppLogo } from '../../components/AppLogo';
@@ -25,8 +25,31 @@ export function LoginScreen() {
     const { t } = useTranslation();
     const language = useAppStore((state) => state.language);
     const setLanguage = useAppStore((state) => state.setLanguage);
+    const pendingDeactivationNotice = useAppStore((state) => state.pendingDeactivationNotice);
+    const setPendingDeactivationNotice = useAppStore((state) => state.setPendingDeactivationNotice);
     const { isLoading, startLoading, stopLoading } = useLoading();
     const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
+
+    // When App.tsx detects that the user signing in has been deleted, it flips
+    // pendingDeactivationNotice on the store and skips storing the session. We
+    // wait until LoginScreen is mounted before firing the Alert so the message
+    // can't race with the navigator transition.
+    useEffect(() => {
+        if (!pendingDeactivationNotice) return;
+        const email = getSupportEmail();
+        Alert.alert(
+            t('deleteAccount.deactivatedTitle'),
+            t('deleteAccount.deactivatedMessage', { email }),
+            [
+                { text: t('common.close'), style: 'cancel' },
+                {
+                    text: t('common.openMail'),
+                    onPress: () => { void openSupportContact(); },
+                },
+            ],
+        );
+        setPendingDeactivationNotice(false);
+    }, [pendingDeactivationNotice, setPendingDeactivationNotice, t]);
 
     const handleLanguageChange = useCallback(
         async (lang: 'en' | 'he') => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 jest.mock('../../../services/auth.service', () => ({
     signInWithGoogle: jest.fn(),
@@ -26,7 +26,7 @@ const mockChangeLanguage = changeLanguage as jest.MockedFunction<typeof changeLa
 describe('LoginScreen', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        useAppStore.setState({ language: 'en' });
+        useAppStore.setState({ language: 'en', pendingDeactivationNotice: false });
     });
 
     it('renders the app logo, name and subtitle', () => {
@@ -91,6 +91,31 @@ describe('LoginScreen', () => {
         const [titleArg] = alertSpy.mock.calls[0];
         expect(titleArg).toBe('deleteAccount.reSignupBlockedTitle');
         expect(Toast.show).not.toHaveBeenCalled();
+
+        alertSpy.mockRestore();
+    });
+
+    it('shows the deactivation Alert and resets the flag when pendingDeactivationNotice flips on', async () => {
+        const alertSpy = jest
+            .spyOn(require('react-native').Alert, 'alert')
+            .mockImplementation(() => {});
+
+        const { rerender } = render(<LoginScreen />);
+        expect(alertSpy).not.toHaveBeenCalled();
+
+        // Simulate App.tsx flipping the flag after detecting a deactivated profile.
+        act(() => {
+            useAppStore.setState({ pendingDeactivationNotice: true });
+        });
+        rerender(<LoginScreen />);
+
+        await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+
+        const [titleArg, bodyArg] = alertSpy.mock.calls[0];
+        expect(titleArg).toBe('deleteAccount.deactivatedTitle');
+        expect(bodyArg).toBe('deleteAccount.deactivatedMessage');
+        // After display the flag is reset so the Alert doesn't loop on re-renders.
+        expect(useAppStore.getState().pendingDeactivationNotice).toBe(false);
 
         alertSpy.mockRestore();
     });
