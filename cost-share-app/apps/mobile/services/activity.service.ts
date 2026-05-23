@@ -6,6 +6,7 @@ import { RecentActivity } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
 import i18n from '../i18n';
+import { getAvatarUrl, getDisplayName } from '../lib/userDisplay';
 
 export const ACTIVITY_INITIAL_PAGE_SIZE = 15;
 export const ACTIVITY_PAGE_SIZE = 20;
@@ -150,6 +151,7 @@ function mapToActivities(
     for (const row of expenses) {
         const createdBy = row.created_by as string;
         const creator = profileFromEmbed(row.creator as ProfileEmbed);
+        const creatorLike = creator ? { id: createdBy, name: creator.name, avatarUrl: creator.avatarUrl, isActive: creator.isActive } : null;
         activities.push({
             id: row.id as string,
             activityType: 'expense',
@@ -158,8 +160,8 @@ function mapToActivities(
             amount: Number(row.amount),
             currency: row.currency as string,
             userId: createdBy,
-            userName: creator?.name ?? 'Unknown',
-            userAvatarUrl: creator?.avatarUrl,
+            userName: getDisplayName(creatorLike, i18n.t),
+            userAvatarUrl: getAvatarUrl(creatorLike) ?? undefined,
             activityDate: new Date(row.expense_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -172,8 +174,10 @@ function mapToActivities(
         const amountStr = `${row.currency as string} ${Number(row.amount).toFixed(2)}`;
         const fromProfile = profileFromEmbed(row.from_user as ProfileEmbed);
         const toProfile = profileFromEmbed(row.to_user as ProfileEmbed);
-        const fromName = fromProfile?.name ?? 'Unknown';
-        const toName = toProfile?.name ?? 'Unknown';
+        const fromLike = fromProfile ? { id: fromUserId, name: fromProfile.name, avatarUrl: fromProfile.avatarUrl, isActive: fromProfile.isActive } : null;
+        const toLike = toProfile ? { id: toUserId, name: toProfile.name, avatarUrl: toProfile.avatarUrl, isActive: toProfile.isActive } : null;
+        const fromName = getDisplayName(fromLike, i18n.t);
+        const toName = getDisplayName(toLike, i18n.t);
         const groupName = groupNamesById.get(groupId) ?? '';
 
         let description: string;
@@ -201,7 +205,7 @@ function mapToActivities(
             currency: row.currency as string,
             userId: fromUserId,
             userName: fromName,
-            userAvatarUrl: fromProfile?.avatarUrl,
+            userAvatarUrl: getAvatarUrl(fromLike) ?? undefined,
             activityDate: new Date(row.settlement_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -210,6 +214,7 @@ function mapToActivities(
     for (const row of messages) {
         const userId = row.user_id as string;
         const sender = messageProfilesById.get(userId);
+        const senderLike = sender ? { id: userId, name: sender.name, avatarUrl: sender.avatarUrl, isActive: sender.isActive } : null;
         const createdAt = new Date(row.created_at as string);
         activities.push({
             id: row.id as string,
@@ -219,8 +224,8 @@ function mapToActivities(
             amount: 0,
             currency: '',
             userId,
-            userName: sender?.name ?? 'Unknown',
-            userAvatarUrl: sender?.avatarUrl,
+            userName: getDisplayName(senderLike, i18n.t),
+            userAvatarUrl: getAvatarUrl(senderLike) ?? undefined,
             activityDate: createdAt,
             createdAt,
         });
