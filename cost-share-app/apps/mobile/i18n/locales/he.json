@@ -21,7 +21,10 @@
         "submit": "שלח",
         "done": "סיום",
         "close": "סגור",
-        "you": "את/ה"
+        "you": "את/ה",
+        "deletedUser": "משתמש שנמחק",
+        "unknownUser": "משתמש לא ידוע",
+        "openMail": "פתח מייל"
     },
     "tabs": {
         "groups": "קופות",
@@ -631,7 +634,7 @@
         "warningBullet1": "לא תוכל להתחבר יותר.",
         "warningBullet2": "השם וההיסטוריה שלך ימשיכו להופיע לחברים בקופות המשותפות.",
         "warningBullet3": "יתרות פתוחות יישארו פתוחות — סלוק אותן קודם אם אתה לא רוצה שיישארו.",
-        "warningBullet4": "פעולה זו אינה הפיכה. פנה לתמיכה דרך WhatsApp כדי לשחזר.",
+        "warningBullet4": "פעולה זו אינה הפיכה. פנה אלינו ב-{{email}} לשחזור.",
         "continueBtn": "המשך",
         "confirmTitle": "כתוב את האימייל שלך לאישור",
         "typeEmailHint": "כדי לאשר את המחיקה, הקלד:",
@@ -639,6 +642,11 @@
         "deletedToast": "החשבון נמחק",
         "deleteFailed": "מחיקת החשבון נכשלה. נסה שוב.",
         "deactivatedTitle": "החשבון לא פעיל",
-        "deactivatedMessage": "החשבון הזה נמחק. פנה לתמיכה דרך WhatsApp כדי לשחזר."
+        "deactivatedMessage": "החשבון הזה נמחק. פנה ל-{{email}} לשחזור.",
+        "openBalancesWarningTitle": "יש לך יתרות פתוחות",
+        "openBalancesWarningBody": "החברים יראו אותן רשומות מול 'משתמש שנמחק'.",
+        "openBalancesCta": "סלוק עכשיו",
+        "reSignupBlockedTitle": "החשבון נמחק",
+        "reSignupBlocked": "החשבון הזה נמחק. פנה ל-{{email}} כדי לשחזר."
     }
 }
