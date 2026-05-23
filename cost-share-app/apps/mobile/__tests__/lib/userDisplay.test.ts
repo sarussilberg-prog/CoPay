@@ -2,17 +2,20 @@ import { getAvatarUrl, getDisplayName, isDeleted } from '../../lib/userDisplay';
 
 const t = (key: string) => key;
 
-const active = { id: 'a', name: 'Alice', avatar_url: 'https://x/a.png', is_active: true };
-const deleted = { id: 'd', name: null, avatar_url: null, is_active: false };
-const nameless = { id: 'n', name: '   ', avatar_url: null, is_active: true };
+const active = { id: 'a', name: 'Alice', avatarUrl: 'https://x/a.png', isActive: true };
+const deleted = { id: 'd', name: null, avatarUrl: null, isActive: false };
+const nameless = { id: 'n', name: '   ', avatarUrl: null, isActive: true };
 
 describe('userDisplay', () => {
     describe('isDeleted', () => {
-        it('returns true for is_active=false', () => expect(isDeleted(deleted)).toBe(true));
-        it('returns false for is_active=true', () => expect(isDeleted(active)).toBe(false));
+        it('returns true for isActive=false', () => expect(isDeleted(deleted)).toBe(true));
+        it('returns false for isActive=true', () => expect(isDeleted(active)).toBe(false));
         it('returns false for null/undefined', () => {
             expect(isDeleted(null)).toBe(false);
             expect(isDeleted(undefined)).toBe(false);
+        });
+        it('treats isActive=undefined as not deleted', () => {
+            expect(isDeleted({ id: 'x' })).toBe(false);
         });
     });
 
@@ -29,6 +32,9 @@ describe('userDisplay', () => {
         it('returns common.unknownUser for active user with blank name', () => {
             expect(getDisplayName(nameless, t as any)).toBe('common.unknownUser');
         });
+        it('returns common.unknownUser when name is missing entirely', () => {
+            expect(getDisplayName({ id: 'x' }, t as any)).toBe('common.unknownUser');
+        });
     });
 
     describe('getAvatarUrl', () => {
@@ -40,6 +46,9 @@ describe('userDisplay', () => {
         });
         it('returns null for null user', () => {
             expect(getAvatarUrl(null)).toBeNull();
+        });
+        it('returns null when avatarUrl missing', () => {
+            expect(getAvatarUrl({ id: 'x' })).toBeNull();
         });
     });
 });
