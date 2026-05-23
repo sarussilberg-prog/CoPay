@@ -543,6 +543,8 @@ export interface FriendBalance {
     userId: string;
     name: string;
     avatarUrl?: string;
+    /** `false` when the friend's account was deleted; UI should mask name/avatar. */
+    isActive: boolean;
     sharedGroupIds: string[];
     /** Balances per group currency from `get_user_dashboard`. */
     byCurrency: FriendBalanceByCurrency[];

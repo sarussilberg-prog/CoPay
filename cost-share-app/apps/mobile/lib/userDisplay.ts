@@ -45,7 +45,10 @@ export function getAvatarUrlForMember(m: MemberLike | undefined | null): string 
     return getAvatarUrl({ id: m.userId, name: m.displayName, avatarUrl: m.avatarUrl, isActive: m.isActive }) ?? undefined;
 }
 
-/** Display helpers for `FriendBalance` (shape: {userId, name, avatarUrl, isActive}). */
+/**
+ * Display helpers for `FriendBalance` (shape: {userId, name, avatarUrl, isActive}).
+ * `isActive` is required to mirror the strict `FriendBalance` type contract.
+ */
 export interface FriendLike {
     userId: string;
     name?: string | null;

@@ -1,8 +1,7 @@
--- Idempotent: profile dashboard RPC.
--- Totals, byCurrency, active/closed counts, AND friend balances all derive
--- from the same pairwise-debt logic as get_group_pairwise_debts so the profile
--- summary matches the Settle Up screen exactly.
--- Apply: supabase db query --linked -f supabase/get-user-dashboard.sql
+-- friend-balance-is-active.sql
+-- Idempotent. Adds `isActive` to the friend rows returned by get_user_dashboard
+-- so the profile dashboard can mask name/avatar for deleted friends.
+-- Apply: supabase db query --linked -f supabase/friend-balance-is-active.sql
 
 CREATE OR REPLACE FUNCTION get_user_dashboard(p_user_id UUID)
 RETURNS JSONB

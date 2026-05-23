@@ -432,6 +432,7 @@ BEGIN
             'userId', fm.friend_id,
             'name', p.name,
             'avatarUrl', p.avatar_url,
+            'isActive', p.is_active,
             'byCurrency', fm.by_currency,
             'sharedGroupIds', fm.shared_group_ids
         ) ORDER BY p.name), '[]'::jsonb) AS friends_json
