@@ -187,3 +187,96 @@ AS $$
     SELECT get_user_balance_summary(auth.uid());
 $$;
 GRANT EXECUTE ON FUNCTION get_my_open_balances() TO authenticated;
+
+-- ============================================
+-- RLS HARDENING: gate every write on is_caller_active()
+-- Policy names match those in schema.sql so DROP+CREATE replaces them.
+-- ============================================
+
+-- profiles
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+CREATE POLICY "Users can update own profile" ON profiles
+    FOR UPDATE
+    USING (auth.uid() = id AND public.is_caller_active())
+    WITH CHECK (auth.uid() = id AND public.is_caller_active());
+
+-- groups
+DROP POLICY IF EXISTS "Users can create groups" ON groups;
+CREATE POLICY "Users can create groups" ON groups
+    FOR INSERT
+    WITH CHECK (auth.uid() = created_by AND public.is_caller_active());
+
+DROP POLICY IF EXISTS "Group members can update their groups" ON groups;
+CREATE POLICY "Group members can update their groups" ON groups
+    FOR UPDATE
+    USING (public.is_group_member(id) AND public.is_caller_active());
+
+-- group_members
+DROP POLICY IF EXISTS "Users can insert group members" ON group_members;
+CREATE POLICY "Users can insert group members" ON group_members
+    FOR INSERT
+    WITH CHECK (
+        public.is_caller_active()
+        AND (
+            auth.uid() = user_id
+            OR public.is_group_creator(group_id)
+            OR public.is_group_member(group_id)
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can update group members" ON group_members;
+CREATE POLICY "Users can update group members" ON group_members
+    FOR UPDATE
+    USING (public.is_group_member(group_id) AND public.is_caller_active());
+
+-- expenses
+DROP POLICY IF EXISTS "Users can create expenses in their groups" ON expenses;
+CREATE POLICY "Users can create expenses in their groups" ON expenses
+    FOR INSERT
+    WITH CHECK (public.is_group_member(group_id) AND public.is_caller_active());
+
+DROP POLICY IF EXISTS "Users can update group expenses" ON expenses;
+CREATE POLICY "Users can update group expenses" ON expenses
+    FOR UPDATE
+    USING (public.is_group_member(group_id) AND public.is_caller_active());
+
+-- expense_splits
+DROP POLICY IF EXISTS "Users can insert expense splits" ON expense_splits;
+CREATE POLICY "Users can insert expense splits" ON expense_splits
+    FOR INSERT
+    WITH CHECK (
+        public.is_caller_active()
+        AND expense_id IN (
+            SELECT e.id FROM expenses e WHERE public.is_group_member(e.group_id)
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can delete expense splits" ON expense_splits;
+CREATE POLICY "Users can delete expense splits" ON expense_splits
+    FOR DELETE
+    USING (
+        public.is_caller_active()
+        AND expense_id IN (
+            SELECT e.id FROM expenses e WHERE public.is_group_member(e.group_id)
+        )
+    );
+
+-- settlements
+DROP POLICY IF EXISTS "Users can create settlements in their groups" ON settlements;
+CREATE POLICY "Users can create settlements in their groups" ON settlements
+    FOR INSERT
+    WITH CHECK (public.is_group_member(group_id) AND public.is_caller_active());
+
+DROP POLICY IF EXISTS "Group members can update settlements" ON settlements;
+CREATE POLICY "Group members can update settlements" ON settlements
+    FOR UPDATE
+    USING (public.is_group_member(group_id) AND public.is_caller_active());
+
+DROP POLICY IF EXISTS "Either party can delete settlement" ON settlements;
+CREATE POLICY "Either party can delete settlement" ON settlements
+    FOR DELETE
+    USING (
+        public.is_caller_active()
+        AND public.is_group_member(group_id)
+        AND (auth.uid() = from_user_id OR auth.uid() = to_user_id)
+    );
