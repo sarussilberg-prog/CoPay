@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Modal, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Markdown from 'react-native-markdown-display';
@@ -17,15 +17,21 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
     const { t, i18n } = useTranslation();
     const query = useLegalDocument(slug);
 
+    const docLocale = query.data?.locale ?? (i18n.language === 'he' ? 'he' : 'en');
+    const isRtl = docLocale === 'he';
+    const styles = useMemo(() => buildMarkdownStyles(isRtl), [isRtl]);
+
     if (!visible) return null;
 
     const formattedDate = query.data
-        ? new Intl.DateTimeFormat(i18n.language === 'he' ? 'he-IL' : 'en-US', {
+        ? new Intl.DateTimeFormat(isRtl ? 'he-IL' : 'en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
           }).format(new Date(query.data.effectiveDate))
         : '';
+
+    const titleAlign = isRtl ? 'right' : 'left';
 
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -34,19 +40,28 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
                     onPress={(e) => e.stopPropagation()}
                     testID="legal-sheet"
                     className="bg-white rounded-t-2xl absolute bottom-0 inset-x-0"
-                    style={{ maxHeight: '92%' }}
+                    style={{ height: '92%', flexDirection: 'column' }}
                 >
                     <View className="items-center pt-2 pb-1">
                         <View className="w-10 h-1 bg-gray-300 rounded-full" />
                     </View>
 
-                    <View className="px-5 pt-2 pb-3 border-b border-gray-100 flex-row items-start justify-between">
-                        <View className="flex-1 pe-3">
-                            <Text className="text-xl font-bold text-gray-900">
+                    <View
+                        className="px-5 pt-2 pb-3 border-b border-gray-100 items-start justify-between"
+                        style={{ flexDirection: isRtl ? 'row-reverse' : 'row' }}
+                    >
+                        <View className="flex-1" style={{ paddingEnd: 12 }}>
+                            <Text
+                                className="text-xl font-bold text-gray-900"
+                                style={{ textAlign: titleAlign, writingDirection: isRtl ? 'rtl' : 'ltr' }}
+                            >
                                 {query.data?.title ?? t(slug === 'terms' ? 'legal.termsTitle' : 'legal.privacyTitle')}
                             </Text>
                             {query.data && (
-                                <Text className="text-xs text-gray-500 mt-1">
+                                <Text
+                                    className="text-xs text-gray-500 mt-1"
+                                    style={{ textAlign: titleAlign, writingDirection: isRtl ? 'rtl' : 'ltr' }}
+                                >
                                     {t('legal.lastUpdated', { date: formattedDate })} · {t('legal.versionLabel', { version: query.data.version })}
                                 </Text>
                             )}
@@ -61,9 +76,12 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
                         <ErrorBody onRetry={() => void query.refetch()} />
                     )}
                     {query.data && (
-                        <ScrollView className="px-5 pt-3" showsVerticalScrollIndicator={true}>
-                            <Markdown style={markdownStyles}>{query.data.contentMd}</Markdown>
-                            <View className="h-6" />
+                        <ScrollView
+                            style={{ flex: 1 }}
+                            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}
+                            showsVerticalScrollIndicator={true}
+                        >
+                            <Markdown style={styles}>{query.data.contentMd}</Markdown>
                         </ScrollView>
                     )}
 
@@ -103,19 +121,34 @@ function ErrorBody({ onRetry }: { onRetry: () => void }) {
     );
 }
 
-const markdownStyles = {
-    body: { color: '#374151', fontSize: 16, lineHeight: 24 },
-    heading1: { fontSize: 22, fontWeight: '700' as const, color: '#111827', marginTop: 16, marginBottom: 8 },
-    heading2: { fontSize: 18, fontWeight: '700' as const, color: '#111827', marginTop: 14, marginBottom: 6 },
-    heading3: { fontSize: 16, fontWeight: '700' as const, color: '#111827', marginTop: 12, marginBottom: 4 },
-    strong: { fontWeight: '700' as const, color: '#111827' },
-    em: { fontStyle: 'italic' as const },
-    link: { color: '#2563eb', textDecorationLine: 'underline' as const },
-    bullet_list: { marginBottom: 8 },
-    ordered_list: { marginBottom: 8 },
-    list_item: { marginBottom: 4 },
-    blockquote: { backgroundColor: '#f9fafb', borderLeftWidth: 4, borderLeftColor: '#d1d5db', paddingHorizontal: 12, paddingVertical: 6, marginVertical: 8 },
-    table: { borderWidth: 1, borderColor: '#e5e7eb', marginVertical: 8 },
-    th: { padding: 6, fontWeight: '700' as const, backgroundColor: '#f9fafb' },
-    td: { padding: 6, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
-};
+function buildMarkdownStyles(isRtl: boolean) {
+    const textAlign = isRtl ? ('right' as const) : ('left' as const);
+    const writingDirection = isRtl ? ('rtl' as const) : ('ltr' as const);
+    return {
+        body: { color: '#374151', fontSize: 16, lineHeight: 24, textAlign, writingDirection },
+        paragraph: { textAlign, writingDirection, marginTop: 0, marginBottom: 10 },
+        heading1: { fontSize: 22, fontWeight: '700' as const, color: '#111827', marginTop: 16, marginBottom: 8, textAlign, writingDirection },
+        heading2: { fontSize: 18, fontWeight: '700' as const, color: '#111827', marginTop: 14, marginBottom: 6, textAlign, writingDirection },
+        heading3: { fontSize: 16, fontWeight: '700' as const, color: '#111827', marginTop: 12, marginBottom: 4, textAlign, writingDirection },
+        strong: { fontWeight: '700' as const, color: '#111827' },
+        em: { fontStyle: 'italic' as const },
+        link: { color: '#2563eb', textDecorationLine: 'underline' as const },
+        bullet_list: { marginBottom: 8 },
+        ordered_list: { marginBottom: 8 },
+        list_item: { marginBottom: 4, flexDirection: isRtl ? ('row-reverse' as const) : ('row' as const) },
+        bullet_list_icon: { marginStart: isRtl ? 0 : 8, marginEnd: isRtl ? 8 : 8 },
+        ordered_list_icon: { marginStart: isRtl ? 0 : 8, marginEnd: isRtl ? 8 : 8 },
+        blockquote: {
+            backgroundColor: '#f9fafb',
+            ...(isRtl
+                ? { borderRightWidth: 4, borderRightColor: '#d1d5db' }
+                : { borderLeftWidth: 4, borderLeftColor: '#d1d5db' }),
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            marginVertical: 8,
+        },
+        table: { borderWidth: 1, borderColor: '#e5e7eb', marginVertical: 8 },
+        th: { padding: 6, fontWeight: '700' as const, backgroundColor: '#f9fafb', textAlign },
+        td: { padding: 6, borderTopWidth: 1, borderTopColor: '#e5e7eb', textAlign },
+    };
+}
