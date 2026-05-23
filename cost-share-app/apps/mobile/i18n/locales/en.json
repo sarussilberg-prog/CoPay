@@ -640,7 +640,7 @@
         "deletedToast": "Account deleted",
         "deleteFailed": "Could not delete account. Please try again.",
         "deactivatedTitle": "Account deactivated",
-        "deactivatedMessage": "This account was deleted. Contact {{email}} to restore.",
+        "deactivatedMessage": "This account was deleted. You can't sign back in until you contact us at {{email}}.",
         "openBalancesWarningTitle": "You have open balances",
         "openBalancesWarningBody": "Friends will see these owed against 'Deleted user'.",
         "openBalancesCta": "Settle up now",

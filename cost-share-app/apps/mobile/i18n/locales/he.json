@@ -642,7 +642,7 @@
         "deletedToast": "החשבון נמחק",
         "deleteFailed": "מחיקת החשבון נכשלה. נסה שוב.",
         "deactivatedTitle": "החשבון לא פעיל",
-        "deactivatedMessage": "החשבון הזה נמחק. פנה ל-{{email}} לשחזור.",
+        "deactivatedMessage": "החשבון הזה נמחק. לא תוכל להתחבר עד שתפנה אלינו ב-{{email}}.",
         "openBalancesWarningTitle": "יש לך יתרות פתוחות",
         "openBalancesWarningBody": "החברים יראו אותן רשומות מול 'משתמש שנמחק'.",
         "openBalancesCta": "סלוק עכשיו",
