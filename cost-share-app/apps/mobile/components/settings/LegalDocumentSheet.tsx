@@ -35,11 +35,14 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
 
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-            <Pressable className="flex-1 bg-black/40" onPress={onClose}>
+            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
                 <Pressable
-                    onPress={(e) => e.stopPropagation()}
+                    style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.4)' }}
+                    onPress={onClose}
+                />
+                <View
                     testID="legal-sheet"
-                    className="bg-white rounded-t-2xl absolute bottom-0 inset-x-0"
+                    className="bg-white rounded-t-2xl"
                     style={{ height: '92%', flexDirection: 'column' }}
                 >
                     <View className="items-center pt-2 pb-1">
@@ -50,7 +53,7 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
                         className="px-5 pt-2 pb-3 border-b border-gray-100 items-start justify-between"
                         style={{ flexDirection: isRtl ? 'row-reverse' : 'row' }}
                     >
-                        <View className="flex-1" style={{ paddingEnd: 12 }}>
+                        <View style={{ flex: 1, paddingEnd: 12 }}>
                             <Text
                                 className="text-xl font-bold text-gray-900"
                                 style={{ textAlign: titleAlign, writingDirection: isRtl ? 'rtl' : 'ltr' }}
@@ -71,27 +74,30 @@ export function LegalDocumentSheet({ visible, slug, onClose }: Props) {
                         </TouchableOpacity>
                     </View>
 
-                    {query.isLoading && <SkeletonBody />}
-                    {query.isError && !query.data && (
-                        <ErrorBody onRetry={() => void query.refetch()} />
-                    )}
-                    {query.data && (
-                        <ScrollView
-                            style={{ flex: 1 }}
-                            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}
-                            showsVerticalScrollIndicator={true}
-                        >
-                            <Markdown style={styles}>{query.data.contentMd}</Markdown>
-                        </ScrollView>
-                    )}
+                    <View style={{ flex: 1 }}>
+                        {query.isLoading && <SkeletonBody />}
+                        {query.isError && !query.data && (
+                            <ErrorBody onRetry={() => void query.refetch()} />
+                        )}
+                        {query.data && (
+                            <ScrollView
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}
+                                showsVerticalScrollIndicator={true}
+                                nestedScrollEnabled={true}
+                            >
+                                <Markdown style={styles}>{query.data.contentMd}</Markdown>
+                            </ScrollView>
+                        )}
+                    </View>
 
                     <View className="px-5 pb-5 pt-3 border-t border-gray-100">
                         <TouchableOpacity onPress={onClose} className="bg-primary py-4 rounded-xl">
                             <Text className="text-white text-center font-semibold">{t('legal.understood')}</Text>
                         </TouchableOpacity>
                     </View>
-                </Pressable>
-            </Pressable>
+                </View>
+            </View>
         </Modal>
     );
 }
