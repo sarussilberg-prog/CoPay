@@ -15,6 +15,7 @@ jest.mock('../../../services/auth.service', () => ({ signOut: jest.fn() }));
 jest.mock('../../../i18n', () => ({ changeLanguage: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('../../../services/account.service', () => ({
     deleteMyAccount: jest.fn().mockResolvedValue({ ok: true }),
+    getMyOpenBalances: jest.fn(),
 }));
 jest.mock('../../../services/users.service', () => ({
     updateUser: jest.fn(),
@@ -34,10 +35,13 @@ import { SettingsScreen } from '../../../screens/profile/SettingsScreen';
 import { useAppStore } from '../../../store';
 import { updateUser } from '../../../services/users.service';
 import { openSupportContact } from '../../../lib/openMailto';
+import { getMyOpenBalances } from '../../../services/account.service';
 
 const mockOpenSupportContact = openSupportContact as jest.MockedFunction<typeof openSupportContact>;
 
 const mockUpdateUser = updateUser as jest.MockedFunction<typeof updateUser>;
+
+const mockGetMyOpenBalances = getMyOpenBalances as jest.MockedFunction<typeof getMyOpenBalances>;
 
 let mockOpenURL: jest.SpyInstance;
 
@@ -47,6 +51,13 @@ beforeEach(() => {
     mockOpenSupportContact.mockResolvedValue(undefined);
     mockUpdateUser.mockReset();
     mockUpdateUser.mockResolvedValue({ id: 'u1' } as any);
+    mockGetMyOpenBalances.mockReset();
+    mockGetMyOpenBalances.mockResolvedValue({
+        hasOpenBalances: false,
+        totalOwed: 0,
+        totalOwing: 0,
+        currency: 'ILS',
+    });
     useAppStore.setState({
         language: 'en',
         currentUser: { id: 'u1', email: 'a@x.com', name: 'Alice', inviteToken: 'alice123456', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date() },
@@ -83,10 +94,25 @@ describe('SettingsScreen (grouped, no notifications)', () => {
         expect(getByText('settings.deleteAccount')).toBeTruthy();
     });
 
-    it('opens the warning sheet when Delete account is pressed', () => {
+    it('opens the warning sheet when Delete account is pressed', async () => {
         const { getByText } = render(<SettingsScreen />);
         fireEvent.press(getByText('settings.deleteAccount'));
-        expect(getByText('deleteAccount.warningTitle')).toBeTruthy();
+        await waitFor(() => expect(getByText('deleteAccount.warningTitle')).toBeTruthy());
+    });
+
+    it('fetches open balances when delete-account row is tapped', async () => {
+        mockGetMyOpenBalances.mockResolvedValue({
+            hasOpenBalances: true,
+            totalOwed: 50,
+            totalOwing: 0,
+            currency: 'ILS',
+        });
+
+        const { getByText } = render(<SettingsScreen />);
+
+        fireEvent.press(getByText('settings.deleteAccount'));
+
+        await waitFor(() => expect(mockGetMyOpenBalances).toHaveBeenCalledTimes(1));
     });
 
     it('renders default currency row in General section', () => {

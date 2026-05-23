@@ -17,7 +17,8 @@ import { LegalSheet } from '../../components/settings/LegalSheet';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import Toast from 'react-native-toast-message';
-import { deleteMyAccount } from '../../services/account.service';
+import { deleteMyAccount, getMyOpenBalances, type OpenBalancesSummary } from '../../services/account.service';
+import { useNavigation } from '@react-navigation/native';
 import { DeleteAccountWarningSheet } from '../../components/settings/DeleteAccountWarningSheet';
 import { DeleteAccountConfirmSheet } from '../../components/settings/DeleteAccountConfirmSheet';
 import currencyCodes from 'currency-codes';
@@ -41,6 +42,9 @@ export function SettingsScreen() {
     const [showPrivacy, setShowPrivacy] = useState(false);
     const [showDeleteWarning, setShowDeleteWarning] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [openBalances, setOpenBalances] = useState<OpenBalancesSummary | null>(null);
+
+    const navigation = useNavigation<any>();
 
     const handleLanguagePick = useCallback(async (lang: Language) => {
         setShowLanguage(false);
@@ -146,7 +150,11 @@ export function SettingsScreen() {
                         iconName="trash-outline"
                         label={t('settings.deleteAccount')}
                         variant="danger"
-                        onPress={() => setShowDeleteWarning(true)}
+                        onPress={async () => {
+                            const balances = await getMyOpenBalances();
+                            setOpenBalances(balances);
+                            setShowDeleteWarning(true);
+                        }}
                     />
                 </SettingsSection>
 
@@ -185,10 +193,15 @@ export function SettingsScreen() {
 
             <DeleteAccountWarningSheet
                 visible={showDeleteWarning}
+                openBalances={openBalances}
                 onClose={() => setShowDeleteWarning(false)}
                 onContinue={() => {
                     setShowDeleteWarning(false);
                     setShowDeleteConfirm(true);
+                }}
+                onSettleUp={() => {
+                    setShowDeleteWarning(false);
+                    navigation.navigate('SettleUpList');
                 }}
             />
 
