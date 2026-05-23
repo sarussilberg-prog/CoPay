@@ -691,10 +691,14 @@ ALTER TABLE profiles ALTER COLUMN name DROP NOT NULL;
 -- ============================================
 CREATE OR REPLACE FUNCTION public.is_caller_active() RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT COALESCE(
-        (SELECT is_active FROM profiles WHERE id = auth.uid()),
-        TRUE
-    );
+    -- Returns TRUE only for an authenticated, active user.
+    -- - Returns FALSE for anon (unauthenticated) callers.
+    -- - Returns TRUE when the caller is authenticated but the profile row is
+    --   missing — preserves the first-login race tolerated by assertProfileActive().
+    SELECT CASE
+        WHEN auth.uid() IS NULL THEN FALSE
+        ELSE COALESCE((SELECT is_active FROM profiles WHERE id = auth.uid()), TRUE)
+    END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.is_caller_active() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_caller_active() TO anon, authenticated;
@@ -731,7 +735,7 @@ BEGIN
     BEGIN
         v_balance := get_user_balance_summary(v_user_id);
     EXCEPTION WHEN OTHERS THEN
-        v_balance := jsonb_build_object('error', SQLERRM);
+        v_balance := jsonb_build_object('error', SQLERRM, 'sqlstate', SQLSTATE);
     END;
 
     SELECT avatar_url INTO v_avatar FROM profiles WHERE id = v_user_id;
@@ -756,7 +760,7 @@ BEGIN
     END IF;
 
     UPDATE auth.users
-        SET banned_until = TIMESTAMPTZ '2099-12-31 00:00:00+00'
+        SET banned_until = 'infinity'::timestamptz
         WHERE id = v_user_id;
 
     INSERT INTO account_deletions_audit (user_id, email_hash, reason, open_balance_snapshot)
