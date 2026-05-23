@@ -3,17 +3,18 @@
  * filtered by group_id while the screen is mounted.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { groupMessageFromRow } from '@cost-share/shared';
 
 export function useGroupMessagesRealtime(groupId: string | undefined | null): void {
+    const instanceId = useId();
     useEffect(() => {
         if (!groupId) return;
 
         const channel = supabase
-            .channel(`group_messages:${groupId}`)
+            .channel(`group_messages:${groupId}:${instanceId}`)
             .on(
                 'postgres_changes' as never,
                 {
@@ -57,5 +58,5 @@ export function useGroupMessagesRealtime(groupId: string | undefined | null): vo
             void channel.unsubscribe();
             void supabase.removeChannel(channel);
         };
-    }, [groupId]);
+    }, [groupId, instanceId]);
 }

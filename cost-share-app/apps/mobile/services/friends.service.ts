@@ -70,7 +70,13 @@ export async function fetchFriends(): Promise<User[]> {
         console.error('fetchFriends profile lookup failed:', pErr);
         return [];
     }
-    return (profiles ?? []).map(profileFromRow).sort((a, b) => a.name.localeCompare(b.name));
+    return (profiles ?? [])
+        .map(profileFromRow)
+        .sort((a, b) => {
+            const aKey = a.isActive === false ? '' : (a.name?.trim() ?? '');
+            const bKey = b.isActive === false ? '' : (b.name?.trim() ?? '');
+            return aKey.localeCompare(bKey);
+        });
 }
 
 async function fetchProfilesByIds(ids: string[]): Promise<Map<string, User>> {

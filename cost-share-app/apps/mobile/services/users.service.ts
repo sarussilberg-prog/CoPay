@@ -6,16 +6,23 @@ import { User, UpdateProfileDto, BalanceSummaryResponse } from '@cost-share/shar
 import { profileFromRow } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
+import { clearLocalAuthSession } from './auth.service';
 import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../hooks/queries/keys';
 import { useAppStore } from '../store';
 
 /** Load profiles.default_currency (and other fields) after auth — session alone only has ILS placeholder. */
-export async function hydrateCurrentUserProfile(userId: string): Promise<void> {
+export async function hydrateCurrentUserProfile(userId: string): Promise<boolean> {
     const user = await getUserById(userId);
-    if (user) {
-        useAppStore.getState().setCurrentUser(user);
+    if (!user) return false;
+
+    if (user.isActive === false) {
+        await clearLocalAuthSession();
+        return false;
     }
+
+    useAppStore.getState().setCurrentUser(user);
+    return true;
 }
 
 export async function fetchUsers(): Promise<User[]> {

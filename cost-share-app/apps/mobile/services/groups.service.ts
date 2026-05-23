@@ -33,6 +33,21 @@ import { useAppStore } from '../store';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
 
+async function filterActiveMemberIds(memberIds: string[]): Promise<string[]> {
+    if (memberIds.length === 0) return [];
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('id', memberIds)
+        .eq('is_active', true);
+    if (error) {
+        console.error('filterActiveMemberIds failed:', error);
+        return [];
+    }
+    const active = new Set((data ?? []).map(row => row.id as string));
+    return memberIds.filter(id => active.has(id));
+}
+
 async function loadBalanceData(groupId: string, userId?: string) {
     const [groupRes, membersRes, expensesRes, settlementsRes] = await Promise.all([
         supabase.from('groups').select('default_currency').eq('id', groupId).maybeSingle(),
@@ -109,7 +124,7 @@ export async function fetchGroups(): Promise<GroupWithMembers[]> {
             supabase
                 .from('groups')
                 .select(
-                    '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url))',
+                    '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url, is_active))',
                 )
                 .in('id', groupIds)
                 .eq('is_active', true)
@@ -209,6 +224,15 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
     if (!createdBy) return null;
 
     try {
+        const requestedIds = dto.memberIds.filter(id => id !== createdBy);
+        const activeMemberIds = await filterActiveMemberIds(requestedIds);
+        if (activeMemberIds.length < requestedIds.length) {
+            Toast.show({
+                type: 'error',
+                text1: i18n.t('groups.inactiveMemberSkipped'),
+            });
+        }
+
         const { data: groupRow, error: groupErr } = await supabase
             .from('groups')
             .insert({
@@ -223,7 +247,7 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
             .single();
         if (groupErr) throw groupErr;
 
-        const memberIds = new Set<string>([createdBy, ...dto.memberIds]);
+        const memberIds = new Set<string>([createdBy, ...activeMemberIds]);
         const rows = Array.from(memberIds).map(userId => ({
             group_id: groupRow.id,
             user_id: userId,
@@ -340,7 +364,7 @@ export async function fetchProfilesByUserIds(
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, avatar_url')
+        .select('id, name, avatar_url, is_active')
         .in('id', unique);
 
     if (error) {
@@ -355,6 +379,7 @@ export async function fetchProfilesByUserIds(
             userId: id,
             displayName: (p.name as string) ?? '',
             avatarUrl: (p.avatar_url as string | undefined) ?? undefined,
+            isActive: p.is_active === undefined ? true : Boolean(p.is_active),
         };
     });
     return map;

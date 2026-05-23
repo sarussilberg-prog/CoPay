@@ -21,6 +21,7 @@ import { Text } from './AppText';
 import { MemberAvatar } from './MemberAvatar';
 import { Button } from './Button';
 import { resolveAutoTextInputStyle, useRtlLayout } from '../hooks/useRtlLayout';
+import { getAvatarUrlForMember } from '../lib/userDisplay';
 
 export interface SettleUpFormValues {
     fromUserId: string;
@@ -171,7 +172,7 @@ export function SettleUpSheet({
                                 </Text>
                                 <MemberAvatar
                                     name={fromMember?.displayName ?? '?'}
-                                    avatarUrl={fromMember?.avatarUrl}
+                                    avatarUrl={getAvatarUrlForMember(fromMember)}
                                     size="lg"
                                 />
                                 <Text className="text-sm font-medium text-gray-900 mt-2" numberOfLines={1}>
@@ -195,7 +196,7 @@ export function SettleUpSheet({
                                 </Text>
                                 <MemberAvatar
                                     name={toMember?.displayName ?? '?'}
-                                    avatarUrl={toMember?.avatarUrl}
+                                    avatarUrl={getAvatarUrlForMember(toMember)}
                                     size="lg"
                                 />
                                 <Text className="text-sm font-medium text-gray-900 mt-2" numberOfLines={1}>

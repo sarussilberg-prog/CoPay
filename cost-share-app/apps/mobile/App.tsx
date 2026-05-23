@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Alert, View, ActivityIndicator, Platform } from 'react-native';
+import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
@@ -9,17 +9,26 @@ import { handleAuthRedirectUrl, isAuthCallbackUrl } from './services/auth.servic
 import { AppNavigator } from './navigation/AppNavigator';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { initializeLanguage } from './i18n';
-import i18n from './i18n';
-import { hydrateAuthSession } from './lib/authSessionLifecycle';
+import {
+  clearStaleAuthSession,
+  hydrateAuthSession,
+  isInvalidRefreshTokenError,
+  setupSupabaseAuthAutoRefresh,
+} from './lib/authSessionLifecycle';
 import { supabase } from './lib/supabase';
-import { assertProfileActive } from './lib/auth';
+import { assertProfileActiveWithTimeout, isAuthSessionAllowed } from './lib/auth';
+import { signalDeactivatedAccount } from './lib/signalDeactivatedAccount';
 import { hydrateCurrentUserProfile } from './services/users.service';
 import { queryClient } from './lib/queryClient';
 import { useAppStore } from './store';
 import { colors } from './theme';
 import { RtlLayoutProvider } from './hooks/useRtlLayout';
+import type { Session } from '@supabase/supabase-js';
 import './i18n';
 import './global.css';
+
+// Benign when a persisted session was revoked server-side (global sign-out, token rotation, etc.).
+LogBox.ignoreLogs([/Invalid Refresh Token/i, /Refresh Token Not Found/i]);
 
 // On web, frame the app in a phone-shaped column so mobile screens don't stretch across the browser.
 function WebFrame({ children }: { children: React.ReactNode }) {
@@ -45,44 +54,71 @@ function WebFrame({ children }: { children: React.ReactNode }) {
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const { session, setSession } = useAppStore();
+  const setPendingDeactivationNotice = useAppStore((s) => s.setPendingDeactivationNotice);
   const incomingUrl = Linking.useURL();
 
-  // Web: OAuth returns in the same browser tab via useURL (ignored on native — see below).
-  useEffect(() => {
-    if (Platform.OS !== 'web' || !incomingUrl || session || !isAuthCallbackUrl(incomingUrl)) return;
-    void handleAuthRedirectUrl(incomingUrl).then(({ error }) => {
-      if (error) console.error('Deep link auth error:', error.message);
-    });
-  }, [incomingUrl, session]);
+  const rejectDeactivatedSession = useCallback(async () => {
+    void signalDeactivatedAccount(setPendingDeactivationNotice);
+    await clearStaleAuthSession();
+    setSession(null);
+  }, [setPendingDeactivationNotice, setSession]);
 
-  // Native: in-app OAuth is completed in signInWithGoogle (WebBrowser result).
-  // Only handle cold-start deep links so we do not exchange the same code twice.
+  const acceptSessionIfAllowed = useCallback(async (nextSession: Session | null) => {
+    if (!nextSession) {
+      setSession(null);
+      return;
+    }
+
+    const allowed = await isAuthSessionAllowed();
+    if (!allowed) {
+      await rejectDeactivatedSession();
+      return;
+    }
+
+    const hydrated = await hydrateCurrentUserProfile(nextSession.user.id);
+    if (!hydrated) {
+      await rejectDeactivatedSession();
+      return;
+    }
+
+    setSession(nextSession);
+  }, [rejectDeactivatedSession, setSession]);
+
+  const processOAuthCallbackUrl = useCallback(async (url: string) => {
+    const { error } = await handleAuthRedirectUrl(url);
+    if (error?.code === 'account_deleted') {
+      await rejectDeactivatedSession();
+    }
+    return error;
+  }, [rejectDeactivatedSession]);
+
+  // Web: OAuth returns in the same browser tab via useURL.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !incomingUrl || !isAuthCallbackUrl(incomingUrl)) return;
+    void processOAuthCallbackUrl(incomingUrl);
+  }, [incomingUrl, processOAuthCallbackUrl]);
+
+  // Native: cold-start deep links only (in-app OAuth is handled in signInWithGoogle).
   useEffect(() => {
     if (Platform.OS === 'web' || session) return;
 
     let cancelled = false;
     void Linking.getInitialURL().then((url) => {
       if (cancelled || !url || !isAuthCallbackUrl(url)) return;
-      void handleAuthRedirectUrl(url).then(({ error }) => {
-        if (error) console.error('Deep link auth error:', error.message);
-      });
+      void processOAuthCallbackUrl(url);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, processOAuthCallbackUrl]);
 
   const guardSession = useCallback(async () => {
-    const status = await assertProfileActive();
+    const status = await assertProfileActiveWithTimeout();
     if (status === 'deactivated') {
-      Alert.alert(
-        i18n.t('deleteAccount.deactivatedTitle'),
-        i18n.t('deleteAccount.deactivatedMessage'),
-        [{ text: i18n.t('common.ok') }],
-      );
+      await rejectDeactivatedSession();
     }
-  }, []);
+  }, [rejectDeactivatedSession]);
 
   useEffect(() => {
     let mounted = true;
@@ -90,14 +126,33 @@ export default function App() {
     const init = async () => {
       try {
         await initializeLanguage();
-        const session = await hydrateAuthSession();
-        if (mounted) setSession(session);
-        if (mounted && session) {
-          void hydrateCurrentUserProfile(session.user.id);
-          void guardSession();
+
+        if (Platform.OS === 'web' && typeof globalThis.location !== 'undefined') {
+          const callbackUrl = globalThis.location.href;
+          if (isAuthCallbackUrl(callbackUrl)) {
+            await processOAuthCallbackUrl(callbackUrl);
+            globalThis.history.replaceState({}, '', globalThis.location.pathname);
+          }
         }
+
+        const hydratedSession = await hydrateAuthSession();
+        if (!mounted) return;
+
+        if (hydratedSession) {
+          await acceptSessionIfAllowed(hydratedSession);
+        } else {
+          setSession(null);
+        }
+
+        setupSupabaseAuthAutoRefresh();
       } catch (e) {
-        console.error('Init error:', e);
+        if (isInvalidRefreshTokenError(e)) {
+          await clearStaleAuthSession();
+          if (mounted) setSession(null);
+        } else {
+          console.error('Init error:', e);
+        }
+        setupSupabaseAuthAutoRefresh();
       } finally {
         if (mounted) setIsReady(true);
       }
@@ -105,18 +160,35 @@ export default function App() {
 
     void init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        void hydrateCurrentUserProfile(session.user.id);
-        void guardSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!nextSession) {
+        setSession(null);
+        return;
       }
+
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        setTimeout(() => {
+          void acceptSessionIfAllowed(nextSession);
+        }, 0);
+        return;
+      }
+
+      setSession(nextSession);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
+  }, [acceptSessionIfAllowed, processOAuthCallbackUrl, setSession]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        void guardSession();
+      }
+    });
+    return () => sub.remove();
   }, [guardSession]);
 
   if (!isReady) {
@@ -133,7 +205,6 @@ export default function App() {
     );
   }
 
-  // Show login outside NavigationContainer so it doesn't conflict with the tab navigator
   if (!session) {
     return (
       <SafeAreaProvider>

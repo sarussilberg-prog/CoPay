@@ -347,7 +347,7 @@ function SettlementDetailBody({
     return (
         <View>
             <View className="items-center py-4">
-                <View className="w-16 h-16 rounded-2xl bg-green-50 items-center justify-center mb-3">
+                <View className="mb-3">
                     <AppIcon
                         name="swap-horizontal-outline"
                         size={28}

@@ -69,8 +69,8 @@ beforeEach(() => {
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 members: [
-                    { userId: 'u1', displayName: 'Alice' },
-                    { userId: 'u2', displayName: 'Bob' },
+                    { userId: 'u1', displayName: 'Alice', isActive: true },
+                    { userId: 'u2', displayName: 'Bob', isActive: true },
                 ],
             },
         ],
@@ -81,6 +81,7 @@ beforeEach(() => {
             inviteToken: 'alice123456',
             defaultCurrency: 'USD',
             language: 'en',
+            isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
         },

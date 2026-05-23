@@ -26,6 +26,7 @@ export function resolveGroupMemberUsers(
             inviteToken: '',
             defaultCurrency: fallbackCurrency,
             language: 'en' as Language,
+            isActive: lite?.isActive ?? true,
             createdAt: now,
             updatedAt: now,
         };

@@ -15,10 +15,10 @@ describe('BalanceHeroCard', () => {
         expect(getByTestId('balance-hero-net').props.children).toMatch(/50\.00/);
     });
 
-    it('renders settled label when net is zero', () => {
-        const { getByText } = render(<BalanceHeroCard summary={zero as any} />);
-        expect(getByText('dashboard.netSettled')).toBeTruthy();
-        expect(getByText('dashboard.settled')).toBeTruthy();
+    it('renders zero net balance as formatted currency', () => {
+        const { getByText, getByTestId } = render(<BalanceHeroCard summary={zero as any} />);
+        expect(getByText('dashboard.netBalance')).toBeTruthy();
+        expect(getByTestId('balance-hero-net').props.children).toMatch(/0\.00/);
     });
 
     it('renders em-dash when multi-currency without conversion', () => {

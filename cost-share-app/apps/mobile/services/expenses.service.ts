@@ -181,13 +181,12 @@ export async function updateExpense(id: string, dto: UpdateExpenseDto): Promise<
     if (!existing) return null;
 
     try {
+        let resolvedSplits: { userId: string; amount: number }[] | undefined;
+
         if (dto.splits) {
             const amount = dto.amount ?? existing.amount;
-            const splitsWithAmounts = dto.splits.map(s => ({
-                userId: s.userId,
-                amount: s.amount ?? 0,
-            }));
-            const validation = validateExpenseSplits(amount, splitsWithAmounts);
+            resolvedSplits = resolveSplitAmounts(amount, dto.splits);
+            const validation = validateExpenseSplits(amount, resolvedSplits);
             if (!validation.valid) {
                 Toast.show({
                     type: 'error',
@@ -203,10 +202,10 @@ export async function updateExpense(id: string, dto: UpdateExpenseDto): Promise<
                 .eq('expense_id', id);
             if (delErr) throw delErr;
 
-            const splitRows = dto.splits.map(s => ({
+            const splitRows = resolvedSplits.map(s => ({
                 expense_id: id,
                 user_id: s.userId,
-                amount: s.amount ?? 0,
+                amount: s.amount,
             }));
             const { error: insErr } = await supabase.from('expense_splits').insert(splitRows);
             if (insErr) throw insErr;
@@ -223,22 +222,33 @@ export async function updateExpense(id: string, dto: UpdateExpenseDto): Promise<
         if (dto.receiptUrl !== undefined) patch.receipt_url = dto.receiptUrl;
         if (dto.paidBy !== undefined) patch.paid_by = dto.paidBy;
 
-        if (Object.keys(patch).length === 0) {
+        if (Object.keys(patch).length === 0 && !dto.splits) {
             return existing;
         }
 
-        const { data, error } = await supabase
-            .from('expenses')
-            .update(patch)
-            .eq('id', id)
-            .select()
-            .maybeSingle();
-        if (error || !data) throw error ?? new Error('Update failed');
+        let baseExpense = existing;
+        if (Object.keys(patch).length > 0) {
+            const { data, error } = await supabase
+                .from('expenses')
+                .update(patch)
+                .eq('id', id)
+                .select()
+                .maybeSingle();
+            if (error || !data) throw error ?? new Error('Update failed');
+            baseExpense = expenseFromRow(data);
+        }
 
-        const baseExpense = expenseFromRow(data);
-        const existingSplits =
-            useAppStore.getState().expenses.find(e => e.id === id)?.splits ?? [];
-        useAppStore.getState().updateExpense({ ...baseExpense, splits: existingSplits });
+        const storeSplits = resolvedSplits
+            ? resolvedSplits.map(s => ({
+                  id: '',
+                  expenseId: id,
+                  userId: s.userId,
+                  amount: s.amount,
+                  createdAt: baseExpense.createdAt,
+              }))
+            : useAppStore.getState().expenses.find(e => e.id === id)?.splits ?? [];
+
+        useAppStore.getState().updateExpense({ ...baseExpense, splits: storeSplits });
         Toast.show({
             type: 'success',
             text1: i18n.t('common.success'),

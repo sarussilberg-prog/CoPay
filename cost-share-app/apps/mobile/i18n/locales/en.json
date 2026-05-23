@@ -21,7 +21,10 @@
         "submit": "Submit",
         "done": "Done",
         "close": "Close",
-        "you": "You"
+        "you": "You",
+        "deletedUser": "Deleted user",
+        "unknownUser": "Unknown user",
+        "openMail": "Open mail"
     },
     "tabs": {
         "groups": "Groups",
@@ -62,6 +65,7 @@
         "loadingGroups": "Loading groups...",
         "loadError": "Failed to load groups",
         "createError": "Failed to create group",
+        "inactiveMemberSkipped": "Deleted users can't be added to a group",
         "updateError": "Failed to update group",
         "deleteGroup": "Delete Group",
         "deleteForEveryone": "Delete group for everyone",
@@ -158,6 +162,10 @@
         "summary": {
             "youAreOwed": "You are owed {{amount}}",
             "youOwe": "You owe {{amount}}"
+        },
+        "hero": {
+            "spentTogether": "Spent together",
+            "leftToSettle": "Left to settle"
         },
         "card": {
             "matchedMembers": "incl. {{names}}",
@@ -389,14 +397,16 @@
         "defaultCurrency": "Default Currency",
         "support": "Support",
         "rateUs": "Rate us",
-        "contactWhatsApp": "Contact us on WhatsApp",
+        "contactUs": "Contact us",
         "legal": "Legal",
         "terms": "Terms of Service",
         "privacy": "Privacy Policy",
         "account": "Account",
         "logout": "Log out",
         "version": "Version {{version}}",
-        "whatsappOpenFailed": "Could not open WhatsApp",
+        "emailOpenFailed": "Could not open email app",
+        "copyEmail": "Copy address",
+        "contactEmailCopied": "Email address copied",
         "deleteAccount": "Delete account"
     },
     "profile": {
@@ -499,7 +509,8 @@
         "notInvolved": "You're not in this debt"
     },
     "feed": {
-        "settlement": "{{from}} paid {{to}} {{amount}}"
+        "settlement": "{{from}} paid {{to}} {{amount}}",
+        "settlementRow": "{{from}} paid {{to}}"
     },
     "history": {
         "title": "History",
@@ -579,10 +590,16 @@
     },
     "legal": {
         "termsTitle": "Terms of Service",
-        "termsBody": "By using Kupa you agree to share expenses responsibly. We do not process payments — we only track balances between users.\n\nYour data is stored securely and is never sold to third parties. You may delete your account at any time by contacting support.\n\nKupa is provided as-is, without warranty.",
         "privacyTitle": "Privacy Policy",
-        "privacyBody": "Kupa stores your profile (name, email, avatar) and the groups, expenses, and settlements you create. We use your email only for authentication.\n\nWe do not sell your data. We may share anonymous aggregate analytics. You can request deletion of your data at any time.\n\nContact: support via WhatsApp +972528616878.",
-        "close": "Close"
+        "close": "Close",
+        "loading": "Loading…",
+        "errorTitle": "Couldn't load document",
+        "errorBody": "Check your connection and try again.",
+        "retry": "Try again",
+        "cachedNotice": "Showing saved version",
+        "lastUpdated": "Updated: {{date}}",
+        "versionLabel": "v{{version}}",
+        "understood": "I understand"
     },
     "friends": {
         "title": "Friends",
@@ -622,7 +639,7 @@
         "warningBullet1": "You will no longer be able to sign in.",
         "warningBullet2": "Your name and history remain visible to friends you shared groups with.",
         "warningBullet3": "Open balances stay open — settle them first if you don't want them to remain.",
-        "warningBullet4": "This cannot be undone. Contact support via WhatsApp to restore.",
+        "warningBullet4": "This action is irreversible. Contact us at {{email}} to restore.",
         "continueBtn": "Continue",
         "confirmTitle": "Type your email to confirm",
         "typeEmailHint": "To confirm deletion, type:",
@@ -630,6 +647,11 @@
         "deletedToast": "Account deleted",
         "deleteFailed": "Could not delete account. Please try again.",
         "deactivatedTitle": "Account deactivated",
-        "deactivatedMessage": "This account has been deleted. Contact support via WhatsApp to restore it."
+        "deactivatedMessage": "This account was deleted. You can't sign back in until you contact us at {{email}}.",
+        "openBalancesWarningTitle": "You have open balances",
+        "openBalancesWarningBody": "Friends will see these owed against 'Deleted user'.",
+        "openBalancesCta": "Settle up now",
+        "reSignupBlockedTitle": "Account deleted",
+        "reSignupBlocked": "This account was deleted. Contact {{email}} to restore it."
     }
 }

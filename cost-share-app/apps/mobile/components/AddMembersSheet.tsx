@@ -24,6 +24,7 @@ import { colors } from '../theme';
 import { useFriendsQuery } from '../hooks/queries/useFriendsQueries';
 import { addGroupMember } from '../services/groups.service';
 import { shareGroupInvite } from '../services/invite.service';
+import { getDisplayEmail, getDisplayName, isDeleted } from '../lib/userDisplay';
 
 interface AddMembersSheetProps {
     visible: boolean;
@@ -61,19 +62,18 @@ export function AddMembersSheet({
 
     const memberSet = useMemo(() => new Set(currentMemberIds), [currentMemberIds]);
     const eligible = useMemo<User[]>(
-        () => (friends ?? []).filter(f => !memberSet.has(f.id)),
+        () => (friends ?? []).filter(f => f.isActive !== false && !memberSet.has(f.id)),
         [friends, memberSet],
     );
     const filtered = useMemo<User[]>(() => {
         const q = query.trim().toLowerCase();
         if (!q) return eligible;
         return eligible.filter(u => {
-            const name = u.name?.toLowerCase() ?? '';
-            const email = u.email?.toLowerCase() ?? '';
-            const phone = u.phone?.toLowerCase() ?? '';
-            return name.includes(q) || email.includes(q) || phone.includes(q);
+            const name = getDisplayName(u, t).toLowerCase();
+            const email = getDisplayEmail(u)?.toLowerCase() ?? '';
+            return name.includes(q) || email.includes(q);
         });
-    }, [eligible, query]);
+    }, [eligible, query, t]);
 
     const toggle = useCallback((userId: string) => {
         setSelectedIds(prev =>

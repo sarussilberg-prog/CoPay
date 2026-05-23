@@ -6,6 +6,7 @@ const base = {
     userId: 'u2',
     name: 'Bob',
     avatarUrl: undefined,
+    isActive: true,
     sharedGroupIds: ['g1'],
     byCurrency: [{ currency: 'USD', netBalance: 25 }],
 };
@@ -28,7 +29,7 @@ describe('FriendBalanceRow', () => {
         expect(getByText('dashboard.owesYou')).toBeTruthy();
     });
 
-    it('shows settled state at zero', () => {
+    it('shows zero amount at settled balance', () => {
         const { getByText } = render(
             <FriendBalanceRow
                 friend={base}
@@ -36,7 +37,7 @@ describe('FriendBalanceRow', () => {
                 onPress={() => {}}
             />,
         );
-        expect(getByText('dashboard.settled')).toBeTruthy();
+        expect(getByText(/\$0\.00/)).toBeTruthy();
     });
 
     it('shows converted label for multi-currency rollup', () => {

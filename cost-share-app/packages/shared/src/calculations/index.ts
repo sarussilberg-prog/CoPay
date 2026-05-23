@@ -29,6 +29,12 @@ export {
 } from './simplifyDebts';
 
 export {
+    calculateGroupTotalSpent,
+    calculateGroupTotalUnsettled,
+    sortCurrencyAmounts,
+} from './groupSummaryStats';
+
+export {
     calculateMemberContributions,
     calculateUserBalancesByCurrencyFromData,
     type CurrencyAmount,

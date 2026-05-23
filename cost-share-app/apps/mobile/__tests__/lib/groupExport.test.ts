@@ -26,8 +26,8 @@ const group: Group = {
 };
 
 const members: GroupMemberLite[] = [
-    { userId: 'u1', displayName: 'Alice' },
-    { userId: 'u2', displayName: 'Bob' },
+    { userId: 'u1', displayName: 'Alice', isActive: true },
+    { userId: 'u2', displayName: 'Bob', isActive: true },
 ];
 
 describe('buildGroupExportHtml', () => {

@@ -21,6 +21,7 @@ import { colors, shadows } from '../../theme';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 import { useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQueries';
 import { getCurrentUserId } from '../../lib/auth';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 export function ProfileScreen() {
     const { t } = useTranslation();
@@ -93,8 +94,8 @@ export function ProfileScreen() {
                 }
             >
             <ProfileHeaderRow
-                name={currentUser?.name || t('common.unknown')}
-                avatarUrl={currentUser?.avatarUrl}
+                name={getDisplayName(currentUser, t)}
+                avatarUrl={getAvatarUrl(currentUser) ?? undefined}
                 onEditPress={handleEditProfile}
             />
 

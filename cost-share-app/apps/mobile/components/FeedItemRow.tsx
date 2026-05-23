@@ -8,6 +8,7 @@ import { FeedItem, GroupMemberLite, GroupMessage, Settlement } from '@cost-share
 import { ExpenseRow } from './ExpenseRow';
 import { MessageRow } from './MessageRow';
 import { SettlementRow } from './SettlementRow';
+import { getAvatarUrlForMember } from '../lib/userDisplay';
 
 interface FeedItemRowProps {
     item: FeedItem;
@@ -39,7 +40,7 @@ export function FeedItemRow({
             <ExpenseRow
                 expense={item.expense}
                 actorName={actor?.displayName ?? ''}
-                actorAvatarUrl={actor?.avatarUrl}
+                actorAvatarUrl={getAvatarUrlForMember(actor)}
                 payerName={payer?.displayName ?? ''}
                 isMine={item.expense.createdBy === currentUserId}
                 onPress={onExpensePress}
@@ -61,7 +62,7 @@ export function FeedItemRow({
             <SettlementRow
                 settlement={item.settlement}
                 actorName={actor?.displayName ?? fromName}
-                actorAvatarUrl={actor?.avatarUrl}
+                actorAvatarUrl={getAvatarUrlForMember(actor)}
                 fromName={fromName}
                 toName={toName}
                 isMine={item.settlement.createdBy === currentUserId}
@@ -74,7 +75,7 @@ export function FeedItemRow({
         <MessageRow
             message={item.message}
             senderName={sender?.displayName ?? ''}
-            senderAvatarUrl={sender?.avatarUrl}
+            senderAvatarUrl={getAvatarUrlForMember(sender)}
             isMine={item.message.userId === currentUserId}
             onEdit={onMessageEdit}
             onDelete={onMessageDelete}

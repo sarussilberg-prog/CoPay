@@ -10,6 +10,7 @@ import { View, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { User } from '@cost-share/shared';
 import { MemberAvatar } from './MemberAvatar';
+import { getAvatarUrl, getDisplayName } from '../lib/userDisplay';
 
 interface MemberSelectorProps {
     members: User[];
@@ -58,8 +59,8 @@ export function MemberSelector({
                                         }`}
                                     >
                                         <MemberAvatar
-                                            name={member.name}
-                                            avatarUrl={member.avatarUrl}
+                                            name={getDisplayName(member, t)}
+                                            avatarUrl={getAvatarUrl(member) ?? undefined}
                                             size="xs"
                                         />
                                         <Text
@@ -67,7 +68,7 @@ export function MemberSelector({
                                                 isSelected ? 'text-primary-dark' : 'text-gray-600'
                                             }`}
                                         >
-                                            {member.name}
+                                            {getDisplayName(member, t)}
                                         </Text>
                                         {isSelected && (
                                             <Text className="text-primary text-sm ml-1">✓</Text>
@@ -94,10 +95,10 @@ export function MemberSelector({
                         : 'bg-white border border-gray-200'
                     }`}
             >
-                <MemberAvatar name={item.name} avatarUrl={item.avatarUrl} size="sm" />
+                <MemberAvatar name={getDisplayName(item, t)} avatarUrl={getAvatarUrl(item) ?? undefined} size="sm" />
                 <Text className={`flex-1 ml-3 text-base ${isSelected ? 'font-semibold text-primary-dark' : 'text-gray-700'
                     }`}>
-                    {item.name}
+                    {getDisplayName(item, t)}
                 </Text>
                 {isSelected && (
                     <Text className="text-primary text-lg">✓</Text>

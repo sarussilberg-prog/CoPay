@@ -50,7 +50,7 @@ describe('groupFeedCache', () => {
                 isActive: true,
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                members: [{ userId: 'u1', displayName: 'Ada' }],
+                members: [{ userId: 'u1', displayName: 'Ada', isActive: true }],
                 isArchivedByMe: false,
                 isAutoArchived: false,
             },

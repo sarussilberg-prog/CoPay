@@ -6,7 +6,7 @@
 import { Text } from '../../components/AppText';
 import React, { useState, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { View, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { resolveAutoTextInputStyle, useRtlLayout } from '../../hooks/useRtlLayout';
+import { resolveAutoTextInputStyle, rtlRowStyle, useRtlLayout } from '../../hooks/useRtlLayout';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ExpenseCategory, ExpenseSplitInput, DEFAULT_CURRENCY } from '@cost-share/shared';
@@ -381,10 +381,10 @@ export function AddExpenseScreen() {
 
                     <View className="mb-4">
                         <Text className="text-sm font-medium text-gray-700 mb-2">{t('expenses.amount')}</Text>
-                        <View className="flex-row items-stretch" style={{ gap: 8 }}>
+                        <View style={[rtlRowStyle(isRtl), styles.amountRow]}>
                             <TextInput
                                 className={`flex-1 bg-white border rounded-xl px-4 text-3xl font-semibold text-gray-900 ${amountError ? 'border-red-500' : 'border-gray-300'}`}
-                                style={[resolveAutoTextInputStyle(isRtl), { height: 64, textAlign: 'center' }]}
+                                style={[resolveAutoTextInputStyle(isRtl), styles.amountInput]}
                                 placeholder="0.00"
                                 placeholderTextColor="#9CA3AF"
                                 value={amount}
@@ -397,7 +397,7 @@ export function AddExpenseScreen() {
                                 keyboardType="decimal-pad"
                                 inputMode="decimal"
                             />
-                            <View style={{ width: 100 }}>
+                            <View style={styles.currencyPickerWrap}>
                                 <CurrencyPicker value={currency} onChange={setCurrency} compact />
                             </View>
                         </View>
@@ -494,6 +494,20 @@ export function AddExpenseScreen() {
 }
 
 const styles = StyleSheet.create({
+    amountRow: {
+        gap: 8,
+        alignItems: 'stretch',
+    },
+    amountInput: {
+        flex: 1,
+        minWidth: 0,
+        height: 64,
+        textAlign: 'center',
+    },
+    currencyPickerWrap: {
+        width: 100,
+        flexShrink: 0,
+    },
     actions: {
         marginTop: 16,
         gap: 8,

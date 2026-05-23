@@ -160,6 +160,36 @@ describe('GroupDetailScreen', () => {
         expect(await findByText('Trip')).toBeTruthy();
     });
 
+    it('renders group-wide spent and unsettled stats in the hero', async () => {
+        useAppStore.setState({
+            expenses: [
+                {
+                    id: 'e1',
+                    groupId: 'g1',
+                    description: 'Dinner',
+                    amount: 120,
+                    currency: 'USD',
+                    expenseDate: new Date(),
+                    paidBy: 'me',
+                    createdBy: 'me',
+                    isDeleted: false,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    splits: [],
+                },
+            ],
+        });
+        const { fetchGroupPairwiseDebts } = require('../../../services/settlements.service');
+        fetchGroupPairwiseDebts.mockResolvedValue([
+            { fromUserId: 'u2', toUserId: 'me', amount: 40, currency: 'USD' },
+        ]);
+
+        const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
+        expect(await findByTestId('hero-group-stats')).toBeTruthy();
+        expect(await findByText('$120.00')).toBeTruthy();
+        expect(await findByText('$40.00')).toBeTruthy();
+    });
+
     it('renders the search input without the balance banner', async () => {
         const { findByTestId, queryByTestId } = renderWithQuery(<GroupDetailScreen />);
         expect(await findByTestId('detail-search-input')).toBeTruthy();

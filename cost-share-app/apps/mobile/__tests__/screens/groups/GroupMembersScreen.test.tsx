@@ -38,6 +38,7 @@ const user = {
     inviteToken: 'alice123456',
     defaultCurrency: 'USD',
     language: 'en' as const,
+    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
 };

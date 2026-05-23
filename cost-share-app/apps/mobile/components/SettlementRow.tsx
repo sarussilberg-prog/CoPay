@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Settlement } from '@cost-share/shared';
 import { Text } from './AppText';
@@ -60,10 +60,7 @@ function SettlementRowBase({
                 {!isMine && <FeedActorName name={actorName} />}
 
                 <View className="flex-row items-center">
-                    <View
-                        style={styles.thumb}
-                        className="rounded-xl bg-green-50 items-center justify-center mr-3"
-                    >
+                    <View className="mr-3">
                         <AppIcon
                             name="swap-horizontal-outline"
                             size={18}
@@ -71,22 +68,23 @@ function SettlementRowBase({
                         />
                     </View>
 
-                    <View className="flex-1 min-w-0 mr-2">
+                    <View className="flex-1 min-w-0">
                         <Text className="text-base font-semibold text-gray-900" numberOfLines={2}>
-                            {t('feed.settlement', {
+                            {t('feed.settlementRow', {
                                 from: fromName,
                                 to: toName,
-                                amount: amountText,
                             })}
-                        </Text>
-                        <Text className="text-xs text-gray-500 mt-0.5">
-                            {t('activity.settlement')}
                         </Text>
                     </View>
 
-                    <Text className="text-sm font-bold text-green-600 shrink-0">
-                        {amountText}
-                    </Text>
+                    <View className="items-end ml-2 shrink-0">
+                        <Text className="text-sm font-bold text-green-600" numberOfLines={1}>
+                            {amountText}
+                        </Text>
+                        <Text className="text-[10px] text-gray-400 mt-0.5" numberOfLines={1}>
+                            {t('activity.settlement')}
+                        </Text>
+                    </View>
                 </View>
 
                 <Text className="text-[11px] text-gray-400 mt-2" testID="settlement-timestamp">
@@ -96,12 +94,5 @@ function SettlementRowBase({
         </FeedChatRow>
     );
 }
-
-const styles = StyleSheet.create({
-    thumb: {
-        width: 36,
-        height: 36,
-    },
-});
 
 export const SettlementRow = React.memo(SettlementRowBase);

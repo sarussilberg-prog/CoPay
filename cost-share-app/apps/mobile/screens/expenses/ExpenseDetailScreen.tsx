@@ -20,6 +20,7 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { AppIcon } from '../../components/AppIcon';
 import { colors } from '../../theme';
+import { getDisplayName } from '../../lib/userDisplay';
 
 const categoryEmoji: Record<string, string> = {
     food: '🍕',
@@ -59,7 +60,7 @@ export function ExpenseDetailScreen() {
     }, [expenseId]);
 
     const getUserName = (userId: string): string => {
-        return allUsers.find((u) => u.id === userId)?.name || t('common.unknown');
+        return getDisplayName(allUsers.find((u) => u.id === userId) ?? null, t);
     };
 
     const handleEdit = useCallback(() => {

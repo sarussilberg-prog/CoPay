@@ -37,7 +37,7 @@ const mockFetchSummary = fetchBalanceSummary as jest.MockedFunction<
 const makeGroup = (overrides: Partial<{
     id: string;
     name: string;
-    members: { userId: string; displayName: string }[];
+    members: { userId: string; displayName: string; isActive: boolean }[];
 }>) => ({
     id: 'g1',
     name: 'Trip',
@@ -49,7 +49,7 @@ const makeGroup = (overrides: Partial<{
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    members: [{ userId: 'u1', displayName: 'Alice' }],
+    members: [{ userId: 'u1', displayName: 'Alice', isActive: true }],
     isArchivedByMe: false,
     isAutoArchived: false,
     ...overrides,
@@ -119,12 +119,12 @@ describe('GroupsListScreen', () => {
                 makeGroup({
                     id: 'g1',
                     name: 'Trip',
-                    members: [{ userId: 'u1', displayName: 'Alice' }],
+                    members: [{ userId: 'u1', displayName: 'Alice', isActive: true }],
                 }),
                 makeGroup({
                     id: 'g2',
                     name: 'Home',
-                    members: [{ userId: 'u2', displayName: 'Bob' }],
+                    members: [{ userId: 'u2', displayName: 'Bob', isActive: true }],
                 }),
             ],
         });

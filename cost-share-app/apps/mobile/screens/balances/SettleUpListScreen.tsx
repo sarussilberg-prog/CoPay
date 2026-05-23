@@ -31,6 +31,7 @@ import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { useGroupSettlementsRealtime } from '../../hooks/useGroupSettlementsRealtime';
 import { useAppStore } from '../../store';
 import { colors } from '../../theme';
+import { getAvatarUrl, getAvatarUrlForMember, getDisplayName } from '../../lib/userDisplay';
 
 interface SortedDebts {
     youInvolved: PairwiseDebt[];
@@ -74,10 +75,11 @@ export function SettleUpListScreen() {
         () =>
             members.map(m => ({
                 userId: m.id,
-                displayName: m.name,
-                avatarUrl: m.avatarUrl,
+                displayName: getDisplayName(m, t),
+                avatarUrl: getAvatarUrl(m) ?? undefined,
+                isActive: m.isActive,
             })),
-        [members],
+        [members, t],
     );
 
     const {
@@ -143,6 +145,12 @@ export function SettleUpListScreen() {
             return m?.displayName ?? t('common.unknown');
         },
         [memberLites, currentUserId, t],
+    );
+
+    const memberAvatarFor = useCallback(
+        (userId: string): string | undefined =>
+            getAvatarUrlForMember(memberLites.find(x => x.userId === userId)),
+        [memberLites],
     );
 
     const handleRowPress = useCallback((debt: PairwiseDebt) => {
@@ -232,12 +240,8 @@ export function SettleUpListScreen() {
                         involved={item.involved}
                         fromName={displayName(item.debt.fromUserId)}
                         toName={displayName(item.debt.toUserId)}
-                        fromAvatar={
-                            memberLites.find(m => m.userId === item.debt.fromUserId)?.avatarUrl
-                        }
-                        toAvatar={
-                            memberLites.find(m => m.userId === item.debt.toUserId)?.avatarUrl
-                        }
+                        fromAvatar={memberAvatarFor(item.debt.fromUserId)}
+                        toAvatar={memberAvatarFor(item.debt.toUserId)}
                         onPress={() => handleRowPress(item.debt)}
                     />
                 )}
@@ -274,14 +278,8 @@ export function SettleUpListScreen() {
                                         settlement={s}
                                         fromName={displayName(s.fromUserId)}
                                         toName={displayName(s.toUserId)}
-                                        fromAvatar={
-                                            memberLites.find(m => m.userId === s.fromUserId)
-                                                ?.avatarUrl
-                                        }
-                                        toAvatar={
-                                            memberLites.find(m => m.userId === s.toUserId)
-                                                ?.avatarUrl
-                                        }
+                                        fromAvatar={memberAvatarFor(s.fromUserId)}
+                                        toAvatar={memberAvatarFor(s.toUserId)}
                                         isLast={idx === sortedSettlements.length - 1}
                                         onPress={() => handleSettlementRowPress(s)}
                                     />

@@ -6,8 +6,10 @@
 import { Text } from './AppText';
 import React from 'react';
 import { View, TouchableOpacity, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { User } from '@cost-share/shared';
 import { MemberAvatar } from './MemberAvatar';
+import { getAvatarUrl, getDisplayName } from '../lib/userDisplay';
 
 interface PayerPickerProps {
     members: User[];
@@ -17,6 +19,7 @@ interface PayerPickerProps {
 }
 
 export function PayerPicker({ members, value, onChange, label }: PayerPickerProps) {
+    const { t } = useTranslation();
     return (
         <View className="mb-4">
             {label && (
@@ -40,8 +43,8 @@ export function PayerPicker({ members, value, onChange, label }: PayerPickerProp
                                 }`}
                             >
                                 <MemberAvatar
-                                    name={member.name}
-                                    avatarUrl={member.avatarUrl}
+                                    name={getDisplayName(member, t)}
+                                    avatarUrl={getAvatarUrl(member) ?? undefined}
                                     size="xs"
                                 />
                                 <Text
@@ -49,7 +52,7 @@ export function PayerPicker({ members, value, onChange, label }: PayerPickerProp
                                         isSelected ? 'text-primary-dark' : 'text-gray-600'
                                     }`}
                                 >
-                                    {member.name}
+                                    {getDisplayName(member, t)}
                                 </Text>
                             </TouchableOpacity>
                         );

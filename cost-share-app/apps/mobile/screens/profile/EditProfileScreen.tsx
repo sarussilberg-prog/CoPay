@@ -19,6 +19,7 @@ import { ProfileImagePicker } from '../../components/ProfileImagePicker';
 import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 import { DEFAULT_CURRENCY } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 export function EditProfileScreen() {
     const { t } = useTranslation();
@@ -26,6 +27,7 @@ export function EditProfileScreen() {
     const { isLoading, startLoading, stopLoading } = useLoading();
     const currentUser = useAppStore((state) => state.currentUser);
 
+    // TODO(account-deletion): self-edit form initial value uses raw name on purpose so empty names stay empty (not the unknown-user fallback). Keep raw read.
     const [name, setName] = useState(currentUser?.name || '');
     const [phone, setPhone] = useState(currentUser?.phone || '');
     const [currency, setCurrency] = useState(currentUser?.defaultCurrency || DEFAULT_CURRENCY);
@@ -52,7 +54,7 @@ export function EditProfileScreen() {
         if (!currentUser) return;
 
         startLoading();
-        let nextAvatarUrl: string | undefined = avatarRemoved ? undefined : currentUser.avatarUrl;
+        let nextAvatarUrl: string | undefined = avatarRemoved ? undefined : (getAvatarUrl(currentUser) ?? undefined);
 
         if (localAvatarUri) {
             const uploadedUrl = await uploadProfileImage(currentUser.id, localAvatarUri);
@@ -96,8 +98,8 @@ export function EditProfileScreen() {
         <ScrollView className="flex-1 bg-slate-50">
             <View className="p-4">
                 <ProfileImagePicker
-                    name={name.trim() || currentUser?.name || ''}
-                    avatarUrl={avatarRemoved ? null : currentUser?.avatarUrl}
+                    name={name.trim() || getDisplayName(currentUser, t)}
+                    avatarUrl={avatarRemoved ? null : getAvatarUrl(currentUser)}
                     localUri={localAvatarUri}
                     onChange={handleAvatarChange}
                 />

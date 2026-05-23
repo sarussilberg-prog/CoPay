@@ -36,6 +36,7 @@ import { AddMembersSheet } from '../../components/AddMembersSheet';
 import { AppIcon } from '../../components/AppIcon';
 import { Text } from '../../components/AppText';
 import { colors } from '../../theme';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 export function CreateGroupScreen() {
     const { t } = useTranslation();
@@ -55,7 +56,7 @@ export function CreateGroupScreen() {
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);
     const [imageRemoved, setImageRemoved] = useState(false);
     const [members, setMembers] = useState<User[]>(
-        !isEdit && initialMembers ? initialMembers : [],
+        !isEdit && initialMembers ? initialMembers.filter(m => m.isActive !== false) : [],
     );
     const [addMembersOpen, setAddMembersOpen] = useState(false);
     const [removeTarget, setRemoveTarget] = useState<User | null>(null);
@@ -133,7 +134,7 @@ export function CreateGroupScreen() {
         setMembers(prev => {
             const existing = new Set(prev.map(m => m.id));
             const next = [...prev];
-            users.forEach(u => {
+            users.filter(u => u.isActive !== false).forEach(u => {
                 if (!existing.has(u.id)) next.push(u);
             });
             return next;
@@ -309,7 +310,7 @@ export function CreateGroupScreen() {
                                     testID={`group-form-member-${m.id}`}
                                 >
                                     <View>
-                                        <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size="md" />
+                                        <MemberAvatar name={getDisplayName(m, t)} avatarUrl={getAvatarUrl(m) ?? undefined} size="md" />
                                         {!isSelf && (
                                             <TouchableOpacity
                                                 onPress={() => openRemoveDialog(m)}
@@ -328,7 +329,7 @@ export function CreateGroupScreen() {
                                         numberOfLines={1}
                                         className="text-xs text-gray-600 mt-1 w-14 text-center"
                                     >
-                                        {m.name}
+                                        {getDisplayName(m, t)}
                                     </Text>
                                 </View>
                             );

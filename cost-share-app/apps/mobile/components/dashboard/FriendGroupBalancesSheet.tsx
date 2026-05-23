@@ -14,7 +14,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { FriendBalance, PairwiseDebt } from '@cost-share/shared';
 import { Text } from '../AppText';
 import { MemberAvatar } from '../MemberAvatar';
@@ -26,6 +26,8 @@ import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
 import { useAppStore } from '../../store';
 import { queryKeys } from '../../hooks/queries/keys';
 import { fetchGroupPairwiseDebts } from '../../services/settlements.service';
+import { fetchGroups } from '../../services/groups.service';
+import { getAvatarUrlForFriend, getDisplayNameForFriend } from '../../lib/userDisplay';
 
 interface Props {
     visible: boolean;
@@ -79,7 +81,16 @@ export function FriendGroupBalancesSheet({
 }: Props) {
     const { t } = useTranslation();
     const isRtl = useRtlLayout();
-    const groups = useAppStore(s => s.groups);
+    const storeGroups = useAppStore(s => s.groups);
+    const sharedGroupIds = useMemo(() => friend?.sharedGroupIds ?? [], [friend]);
+
+    const groupsQuery = useQuery({
+        queryKey: queryKeys.groups,
+        queryFn: fetchGroups,
+        enabled: visible && sharedGroupIds.length > 0,
+    });
+    const groups = groupsQuery.data ?? storeGroups;
+
     const groupsById = useMemo(() => {
         const map = new Map<string, { name: string; imageUrl?: string; groupType: string }>();
         groups.forEach(g => map.set(g.id, {
@@ -89,8 +100,6 @@ export function FriendGroupBalancesSheet({
         }));
         return map;
     }, [groups]);
-
-    const sharedGroupIds = useMemo(() => friend?.sharedGroupIds ?? [], [friend]);
     const friendId = friend?.userId ?? null;
 
     const debtQueries = useQueries({
@@ -128,14 +137,14 @@ export function FriendGroupBalancesSheet({
                     >
                         {friend && (
                             <MemberAvatar
-                                name={friend.name}
-                                avatarUrl={friend.avatarUrl}
+                                name={getDisplayNameForFriend(friend, t)}
+                                avatarUrl={getAvatarUrlForFriend(friend)}
                                 size="md"
                             />
                         )}
                         <View style={{ flex: 1, marginHorizontal: 12, minWidth: 0 }}>
                             <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
-                                {friend?.name ?? ''}
+                                {friend ? getDisplayNameForFriend(friend, t) : ''}
                             </Text>
                             <Text className="text-xs text-slate-500 mt-0.5">
                                 {t('dashboard.friendBreakdownTitle')}
@@ -186,7 +195,8 @@ export function FriendGroupBalancesSheet({
                                                 className="text-sm font-medium text-gray-900"
                                                 numberOfLines={1}
                                             >
-                                                {group?.name ?? b.groupId}
+                                                {group?.name
+                                                    ?? (groupsQuery.isLoading ? '…' : t('common.unknown'))}
                                             </Text>
                                             {b.isLoading ? (
                                                 <Text className="text-xs text-slate-400 mt-0.5">

@@ -26,6 +26,9 @@ import {
     GroupMemberLite,
     GroupMessage,
     Settlement,
+    calculateGroupTotalSpent,
+    calculateGroupTotalUnsettled,
+    sortCurrencyAmounts,
 } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
@@ -83,6 +86,7 @@ import {
     isAnyGroupFeedFilterActive,
 } from '../../components/GroupFeedFiltersSheet';
 import { filterAndSortGroupFeed } from '../../lib/groupFeedFilters';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 import { SettleUpSheet, SettleUpFormValues } from '../../components/SettleUpSheet';
 import {
     useDeleteSettlementMutation,
@@ -136,10 +140,11 @@ export function GroupDetailScreen() {
         if (storeGroup?.members?.length) return storeGroup.members;
         return groupUsers.map(u => ({
             userId: u.id,
-            displayName: u.name ?? u.id.slice(0, 8),
-            avatarUrl: u.avatarUrl,
+            displayName: getDisplayName(u, t),
+            avatarUrl: getAvatarUrl(u) ?? undefined,
+            isActive: u.isActive,
         }));
-    }, [storeGroup?.members, groupUsers]);
+    }, [storeGroup?.members, groupUsers, t]);
     const [feedParticipants, setFeedParticipants] = useState<
         Record<string, GroupMemberLite>
     >({});
@@ -184,6 +189,20 @@ export function GroupDetailScreen() {
         () => expenses.filter(e => e.groupId === groupId),
         [expenses, groupId],
     );
+
+    const heroStats = useMemo(() => {
+        const defaultCurrency = displayGroup?.defaultCurrency ?? 'USD';
+        return {
+            totalSpent: sortCurrencyAmounts(
+                calculateGroupTotalSpent(groupExpenses),
+                defaultCurrency,
+            ),
+            totalUnsettled: sortCurrencyAmounts(
+                calculateGroupTotalUnsettled(pairwiseDebts),
+                defaultCurrency,
+            ),
+        };
+    }, [groupExpenses, pairwiseDebts, displayGroup?.defaultCurrency]);
 
     const feedUserIds = useMemo(
         () => collectFeedUserIds(groupExpenses, messages, settlements),
@@ -573,6 +592,7 @@ export function GroupDetailScreen() {
                         <GroupHero
                             group={displayGroup}
                             memberCount={memberLites.length}
+                            stats={heroStats}
                             onBack={handleBack}
                             onMenu={handleOpenGroupMenu}
                             onShare={handleShare}

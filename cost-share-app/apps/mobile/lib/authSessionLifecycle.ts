@@ -4,6 +4,18 @@ import { supabase } from './supabase';
 
 let appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
+/** True when the server no longer recognizes the persisted refresh token. */
+export function isInvalidRefreshTokenError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const message = 'message' in error ? String((error as { message?: unknown }).message) : '';
+    return /invalid refresh token|refresh token not found|refresh_token_not_found/i.test(message);
+}
+
+/** Clears a broken local session without calling the auth API. */
+export async function clearStaleAuthSession(): Promise<void> {
+    await supabase.auth.signOut({ scope: 'local' });
+}
+
 function syncAutoRefresh(appState: AppStateStatus) {
     if (appState === 'active') {
         void supabase.auth.startAutoRefresh();
@@ -52,7 +64,13 @@ export function hydrateAuthSession(): Promise<Session | null> {
         subscription = authSubscription;
 
         const timeoutId = setTimeout(() => {
-            void supabase.auth.getSession().then(({ data: { session } }) => finish(session));
+            void supabase.auth.getSession().then(({ data: { session }, error }) => {
+                if (error && isInvalidRefreshTokenError(error)) {
+                    void clearStaleAuthSession().then(() => finish(null));
+                    return;
+                }
+                finish(session);
+            });
         }, 2500);
     });
 }

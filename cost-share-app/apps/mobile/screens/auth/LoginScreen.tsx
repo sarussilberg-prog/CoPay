@@ -5,11 +5,12 @@
  */
 
 import { Text } from '../../components/AppText';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, TouchableOpacity, Alert, Modal } from 'react-native';
 import { AppIcon } from '../../components/AppIcon';
 import { AppLogo } from '../../components/AppLogo';
 import { AppBrandTitle } from '../../components/AppBrandTitle';
+import { DeletedAccountNoticeDialog } from '../../components/DeletedAccountNoticeDialog';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -19,13 +20,52 @@ import { Button } from '../../components/Button';
 import Toast from 'react-native-toast-message';
 import { changeLanguage } from '../../i18n';
 import { useAppStore } from '../../store';
+import {
+    clearDeactivationNoticePending,
+    consumeDeactivationNoticePending,
+} from '../../lib/deactivationNoticeStorage';
+import { getSupportEmail, openSupportContact } from '../../lib/openMailto';
 
 export function LoginScreen() {
     const { t } = useTranslation();
     const language = useAppStore((state) => state.language);
     const setLanguage = useAppStore((state) => state.setLanguage);
+    const pendingDeactivationNotice = useAppStore((state) => state.pendingDeactivationNotice);
+    const setPendingDeactivationNotice = useAppStore((state) => state.setPendingDeactivationNotice);
     const { isLoading, startLoading, stopLoading } = useLoading();
     const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
+    const [deletedNoticeVisible, setDeletedNoticeVisible] = useState(false);
+
+    const supportEmail = getSupportEmail();
+    const deletedNoticeMessage = t('deleteAccount.deactivatedMessage', { email: supportEmail });
+
+    const showDeletedAccountNotice = useCallback(() => {
+        setDeletedNoticeVisible(true);
+    }, []);
+
+    // Survives web OAuth full-page reload via localStorage; also handles in-memory flag from App.tsx.
+    useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+            if (pendingDeactivationNotice) {
+                if (cancelled) return;
+                setPendingDeactivationNotice(false);
+                await clearDeactivationNoticePending();
+                showDeletedAccountNotice();
+                return;
+            }
+
+            const persisted = await consumeDeactivationNoticePending();
+            if (!cancelled && persisted) {
+                showDeletedAccountNotice();
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pendingDeactivationNotice, setPendingDeactivationNotice, showDeletedAccountNotice]);
 
     const handleLanguageChange = useCallback(
         async (lang: 'en' | 'he') => {
@@ -37,7 +77,7 @@ export function LoginScreen() {
                 Alert.alert(t('common.error'), t('profile.languageChangeError'));
             }
         },
-        [setLanguage, t]
+        [setLanguage, t],
     );
 
     const handleSignIn = async () => {
@@ -45,13 +85,17 @@ export function LoginScreen() {
         try {
             const { error } = await signInWithGoogle();
             if (error) {
+                if (error.code === 'account_deleted') {
+                    showDeletedAccountNotice();
+                    return;
+                }
                 Toast.show({
                     type: 'error',
                     text1: t('auth.signInError'),
                     text2: error.message,
                 });
             }
-        } catch (err) {
+        } catch {
             Toast.show({
                 type: 'error',
                 text1: t('auth.signInError'),
@@ -81,12 +125,10 @@ export function LoginScreen() {
 
                 <AppBrandTitle className="mb-2" />
 
-                {/* Subtitle */}
                 <Text className="text-base text-gray-500 text-center mb-12">
                     {t('auth.subtitle')}
                 </Text>
 
-                {/* Sign In Button */}
                 <Button
                     title={t('auth.signInWithGoogle')}
                     onPress={handleSignIn}
@@ -94,6 +136,20 @@ export function LoginScreen() {
                     disabled={isLoading}
                 />
             </View>
+
+            <DeletedAccountNoticeDialog
+                visible={deletedNoticeVisible}
+                title={t('deleteAccount.deactivatedTitle')}
+                message={deletedNoticeMessage}
+                closeLabel={t('common.close')}
+                contactLabel={t('common.openMail')}
+                onClose={() => setDeletedNoticeVisible(false)}
+                onContact={() => {
+                    void openSupportContact().catch(() => {
+                        Alert.alert(t('common.error'), supportEmail);
+                    });
+                }}
+            />
 
             <Modal
                 visible={languagePickerVisible}

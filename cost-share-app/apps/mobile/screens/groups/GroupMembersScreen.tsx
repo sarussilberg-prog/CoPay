@@ -22,6 +22,7 @@ import { MemberAvatar } from '../../components/MemberAvatar';
 import { Button } from '../../components/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 export function GroupMembersScreen() {
     const { t } = useTranslation();
@@ -61,10 +62,10 @@ export function GroupMembersScreen() {
 
         return (
             <View className="bg-white rounded-xl p-4 mb-2 flex-row items-center">
-                <MemberAvatar name={user.name} avatarUrl={user.avatarUrl} size="md" />
+                <MemberAvatar name={getDisplayName(user, t)} avatarUrl={getAvatarUrl(user) ?? undefined} size="md" />
                 <View className="flex-1 ml-3">
                     <Text className="text-base font-medium text-gray-900">
-                        {user.name}
+                        {getDisplayName(user, t)}
                     </Text>
                     {user.email && (
                         <Text className="text-xs text-gray-400 mt-0.5">

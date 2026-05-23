@@ -31,7 +31,6 @@ type BalanceDisplay = { text: string; tone: BalanceTone; labelKey: string };
 function getNetBalanceDisplay(
     net: number | null,
     currency: string,
-    settledLabel: string,
     isLoading: boolean,
 ): BalanceDisplay {
     if (isLoading) {
@@ -41,7 +40,11 @@ function getNetBalanceDisplay(
         return { text: '—', tone: 'unknown', labelKey: 'dashboard.netBalance' };
     }
     if (Math.abs(net) < 0.01) {
-        return { text: settledLabel, tone: 'neutral', labelKey: 'dashboard.netSettled' };
+        return {
+            text: formatCurrencyAmount(0, currency),
+            tone: 'neutral',
+            labelKey: 'dashboard.netBalance',
+        };
     }
     if (net > 0) {
         return {
@@ -159,12 +162,7 @@ export function BalanceHeroCard({ summary, conversion }: Props) {
     const isLoading = conversion?.isLoading ?? false;
 
     const net = computeNetBalance(summary.totalOwed, summary.totalOwedToUser);
-    const netDisplay = getNetBalanceDisplay(
-        net,
-        summary.defaultCurrency,
-        t('dashboard.settled'),
-        isLoading,
-    );
+    const netDisplay = getNetBalanceDisplay(net, summary.defaultCurrency, isLoading);
 
     const conversionFootnote = conversion?.isConverted && conversion.ratesDate
         ? t('dashboard.convertedFootnote', {

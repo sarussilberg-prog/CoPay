@@ -28,6 +28,7 @@ export interface User {
     inviteToken: string;  // 10-char URL-safe slug; the value used to build https://kupa.pro/i/<token>
     defaultCurrency: string;  // 'USD', 'ILS', 'EUR', etc.
     language: Language;
+    isActive: boolean;  // Soft-delete flag — false means the user has deleted their account
     createdAt: Date;
     updatedAt: Date;
 }
@@ -278,6 +279,31 @@ export type Language = 'en' | 'he';
 export type Currency = 'USD' | 'ILS' | 'EUR' | 'GBP' | 'JPY';
 
 // ============================================
+// LEGAL DOCUMENTS
+// ============================================
+
+/**
+ * Legal document kind.
+ * Maps to: legal_documents.slug
+ */
+export type LegalSlug = 'terms' | 'privacy';
+
+/**
+ * Legal document fetched from server.
+ * Maps to: legal_documents table
+ */
+export interface LegalDocument {
+    id: string;
+    slug: LegalSlug;
+    locale: Language;
+    version: string;
+    title: string;
+    contentMd: string;
+    effectiveDate: string;  // ISO date YYYY-MM-DD
+    updatedAt: string;      // ISO timestamp
+}
+
+// ============================================
 // 4. DTOs (Data Transfer Objects)
 // ============================================
 
@@ -445,6 +471,7 @@ export interface GroupMemberLite {
     userId: string;
     displayName: string;
     avatarUrl?: string;
+    isActive: boolean;
 }
 
 /** Group enriched with its active members. */
@@ -541,6 +568,8 @@ export interface FriendBalance {
     userId: string;
     name: string;
     avatarUrl?: string;
+    /** `false` when the friend's account was deleted; UI should mask name/avatar. */
+    isActive: boolean;
     sharedGroupIds: string[];
     /** Balances per group currency from `get_user_dashboard`. */
     byCurrency: FriendBalanceByCurrency[];

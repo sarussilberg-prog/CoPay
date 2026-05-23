@@ -26,6 +26,7 @@ import {
 } from '../../hooks/queries/useFriendsQueries';
 import { SearchUserResult } from '../../services/friends.service';
 import { shareFriendInvite } from '../../services/invite.service';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 function useDebouncedValue<T>(value: T, ms: number): T {
     const [debounced, setDebounced] = useState(value);
@@ -222,13 +223,13 @@ export function FindFriendsScreen() {
                                     }`}
                                 >
                                     <MemberAvatar
-                                        name={r.user.name || '?'}
-                                        avatarUrl={r.user.avatarUrl}
+                                        name={getDisplayName(r.user, t)}
+                                        avatarUrl={getAvatarUrl(r.user) ?? undefined}
                                         size="sm"
                                     />
                                     <View className="flex-1 ml-3">
                                         <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
-                                            {r.user.name || '—'}
+                                            {getDisplayName(r.user, t)}
                                         </Text>
                                         {(r.user.email || r.user.phone) && (
                                             <Text className="text-xs text-gray-500" numberOfLines={1}>

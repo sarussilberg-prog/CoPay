@@ -1,5 +1,6 @@
 export const queryKeys = {
     dashboard: ['dashboard'] as const,
+    groups: ['groups'] as const,
     activity: ['activity'] as const,
     activityFeed: (groupIds: string[]) => ['activity', groupIds.join(',')] as const,
     groupUsers: (groupId: string) => ['groupUsers', groupId] as const,
@@ -15,4 +16,6 @@ export const queryKeys = {
     groupContributions: (groupId: string) => ['group-contributions', groupId] as const,
     groupSimplifiedDebtsByCurrency: (groupId: string) =>
         ['group-simplified-debts-by-currency', groupId] as const,
+    legalDocument: (slug: 'terms' | 'privacy', locale: 'en' | 'he') =>
+        ['legal-document', slug, locale] as const,
 };

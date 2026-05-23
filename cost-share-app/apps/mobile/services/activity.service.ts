@@ -6,6 +6,7 @@ import { RecentActivity } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
 import i18n from '../i18n';
+import { getAvatarUrl, getDisplayName } from '../lib/userDisplay';
 
 export const ACTIVITY_INITIAL_PAGE_SIZE = 15;
 export const ACTIVITY_PAGE_SIZE = 20;
@@ -27,9 +28,10 @@ export interface FetchRecentActivityOptions {
 interface ProfileSummary {
     name: string;
     avatarUrl?: string;
+    isActive?: boolean;
 }
 
-type ProfileEmbedRow = { name?: string; avatar_url?: string | null };
+type ProfileEmbedRow = { name?: string; avatar_url?: string | null; is_active?: boolean | null };
 type ProfileEmbed = ProfileEmbedRow | ProfileEmbedRow[] | null;
 
 async function getUserGroupIds(userId: string): Promise<string[]> {
@@ -48,6 +50,7 @@ function profileFromEmbed(embed: ProfileEmbed): ProfileSummary | undefined {
     return {
         name: row.name,
         avatarUrl: row.avatar_url ?? undefined,
+        isActive: row.is_active ?? undefined,
     };
 }
 
@@ -55,7 +58,7 @@ function buildExpenseQuery(groupIds: string[], limit: number, before?: string) {
     let query = supabase
         .from('expenses')
         .select(
-            'id, group_id, description, amount, currency, expense_date, created_at, created_by, creator:profiles!created_by(name, avatar_url)',
+            'id, group_id, description, amount, currency, expense_date, created_at, created_by, creator:profiles!created_by(name, avatar_url, is_active)',
         )
         .in('group_id', groupIds)
         .eq('is_deleted', false)
@@ -89,7 +92,7 @@ async function fetchProfiles(userIds: string[]): Promise<Map<string, ProfileSumm
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, avatar_url')
+        .select('id, name, avatar_url, is_active')
         .in('id', userIds);
     if (error) throw error;
 
@@ -97,6 +100,7 @@ async function fetchProfiles(userIds: string[]): Promise<Map<string, ProfileSumm
         profiles.set(row.id as string, {
             name: row.name as string,
             avatarUrl: (row.avatar_url as string | null) ?? undefined,
+            isActive: (row.is_active as boolean | null) ?? undefined,
         });
     }
     return profiles;
@@ -106,7 +110,7 @@ function buildSettlementQuery(groupIds: string[], limit: number, before?: string
     let query = supabase
         .from('settlements')
         .select(
-            'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id, from_user:profiles!from_user_id(name, avatar_url), to_user:profiles!to_user_id(name, avatar_url)',
+            'id, group_id, amount, currency, settlement_date, created_at, from_user_id, to_user_id, from_user:profiles!from_user_id(name, avatar_url, is_active), to_user:profiles!to_user_id(name, avatar_url, is_active)',
         )
         .in('group_id', groupIds)
         .is('deleted_at', null)
@@ -147,6 +151,7 @@ function mapToActivities(
     for (const row of expenses) {
         const createdBy = row.created_by as string;
         const creator = profileFromEmbed(row.creator as ProfileEmbed);
+        const creatorLike = creator ? { id: createdBy, name: creator.name, avatarUrl: creator.avatarUrl, isActive: creator.isActive } : null;
         activities.push({
             id: row.id as string,
             activityType: 'expense',
@@ -155,8 +160,8 @@ function mapToActivities(
             amount: Number(row.amount),
             currency: row.currency as string,
             userId: createdBy,
-            userName: creator?.name ?? 'Unknown',
-            userAvatarUrl: creator?.avatarUrl,
+            userName: getDisplayName(creatorLike, i18n.t),
+            userAvatarUrl: getAvatarUrl(creatorLike) ?? undefined,
             activityDate: new Date(row.expense_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -169,8 +174,10 @@ function mapToActivities(
         const amountStr = `${row.currency as string} ${Number(row.amount).toFixed(2)}`;
         const fromProfile = profileFromEmbed(row.from_user as ProfileEmbed);
         const toProfile = profileFromEmbed(row.to_user as ProfileEmbed);
-        const fromName = fromProfile?.name ?? 'Unknown';
-        const toName = toProfile?.name ?? 'Unknown';
+        const fromLike = fromProfile ? { id: fromUserId, name: fromProfile.name, avatarUrl: fromProfile.avatarUrl, isActive: fromProfile.isActive } : null;
+        const toLike = toProfile ? { id: toUserId, name: toProfile.name, avatarUrl: toProfile.avatarUrl, isActive: toProfile.isActive } : null;
+        const fromName = getDisplayName(fromLike, i18n.t);
+        const toName = getDisplayName(toLike, i18n.t);
         const groupName = groupNamesById.get(groupId) ?? '';
 
         let description: string;
@@ -198,7 +205,7 @@ function mapToActivities(
             currency: row.currency as string,
             userId: fromUserId,
             userName: fromName,
-            userAvatarUrl: fromProfile?.avatarUrl,
+            userAvatarUrl: getAvatarUrl(fromLike) ?? undefined,
             activityDate: new Date(row.settlement_date as string),
             createdAt: new Date(row.created_at as string),
         });
@@ -207,6 +214,7 @@ function mapToActivities(
     for (const row of messages) {
         const userId = row.user_id as string;
         const sender = messageProfilesById.get(userId);
+        const senderLike = sender ? { id: userId, name: sender.name, avatarUrl: sender.avatarUrl, isActive: sender.isActive } : null;
         const createdAt = new Date(row.created_at as string);
         activities.push({
             id: row.id as string,
@@ -216,8 +224,8 @@ function mapToActivities(
             amount: 0,
             currency: '',
             userId,
-            userName: sender?.name ?? 'Unknown',
-            userAvatarUrl: sender?.avatarUrl,
+            userName: getDisplayName(senderLike, i18n.t),
+            userAvatarUrl: getAvatarUrl(senderLike) ?? undefined,
             activityDate: createdAt,
             createdAt,
         });

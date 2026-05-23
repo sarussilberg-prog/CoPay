@@ -58,6 +58,7 @@ beforeEach(() => {
             inviteToken: 'alice123456',
             defaultCurrency: 'USD',
             language: 'en',
+            isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
         },

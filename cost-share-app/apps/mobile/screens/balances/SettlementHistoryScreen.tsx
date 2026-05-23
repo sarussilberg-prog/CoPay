@@ -17,6 +17,7 @@ import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { colors } from '../../theme';
+import { getDisplayName } from '../../lib/userDisplay';
 
 export function SettlementHistoryScreen() {
     const { t } = useTranslation();
@@ -50,7 +51,7 @@ export function SettlementHistoryScreen() {
     }, [loadData]);
 
     const getUserName = (userId: string): string => {
-        return allUsers.find((u) => u.id === userId)?.name || t('common.unknown');
+        return getDisplayName(allUsers.find((u) => u.id === userId) ?? null, t);
     };
 
     const renderSettlement = ({ item }: { item: Settlement }) => {

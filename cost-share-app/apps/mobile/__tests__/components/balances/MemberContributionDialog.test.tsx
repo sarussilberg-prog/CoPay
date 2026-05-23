@@ -3,9 +3,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { MemberContributionDialog } from '../../../components/balances/MemberContributionDialog';
 
 const members = [
-    { userId: 'me', displayName: 'Me' },
-    { userId: 'alice', displayName: 'Alice' },
-    { userId: 'bob', displayName: 'Bob' },
+    { userId: 'me', displayName: 'Me', isActive: true },
+    { userId: 'alice', displayName: 'Alice', isActive: true },
+    { userId: 'bob', displayName: 'Bob', isActive: true },
 ];
 
 describe('MemberContributionDialog', () => {

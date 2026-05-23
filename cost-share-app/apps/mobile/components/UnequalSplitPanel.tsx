@@ -14,6 +14,7 @@ import {
     UnequalSplitMode,
     computeUnequalTotal,
 } from '../lib/expenseSplitForm';
+import { getAvatarUrl, getDisplayName } from '../lib/userDisplay';
 
 interface UnequalSplitPanelProps {
     members: User[];
@@ -68,9 +69,9 @@ export function UnequalSplitPanel({
 
             {members.map(member => (
                 <View key={member.id} style={styles.memberRow}>
-                    <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size="sm" />
+                    <MemberAvatar name={getDisplayName(member, t)} avatarUrl={getAvatarUrl(member) ?? undefined} size="sm" />
                     <Text style={styles.memberName} numberOfLines={1}>
-                        {member.name}
+                        {getDisplayName(member, t)}
                     </Text>
                     <TextInput
                         style={[styles.input, resolveAutoTextInputStyle(isRtl, { textAlign: 'center' })]}

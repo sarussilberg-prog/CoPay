@@ -6,6 +6,8 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { getFocusedRouteNameFromRoute, type ParamListBase, type RouteProp } from '@react-navigation/native';
 import {
     createNativeStackNavigator,
     type NativeStackNavigationOptions,
@@ -80,6 +82,27 @@ function buildStackScreenOptions(isRtl: boolean) {
         headerLeft: navigation.canGoBack()
             ? () => <HeaderBackButton onPress={() => navigation.goBack()} />
             : undefined,
+    });
+}
+
+/** Pop nested stack to its root when the already-focused tab is pressed again. */
+function tabPopToTopOnPress(initialScreen: string) {
+    return ({
+        navigation,
+        route,
+    }: {
+        navigation: BottomTabNavigationProp<ParamListBase>;
+        route: RouteProp<ParamListBase>;
+    }) => ({
+        tabPress: (e: { preventDefault: () => void }) => {
+            if (!navigation.isFocused()) return;
+
+            const focusedRouteName = getFocusedRouteNameFromRoute(route) ?? initialScreen;
+            if (focusedRouteName !== initialScreen) {
+                e.preventDefault();
+                navigation.navigate(route.name, { screen: initialScreen });
+            }
+        },
     });
 }
 
@@ -236,27 +259,30 @@ export function AppNavigator() {
             }}
         >
             <Tab.Screen
-                name="Groups"
-                component={GroupsStack}
+                name="Profile"
+                component={ProfileStack}
+                listeners={tabPopToTopOnPress('ProfileMain')}
                 options={{
-                    tabBarLabel: t('tabs.groups'),
-                    tabBarIcon: tabBarIcon('people', 'people-outline'),
+                    tabBarLabel: t('tabs.profile'),
+                    tabBarIcon: tabBarIcon('person', 'person-outline'),
                 }}
             />
             <Tab.Screen
                 name="Activity"
                 component={ActivityStack}
+                listeners={tabPopToTopOnPress('ActivityFeed')}
                 options={{
                     tabBarLabel: t('tabs.activity'),
                     tabBarIcon: tabBarIcon('time', 'time-outline'),
                 }}
             />
             <Tab.Screen
-                name="Profile"
-                component={ProfileStack}
+                name="Groups"
+                component={GroupsStack}
+                listeners={tabPopToTopOnPress('GroupsList')}
                 options={{
-                    tabBarLabel: t('tabs.profile'),
-                    tabBarIcon: tabBarIcon('person', 'person-outline'),
+                    tabBarLabel: t('tabs.groups'),
+                    tabBarIcon: tabBarIcon('people', 'people-outline'),
                 }}
             />
         </Tab.Navigator>

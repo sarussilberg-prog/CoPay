@@ -25,6 +25,10 @@ export const profileFromRow = (r: Row): User => ({
     inviteToken: (r.invite_token as string) ?? '',
     defaultCurrency: (r.default_currency as string) || DEFAULT_CURRENCY,
     language: r.language as User['language'],
+    // Defensive default: legacy callers that select profiles without `is_active`
+    // should not accidentally render every user as "Deleted". Once Phase E
+    // rolls out every select includes `is_active` and this default never kicks in.
+    isActive: r.is_active === undefined ? true : (r.is_active as boolean),
     createdAt: toDate(r.created_at),
     updatedAt: toDate(r.updated_at),
 });
@@ -56,7 +60,7 @@ export const groupMemberFromRow = (r: Row): GroupMember => ({
 type MemberJoinRow = {
     user_id: unknown;
     is_active?: unknown;
-    profiles?: { id?: unknown; name?: unknown; avatar_url?: unknown } | null;
+    profiles?: { id?: unknown; name?: unknown; avatar_url?: unknown; is_active?: unknown } | null;
 };
 
 export const groupWithMembersFromRow = (
@@ -64,11 +68,14 @@ export const groupWithMembersFromRow = (
 ): GroupWithMembers => {
     const memberRows = Array.isArray(r.group_members) ? r.group_members : [];
     const members: GroupMemberLite[] = memberRows
+        // `m.is_active` here is the MEMBERSHIP row's active flag (group_members.is_active).
+        // We also map `m.profiles.is_active` (the USER's active flag) into each member below.
         .filter(m => m.is_active === undefined || m.is_active === true)
         .map(m => ({
             userId: String(m.user_id ?? m.profiles?.id ?? ''),
             displayName: String(m.profiles?.name ?? ''),
             avatarUrl: (m.profiles?.avatar_url as string | undefined) ?? undefined,
+            isActive: m.profiles?.is_active === undefined ? true : (m.profiles?.is_active as boolean),
         }))
         .filter(m => m.userId.length > 0);
     return {

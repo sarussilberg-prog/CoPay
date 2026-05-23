@@ -1,64 +1,76 @@
-const mockGetUser = jest.fn();
-const mockSignOut = jest.fn().mockResolvedValue({ error: null });
-const mockMaybeSingle = jest.fn();
-const mockEq = jest.fn(() => ({ maybeSingle: mockMaybeSingle }));
-const mockSelect = jest.fn(() => ({ eq: mockEq }));
-const mockFrom = jest.fn((_table: string) => ({ select: mockSelect }));
+import { assertProfileActiveWithTimeout } from '../../lib/auth';
 
-jest.mock('../../lib/supabase', () => ({
-    supabase: {
-        auth: { getUser: (...a: any[]) => mockGetUser(...a), signOut: (...a: any[]) => mockSignOut(...a) },
-        from: (table: string) => mockFrom(table),
+const mockMaybeSingle = jest.fn();
+const mockRpc = jest.fn();
+const mockClearStaleAuthSession = jest.fn().mockResolvedValue(undefined);
+const mockSetSession = jest.fn();
+
+jest.mock('../../lib/authSessionLifecycle', () => ({
+    clearStaleAuthSession: (...args: unknown[]) => mockClearStaleAuthSession(...args),
+}));
+
+jest.mock('../../store', () => ({
+    useAppStore: {
+        getState: () => ({ setSession: mockSetSession }),
     },
 }));
 
-import { assertProfileActive, getCurrentUserId } from '../../lib/auth';
+jest.mock('../../lib/supabase', () => ({
+    supabase: {
+        auth: {
+            getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
+        },
+        rpc: (...args: unknown[]) => mockRpc(...args),
+        from: jest.fn(() => ({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: mockMaybeSingle,
+        })),
+    },
+}));
 
-beforeEach(() => {
-    mockGetUser.mockReset();
-    mockSignOut.mockClear();
-    mockMaybeSingle.mockReset();
-    mockFrom.mockClear();
-});
-
-describe('assertProfileActive', () => {
-    it('returns "active" and does not sign out when is_active=true', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+describe('assertProfileActiveWithTimeout', () => {
+    beforeEach(() => {
+        jest.useFakeTimers();
+        mockMaybeSingle.mockReset();
+        mockRpc.mockReset();
+        mockClearStaleAuthSession.mockClear();
+        mockSetSession.mockClear();
+        mockRpc.mockResolvedValue({ data: true, error: null });
         mockMaybeSingle.mockResolvedValue({ data: { is_active: true }, error: null });
-
-        expect(await assertProfileActive()).toBe('active');
-        expect(mockSignOut).not.toHaveBeenCalled();
-        expect(mockFrom).toHaveBeenCalledWith('profiles');
     });
 
-    it('returns "deactivated" and signs out when is_active=false', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    it('returns deactivated when is_caller_active RPC is false', async () => {
+        mockRpc.mockResolvedValue({ data: false, error: null });
+        await expect(assertProfileActiveWithTimeout(100)).resolves.toBe('deactivated');
+        expect(mockClearStaleAuthSession).toHaveBeenCalled();
+        expect(mockSetSession).toHaveBeenCalledWith(null);
+    });
+
+    it('returns deactivated when profile is inactive', async () => {
         mockMaybeSingle.mockResolvedValue({ data: { is_active: false }, error: null });
-
-        expect(await assertProfileActive()).toBe('deactivated');
-        expect(mockSignOut).toHaveBeenCalledTimes(1);
+        await expect(assertProfileActiveWithTimeout(100)).resolves.toBe('deactivated');
+        expect(mockClearStaleAuthSession).toHaveBeenCalled();
+        expect(mockSetSession).toHaveBeenCalledWith(null);
     });
 
-    it('returns "missing" when no profile row exists', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
-        mockMaybeSingle.mockResolvedValue({ data: null, error: null });
-
-        expect(await assertProfileActive()).toBe('missing');
-        expect(mockSignOut).not.toHaveBeenCalled();
+    it('fail-opens to active when the profile check exceeds the timeout', async () => {
+        mockRpc.mockReturnValue(new Promise(() => {}));
+        mockMaybeSingle.mockReturnValue(new Promise(() => {}));
+        const pending = assertProfileActiveWithTimeout(50);
+        jest.advanceTimersByTime(50);
+        await expect(pending).resolves.toBe('active');
     });
 
-    it('returns "active" with no side effect when there is no signed-in user', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
-
-        expect(await assertProfileActive()).toBe('active');
-        expect(mockFrom).not.toHaveBeenCalled();
-        expect(mockSignOut).not.toHaveBeenCalled();
-    });
-});
-
-describe('getCurrentUserId (unchanged, sanity)', () => {
-    it('returns the signed-in user id', async () => {
-        mockGetUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
-        expect(await getCurrentUserId()).toBe('u1');
+    it('fail-closes to deactivated after OAuth when the profile check exceeds the timeout', async () => {
+        mockRpc.mockReturnValue(new Promise(() => {}));
+        mockMaybeSingle.mockReturnValue(new Promise(() => {}));
+        const pending = assertProfileActiveWithTimeout(50, { failOpen: false });
+        jest.advanceTimersByTime(50);
+        await expect(pending).resolves.toBe('deactivated');
     });
 });

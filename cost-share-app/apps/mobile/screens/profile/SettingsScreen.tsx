@@ -12,11 +12,13 @@ import { updateUser } from '../../services/users.service';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { SettingsSection } from '../../components/settings/SettingsSection';
 import { SettingsRow } from '../../components/settings/SettingsRow';
-import { LegalSheet } from '../../components/settings/LegalSheet';
+import { ContactSupportRow } from '../../components/settings/ContactSupportRow';
+import { LegalDocumentSheet } from '../../components/settings/LegalDocumentSheet';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import Toast from 'react-native-toast-message';
-import { deleteMyAccount } from '../../services/account.service';
+import { deleteMyAccount, getMyOpenBalances, type OpenBalancesSummary } from '../../services/account.service';
+import { useNavigation } from '@react-navigation/native';
 import { DeleteAccountWarningSheet } from '../../components/settings/DeleteAccountWarningSheet';
 import { DeleteAccountConfirmSheet } from '../../components/settings/DeleteAccountConfirmSheet';
 import currencyCodes from 'currency-codes';
@@ -24,7 +26,6 @@ import { getCurrencyDisplayName } from '../../lib/currencyDisplay';
 import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
-const WHATSAPP_NUMBER = (process.env.EXPO_PUBLIC_SUPPORT_WHATSAPP_NUMBER || '+972528616878').replace(/[^\d]/g, '');
 const APP_STORE_URL = process.env.EXPO_PUBLIC_APP_STORE_URL;
 const PLAY_STORE_URL = process.env.EXPO_PUBLIC_PLAY_STORE_URL;
 
@@ -41,6 +42,9 @@ export function SettingsScreen() {
     const [showPrivacy, setShowPrivacy] = useState(false);
     const [showDeleteWarning, setShowDeleteWarning] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [openBalances, setOpenBalances] = useState<OpenBalancesSummary | null>(null);
+
+    const navigation = useNavigation<any>();
 
     const handleLanguagePick = useCallback(async (lang: Language) => {
         setShowLanguage(false);
@@ -87,17 +91,6 @@ export function SettingsScreen() {
         if (url) await Linking.openURL(url);
     }, []);
 
-    const handleWhatsApp = useCallback(async () => {
-        const deepLink = `whatsapp://send?phone=${WHATSAPP_NUMBER}`;
-        const webLink = `https://wa.me/${WHATSAPP_NUMBER}`;
-        try {
-            const can = await Linking.canOpenURL(deepLink);
-            await Linking.openURL(can ? deepLink : webLink);
-        } catch {
-            Alert.alert(t('common.error'), t('settings.whatsappOpenFailed'));
-        }
-    }, [t]);
-
     const handleLogout = useCallback(async () => {
         setShowLogout(false);
         await signOut();
@@ -143,7 +136,7 @@ export function SettingsScreen() {
 
                 <SettingsSection title={t('settings.support')}>
                     <SettingsRow iconName="star-outline" label={t('settings.rateUs')} variant="chevron" onPress={handleRate} />
-                    <SettingsRow iconName="logo-whatsapp" label={t('settings.contactWhatsApp')} variant="chevron" onPress={handleWhatsApp} />
+                    <ContactSupportRow />
                 </SettingsSection>
 
                 <SettingsSection title={t('settings.legal')}>
@@ -157,7 +150,15 @@ export function SettingsScreen() {
                         iconName="trash-outline"
                         label={t('settings.deleteAccount')}
                         variant="danger"
-                        onPress={() => setShowDeleteWarning(true)}
+                        onPress={async () => {
+                            try {
+                                const balances = await getMyOpenBalances();
+                                setOpenBalances(balances);
+                            } catch {
+                                setOpenBalances(null);
+                            }
+                            setShowDeleteWarning(true);
+                        }}
                     />
                 </SettingsSection>
 
@@ -191,15 +192,20 @@ export function SettingsScreen() {
                 onClose={() => setShowCurrency(false)}
             />
 
-            <LegalSheet visible={showTerms} title={t('legal.termsTitle')} body={t('legal.termsBody')} onClose={() => setShowTerms(false)} />
-            <LegalSheet visible={showPrivacy} title={t('legal.privacyTitle')} body={t('legal.privacyBody')} onClose={() => setShowPrivacy(false)} />
+            <LegalDocumentSheet visible={showTerms} slug="terms" onClose={() => setShowTerms(false)} />
+            <LegalDocumentSheet visible={showPrivacy} slug="privacy" onClose={() => setShowPrivacy(false)} />
 
             <DeleteAccountWarningSheet
                 visible={showDeleteWarning}
+                openBalances={openBalances}
                 onClose={() => setShowDeleteWarning(false)}
                 onContinue={() => {
                     setShowDeleteWarning(false);
                     setShowDeleteConfirm(true);
+                }}
+                onSettleUp={() => {
+                    setShowDeleteWarning(false);
+                    navigation.navigate('SettleUpList');
                 }}
             />
 

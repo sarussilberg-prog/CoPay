@@ -55,4 +55,57 @@ describe('GroupHero', () => {
         expect(onBack).toHaveBeenCalled();
         expect(onMenu).toHaveBeenCalled();
     });
+
+    it('renders group stats when provided', () => {
+        const { getByTestId, getByText } = render(
+            <GroupHero
+                group={base}
+                memberCount={3}
+                stats={{
+                    totalSpent: [{ currency: 'EUR', amount: 150 }],
+                    totalUnsettled: [{ currency: 'EUR', amount: 25 }],
+                }}
+                onBack={() => {}}
+                onMenu={() => {}}
+            />,
+        );
+        expect(getByTestId('hero-group-stats')).toBeTruthy();
+        expect(getByText('groups.hero.spentTogether')).toBeTruthy();
+        expect(getByText('groups.hero.leftToSettle')).toBeTruthy();
+        expect(getByText('€150.00')).toBeTruthy();
+        expect(getByText('€25.00')).toBeTruthy();
+    });
+
+    it('shows settled label when there is no remaining group balance', () => {
+        const { getByText } = render(
+            <GroupHero
+                group={base}
+                memberCount={3}
+                stats={{
+                    totalSpent: [{ currency: 'EUR', amount: 150 }],
+                    totalUnsettled: [],
+                }}
+                onBack={() => {}}
+                onMenu={() => {}}
+            />,
+        );
+        expect(getByText('groups.card.settled')).toBeTruthy();
+    });
+
+    it('renders the full primary-currency amount without truncation', () => {
+        const ilsGroup = { ...base, defaultCurrency: 'ILS' };
+        const { getByText } = render(
+            <GroupHero
+                group={ilsGroup}
+                memberCount={2}
+                stats={{
+                    totalSpent: [{ currency: 'ILS', amount: 58 }],
+                    totalUnsettled: [],
+                }}
+                onBack={() => {}}
+                onMenu={() => {}}
+            />,
+        );
+        expect(getByText('₪58.00')).toBeTruthy();
+    });
 });

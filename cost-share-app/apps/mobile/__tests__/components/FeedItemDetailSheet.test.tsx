@@ -38,8 +38,8 @@ const expense: ExpenseWithDelta = {
 };
 
 const memberMap = {
-    u1: { userId: 'u1', displayName: 'Alice' },
-    u2: { userId: 'u2', displayName: 'Bob' },
+    u1: { userId: 'u1', displayName: 'Alice', isActive: true },
+    u2: { userId: 'u2', displayName: 'Bob', isActive: true },
 };
 
 describe('FeedItemDetailSheet', () => {

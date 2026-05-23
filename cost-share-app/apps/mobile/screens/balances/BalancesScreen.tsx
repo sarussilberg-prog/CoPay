@@ -41,6 +41,7 @@ import {
 } from '../../hooks/queries/useSettlementQueries';
 import { useAppStore } from '../../store';
 import { colors } from '../../theme';
+import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 interface SettleTarget {
     fromUserId: string;
@@ -90,10 +91,11 @@ export function BalancesScreen() {
         () =>
             allUsers.map(u => ({
                 userId: u.id,
-                displayName: u.name,
-                avatarUrl: u.avatarUrl,
+                displayName: getDisplayName(u, t),
+                avatarUrl: getAvatarUrl(u) ?? undefined,
+                isActive: u.isActive,
             })),
-        [allUsers],
+        [allUsers, t],
     );
 
     const avatarById: Record<string, string | undefined> = useMemo(() => {

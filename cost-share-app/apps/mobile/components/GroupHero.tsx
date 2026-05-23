@@ -14,26 +14,80 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { Group } from '@cost-share/shared';
+import { Group, CurrencyAmount } from '@cost-share/shared';
 import { useRtlLayout } from '../hooks/useRtlLayout';
 import { getGroupTypeVisual } from '../lib/groupTypeVisuals';
+import { formatCurrencyAmount } from '../lib/currencyDisplay';
 import { AppIcon } from './AppIcon';
 import { Text } from './AppText';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const HERO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.26);
+const HERO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.30);
+
+interface GroupHeroStats {
+    totalSpent: CurrencyAmount[];
+    totalUnsettled: CurrencyAmount[];
+}
 
 interface GroupHeroProps {
     group: Group;
     memberCount: number;
+    stats?: GroupHeroStats;
     onBack: () => void;
     onMenu: () => void;
     onShare?: () => void;
 }
 
+function formatPrimaryAmount(rows: CurrencyAmount[], defaultCurrency: string): string {
+    const primary =
+        rows.find(row => row.currency === defaultCurrency) ?? rows[0];
+    if (!primary) return formatCurrencyAmount(0, defaultCurrency);
+    return formatCurrencyAmount(primary.amount, primary.currency);
+}
+
+function HeroStatRow({
+    label,
+    value,
+    testID,
+}: {
+    label: string;
+    value: string;
+    testID: string;
+}) {
+    return (
+        <View
+            className="flex-row items-center justify-between gap-3 py-0.5"
+            testID={testID}
+        >
+            <Text
+                className="text-[11px] font-medium text-white/85 shrink"
+                numberOfLines={1}
+                style={{
+                    textShadowColor: 'rgba(0,0,0,0.45)',
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 2,
+                }}
+            >
+                {label}
+            </Text>
+            <Text
+                className="text-sm font-bold text-white shrink-0"
+                style={{
+                    textShadowColor: 'rgba(0,0,0,0.5)',
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 3,
+                }}
+            >
+                {value}
+            </Text>
+        </View>
+    );
+}
+
 function HeroChrome({
     group,
     memberCount,
+    stats,
     onBack,
     onMenu,
     onShare,
@@ -41,6 +95,13 @@ function HeroChrome({
 }: GroupHeroProps & { topInset: number }) {
     const { t } = useTranslation();
     const isRtl = useRtlLayout();
+    const spentValue = stats
+        ? formatPrimaryAmount(stats.totalSpent, group.defaultCurrency)
+        : formatCurrencyAmount(0, group.defaultCurrency);
+    const unsettledValue =
+        stats && stats.totalUnsettled.length > 0
+            ? formatPrimaryAmount(stats.totalUnsettled, group.defaultCurrency)
+            : t('groups.card.settled');
     return (
         <>
             <View pointerEvents="none" className="absolute inset-0 bg-black/30" />
@@ -68,6 +129,24 @@ function HeroChrome({
                         {t('groups.memberCount', { count: memberCount })}
                     </Text>
                 </View>
+                {stats && (
+                    <View
+                        className="mt-3 self-stretch rounded-2xl bg-black/35 px-4 py-2.5"
+                        testID="hero-group-stats"
+                    >
+                        <HeroStatRow
+                            label={t('groups.hero.spentTogether')}
+                            value={spentValue}
+                            testID="hero-stat-spent"
+                        />
+                        <View className="h-px bg-white/25 my-1.5" />
+                        <HeroStatRow
+                            label={t('groups.hero.leftToSettle')}
+                            value={unsettledValue}
+                            testID="hero-stat-unsettled"
+                        />
+                    </View>
+                )}
             </View>
 
             <View
@@ -126,7 +205,7 @@ function HeroChrome({
     );
 }
 
-export function GroupHero({ group, memberCount, onBack, onMenu, onShare }: GroupHeroProps) {
+export function GroupHero({ group, memberCount, stats, onBack, onMenu, onShare }: GroupHeroProps) {
     const insets = useSafeAreaInsets();
 
     if (group.imageUrl) {
@@ -140,6 +219,7 @@ export function GroupHero({ group, memberCount, onBack, onMenu, onShare }: Group
                 <HeroChrome
                     group={group}
                     memberCount={memberCount}
+                    stats={stats}
                     onBack={onBack}
                     onMenu={onMenu}
                     onShare={onShare}
@@ -169,6 +249,7 @@ export function GroupHero({ group, memberCount, onBack, onMenu, onShare }: Group
             <HeroChrome
                 group={group}
                 memberCount={memberCount}
+                stats={stats}
                 onBack={onBack}
                 onMenu={onMenu}
                 onShare={onShare}
