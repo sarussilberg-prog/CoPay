@@ -62,11 +62,28 @@ if [[ "${EXPO_START_WEB:-0}" == "1" && "${DEV_AUTO_OPEN:-0}" == "1" ]]; then
   ) &
 fi
 
+expo_host_args() {
+  # Physical iPhone cannot use 127.0.0.1 — use LAN IP. Set EXPO_METRO_HOST=lan (dev:mobile:device).
+  if [[ "${EXPO_METRO_HOST:-localhost}" == "lan" ]]; then
+    echo --lan
+  else
+    echo --localhost
+  fi
+}
+
 run_expo() {
   start_mobile_auto_open
-  local -a args=(start --dev-client --localhost --port "$PORT")
+  local host_flag
+  host_flag="$(expo_host_args)"
+  local -a args=(start --dev-client "$host_flag" --port "$PORT")
   if [[ "${EXPO_START_WEB:-0}" == "1" ]]; then
     args+=(--web)
+  fi
+  if [[ "${EXPO_METRO_HOST:-localhost}" == "lan" ]]; then
+    local metro_url
+    metro_url="$("$SCRIPT_DIR/get-metro-lan-url.sh" 2>/dev/null || true)"
+    [[ -n "$metro_url" ]] && echo "Physical iPhone URL: ${metro_url}" >&2
+    echo "Do not press i (simulator). Run: npm run mobile:open:iphone" >&2
   fi
   exec npx expo "${args[@]}"
 }
@@ -77,7 +94,8 @@ if [[ -t 0 && -t 1 ]] && command -v script >/dev/null 2>&1; then
   start_mobile_auto_open
   WEB_FLAG=()
   [[ "${EXPO_START_WEB:-0}" == "1" ]] && WEB_FLAG=(--web)
-  if script -q "$LOG" npx expo start --dev-client --localhost --port "$PORT" ${WEB_FLAG[@]+"${WEB_FLAG[@]}"}; then
+  HOST_FLAG="$(expo_host_args)"
+  if script -q "$LOG" npx expo start --dev-client "$HOST_FLAG" --port "$PORT" ${WEB_FLAG[@]+"${WEB_FLAG[@]}"}; then
     :
   else
     kill "$WATCHER_PID" 2>/dev/null || true

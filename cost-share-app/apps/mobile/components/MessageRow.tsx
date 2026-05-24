@@ -1,27 +1,29 @@
 /**
- * MessageRow — WhatsApp-style group message bubble with avatar and full date/time.
+ * MessageRow — group chat message bubble.
+ * Avatar on the start side (via FeedChatRow); white bubble with
+ * sender label (for others' messages), body text, and meta line.
  */
 
 import React, { useCallback } from 'react';
 import {
     View,
-    Text,
     TouchableOpacity,
     ActionSheetIOS,
     Alert,
     Platform,
+    StyleSheet,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GroupMessage } from '@cost-share/shared';
+import { Text } from './AppText';
 import { MemberAvatar } from './MemberAvatar';
 import { HighlightedText } from './HighlightedText';
 import { AppIcon } from './AppIcon';
 import { FeedChatRow } from './FeedChatRow';
 import { FeedActorName } from './FeedActorName';
-import { feedBubbleStyles } from './feedBubbleStyles';
 import { formatFeedDateTime } from '../lib/formatFeedDateTime';
 import { useAppLanguage } from '../hooks/useRtlLayout';
-import { colors } from '../theme';
+import { colors, shadows } from '../theme';
 
 interface MessageRowProps {
     message: GroupMessage;
@@ -93,7 +95,7 @@ function MessageRowBase({
                 onLongPress={handleLongPress}
                 activeOpacity={isMine ? 0.85 : 1}
                 disabled={!isMine}
-                style={feedBubbleStyles.bubble}
+                style={styles.bubble}
             >
                 {!isMine && (
                     <FeedActorName
@@ -103,7 +105,7 @@ function MessageRowBase({
                 )}
                 <View className="flex-row items-start">
                     <HighlightedText
-                        className="text-sm text-gray-900 flex-1"
+                        className="text-[14px] text-gray-900 flex-1"
                         text={message.body}
                         query={searchQuery}
                     />
@@ -124,22 +126,33 @@ function MessageRowBase({
                         </TouchableOpacity>
                     )}
                 </View>
-                <View className="flex-row items-center mt-2 flex-wrap">
-                    <Text className="text-[11px] text-gray-400" testID="message-timestamp">
-                        {timestamp}
-                    </Text>
+                <Text
+                    className="text-[11px] text-gray-500 mt-1"
+                    testID="message-timestamp"
+                >
+                    {`${senderName} · ${t('groups.share.typeMessage')} · ${timestamp}`}
                     {message.editedAt && (
-                        <Text
-                            className="text-[11px] text-gray-400 ml-1"
-                            testID="message-edited-tag"
-                        >
-                            · {t('groups.message.edited')}
+                        <Text testID="message-edited-tag">
+                            {` · ${t('groups.message.edited')}`}
                         </Text>
                     )}
-                </View>
+                </Text>
             </TouchableOpacity>
         </FeedChatRow>
     );
 }
+
+const styles = StyleSheet.create({
+    bubble: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.gray100,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        width: '100%',
+        ...shadows.sm,
+    },
+});
 
 export const MessageRow = React.memo(MessageRowBase);

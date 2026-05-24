@@ -66,7 +66,10 @@ export function MemberAvatar({
             className="shrink-0 bg-slate-100 justify-center items-center"
             testID={testID}
         >
-            <Text className={`${text} font-semibold text-slate-600`}>
+            <Text
+                className={`${text} font-semibold text-slate-600 text-center`}
+                style={{ width: '100%', textAlign: 'center' }}
+            >
                 {getInitials(name)}
             </Text>
         </View>

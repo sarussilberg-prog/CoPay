@@ -22,26 +22,23 @@ const baseExpense: ExpenseWithDelta = {
 };
 
 describe('ExpenseRow', () => {
-    it('renders the description', () => {
+    it('renders the description and amount', () => {
         const { getByText } = render(
             <ExpenseRow
                 expense={baseExpense}
-                actorName="Bob"
                 payerName="Alice"
-                isMine={false}
                 onPress={() => {}}
             />,
         );
         expect(getByText('Coffee')).toBeTruthy();
+        expect(getByText(/USD 30\.00/)).toBeTruthy();
     });
 
-    it('shows the lent label in green when myDeltaState is lent', () => {
+    it('shows the lent label when myDeltaState is lent', () => {
         const { getByText } = render(
             <ExpenseRow
                 expense={baseExpense}
-                actorName="Bob"
                 payerName="Alice"
-                isMine={false}
                 onPress={() => {}}
             />,
         );
@@ -52,13 +49,22 @@ describe('ExpenseRow', () => {
         const { getByText } = render(
             <ExpenseRow
                 expense={{ ...baseExpense, myDelta: -10, myDeltaState: 'borrowed' }}
-                actorName="Bob"
                 payerName="Alice"
-                isMine={false}
                 onPress={() => {}}
             />,
         );
         expect(getByText(/groups\.expense\.youBorrowed/)).toBeTruthy();
+    });
+
+    it('omits the involvement sub-line when myDelta is zero', () => {
+        const { queryByText } = render(
+            <ExpenseRow
+                expense={{ ...baseExpense, myDelta: 0, myDeltaState: 'lent' }}
+                payerName="Alice"
+                onPress={() => {}}
+            />,
+        );
+        expect(queryByText(/groups\.expense\.youLent/)).toBeNull();
     });
 
     it('calls onPress with the expense id', () => {
@@ -66,9 +72,7 @@ describe('ExpenseRow', () => {
         const { getByText } = render(
             <ExpenseRow
                 expense={baseExpense}
-                actorName="Bob"
                 payerName="Alice"
-                isMine={false}
                 onPress={onPress}
             />,
         );

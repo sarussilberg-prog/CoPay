@@ -9,6 +9,15 @@ describe('MemberAvatar', () => {
         expect(getByText('AS')).toBeTruthy();
     });
 
+    it('renders Hebrew initials centered (RTL names)', () => {
+        const { getByText } = render(<MemberAvatar name="אברהם סילברג" />);
+        const initials = getByText('אס');
+        expect(initials.props.className).toContain('text-center');
+        expect(initials.props.style).toEqual(
+            expect.objectContaining({ textAlign: 'center', width: '100%' }),
+        );
+    });
+
     it('renders single initial for single-word names', () => {
         const { getByText } = render(<MemberAvatar name="Bob" />);
         expect(getByText('B')).toBeTruthy();

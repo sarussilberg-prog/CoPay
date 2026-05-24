@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Kupa · Expense detail popup</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0F172A; font-family: var(--font-sans); }
+    body { display: flex; align-items: center; justify-content: center; }
+    @keyframes kupa-spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const EXP = {
+    desc: 'Sushi on Friday',
+    amount: 84.20,
+    currency: 'USD',
+    date: 'Friday, August 14',
+    payer: { name: 'Sarah Levin', initials: 'S' },
+    category: 'food',
+    note: 'Mizlala — celebrating end of trip 🥂',
+    receiptUrl: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&fit=crop',
+    splits: [
+        { name: 'Sarah Levin', initials: 'S',  amount: 21.05, isPayer: true,  isCurrentUser: false },
+        { name: 'You',         initials: 'YO', amount: 21.05, isPayer: false, isCurrentUser: true  },
+        { name: 'David',       initials: 'D',  amount: 21.05, isPayer: false, isCurrentUser: false },
+        { name: 'Maya',        initials: 'M',  amount: 21.05, isPayer: false, isCurrentUser: false },
+    ],
+    userShare: 21.05,
+    youOwePayer: 21.05, // user borrowed this
+};
+
+const SAFE_TOP = 62;
+
+function FadedGroupScreen() {
+    return (
+        <div style={{ height: '100%', background: 'var(--bg-secondary)', paddingTop: SAFE_TOP, filter: 'brightness(.85)' }}>
+            <div style={{ padding: '8px 8px 6px 8px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <IconButton name="chevron-back" />
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>Group</div>
+                <div style={{ display: 'flex', gap: 0 }}>
+                    <IconButton name="share-outline" />
+                    <IconButton name="ellipsis-vertical" />
+                </div>
+            </div>
+            <div style={{ padding: '6px 16px 12px 16px', background: '#fff' }}>
+                <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-sm)', background: '#fff' }}>
+                    <div style={{ height: 150, position: 'relative' }}>
+                        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&fit=crop"
+                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ExpenseDetail({ onClose }) {
+    const menuItemBtn = {
+        display: 'flex', alignItems: 'center', gap: 10,
+        width: '100%', padding: '10px 12px',
+        background: 'transparent', border: 0,
+        borderRadius: 8, cursor: 'pointer',
+        fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+        fontFamily: 'var(--font-sans)', textAlign: 'left',
+        WebkitTapHighlightColor: 'transparent',
+    };
+    return (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+            {/* Scrim */}
+            <div onClick={onClose} style={{ flex: 1, background: 'rgba(15,23,42,0.55)' }} />
+            {/* Sheet */}
+            <div style={{
+                background: '#fff',
+                borderRadius: '24px 24px 0 0',
+                boxShadow: '0 -8px 24px rgba(0,0,0,0.15)',
+                maxHeight: '88%', overflow: 'auto',
+                fontFamily: 'var(--font-sans)',
+            }}>
+                {/* Handle */}
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 8 }}>
+                    <div style={{ width: 40, height: 4, borderRadius: 9999, background: 'var(--gray-200)' }} />
+                </div>
+
+                {/* Header row — close + edit/menu */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px 4px 8px', position: 'relative' }}>
+                    <IconButton name="close" onClick={onClose} size={22} color="var(--gray-600)" />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Expense</span>
+                    <IconButton name="ellipsis-vertical" size={20} color="var(--gray-600)" />
+                    {/* Kebab menu — shown open for the preview */}
+                    <div style={{
+                        position: 'absolute', top: 38, right: 8,
+                        background: '#fff', borderRadius: 12,
+                        border: '1px solid var(--border-card)',
+                        boxShadow: '0 8px 20px rgba(15,23,42,0.12)',
+                        minWidth: 160, padding: 4, zIndex: 5,
+                    }}>
+                        <button style={menuItemBtn}>
+                            <Icon name="pencil" size={16} color="var(--gray-700)" />
+                            <span style={{ flex: 1 }}>Edit</span>
+                        </button>
+                        <button style={{ ...menuItemBtn, color: 'var(--error)' }}>
+                            <Icon name="trash-outline" size={16} color="var(--error)" />
+                            <span style={{ flex: 1, color: 'var(--error)' }}>Delete</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Hero — receipt photo + amount overlay */}
+                <div style={{ padding: '4px 16px 0 16px' }}>
+                    <div style={{
+                        height: 140, borderRadius: 16, overflow: 'hidden', position: 'relative',
+                        border: '1px solid var(--border-card)',
+                    }}>
+                        <img src={EXP.receiptUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%)' }} />
+                        <div style={{ position: 'absolute', left: 14, right: 14, bottom: 12 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 9999, background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: 11, fontWeight: 600 }}>
+                                <Icon name="restaurant-outline" size={12} color="#fff" />
+                                Food
+                            </div>
+                            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)', marginTop: 4, letterSpacing: '-0.005em' }}>
+                                {EXP.desc}
+                            </div>
+                            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 2px rgba(0,0,0,0.5)', marginTop: 2 }}>
+                                {EXP.date}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Amount */}
+                <div style={{ padding: '12px 16px 6px 16px' }}>
+                    <div className="text-eyebrow" style={{ fontSize: 10 }}>Total</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em', marginTop: 2 }}>
+                        {EXP.currency} {EXP.amount.toFixed(2)}
+                    </div>
+                </div>
+
+                {/* User involvement strip */}
+                <div style={{ margin: '6px 16px 0 16px', padding: '12px 14px', borderRadius: 12, background: 'var(--error-bg)', border: '1px solid var(--error-border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9999, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name="arrow-up-circle-outline" size={18} color="var(--error)" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--error-text)' }}>
+                            You borrowed {EXP.currency} {EXP.userShare.toFixed(2)}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--error-text)', opacity: .8, marginTop: 1 }}>
+                            From {EXP.payer.name}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Splits — equal in this case */}
+                <div style={{ padding: '16px 16px 24px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <span className="text-eyebrow">Split between · 4 people</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Equal</span>
+                    </div>
+                    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid var(--border-card)', overflow: 'hidden' }}>
+                        {EXP.splits.map((s, i) => (
+                            <div key={i} style={{
+                                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                                borderBottom: i === EXP.splits.length - 1 ? 'none' : '1px solid var(--border-soft)',
+                            }}>
+                                <MemberAvatar initials={s.initials} size="sm" />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                                        {s.isCurrentUser ? 'You' : s.name}
+                                        {s.isPayer && (
+                                            <span style={{
+                                                marginLeft: 8, padding: '2px 6px', borderRadius: 4,
+                                                background: 'var(--primary-extra-light)', color: 'var(--primary-dark)',
+                                                fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
+                                            }}>PAID</span>
+                                        )}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                                        {s.isPayer
+                                            ? `Lent ${EXP.currency} ${(EXP.amount - s.amount).toFixed(2)}`
+                                            : `Owes ${EXP.payer.name.split(' ')[0]}`
+                                        }
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                                    {EXP.currency} {s.amount.toFixed(2)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function Stage() {
+    const [scale, setScale] = React.useState(1);
+    React.useEffect(() => {
+        const compute = () => setScale(Math.min(1, (window.innerWidth - 48) / 402, (window.innerHeight - 48) / 874));
+        compute();
+        window.addEventListener('resize', compute);
+        return () => window.removeEventListener('resize', compute);
+    }, []);
+    return (
+        <div style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+            <IOSDevice width={402} height={874}>
+                <div style={{ position: 'relative', height: '100%' }}>
+                    <FadedGroupScreen />
+                    <ExpenseDetail onClose={() => {}} />
+                </div>
+            </IOSDevice>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('stage')).render(<Stage />);
+</script>
+</body>
+</html>

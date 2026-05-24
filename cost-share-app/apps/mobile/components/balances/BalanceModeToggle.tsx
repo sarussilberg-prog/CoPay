@@ -6,9 +6,18 @@
  */
 
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from '../AppText';
+
+/** Inline shadow — NativeWind `shadow-sm` on TouchableOpacity breaks navigation context when toggled. */
+const selectedSegmentShadow: ViewStyle = {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+};
 
 export type BalanceMode = 'paid' | 'spentOn';
 
@@ -44,8 +53,9 @@ export function BalanceModeToggle({
                         accessibilityRole="button"
                         accessibilityState={{ selected }}
                         className={`flex-1 py-2 rounded-lg items-center ${
-                            selected ? 'bg-white shadow-sm' : ''
+                            selected ? 'bg-white' : ''
                         }`}
+                        style={selected ? selectedSegmentShadow : undefined}
                         testID={`${testID}-${opt.value}`}
                     >
                         <Text

@@ -10,16 +10,37 @@ interface Props {
     testID?: string;
 }
 
+const tileLayout = {
+    flex: 1,
+    flexDirection: 'column' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+};
+
+const centeredText = { width: '100%' as const, textAlign: 'center' as const };
+
 export function StatTile({ label, value, onPress, testID }: Props) {
     return (
         <TouchableOpacity
             onPress={onPress}
             testID={testID}
-            className="flex-1 px-4 py-4 items-center justify-center"
+            style={tileLayout}
             accessibilityRole="button"
         >
-            <Text className="text-2xl font-semibold text-slate-900 tracking-tight">{value}</Text>
-            <Text className="text-xs font-medium text-slate-500 mt-1 text-center">{label}</Text>
+            <Text
+                className="text-2xl font-semibold text-slate-900 tracking-tight text-center"
+                style={centeredText}
+            >
+                {value}
+            </Text>
+            <Text
+                className="text-xs font-medium text-slate-500 mt-1 text-center"
+                style={centeredText}
+            >
+                {label}
+            </Text>
         </TouchableOpacity>
     );
 }

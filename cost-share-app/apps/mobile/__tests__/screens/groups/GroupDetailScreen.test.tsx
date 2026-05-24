@@ -1,6 +1,14 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { waitFor, fireEvent } from '@testing-library/react-native';
 import { renderWithQuery } from '../../helpers/renderWithQuery';
+
+// Auto-confirm any Alert.alert popup by invoking the first destructive
+// button's onPress (used for expense/settlement delete confirmation).
+jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+    const destructive = buttons?.find(b => b.style === 'destructive');
+    destructive?.onPress?.();
+});
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -160,36 +168,6 @@ describe('GroupDetailScreen', () => {
         expect(await findByText('Trip')).toBeTruthy();
     });
 
-    it('renders group-wide spent and unsettled stats in the hero', async () => {
-        useAppStore.setState({
-            expenses: [
-                {
-                    id: 'e1',
-                    groupId: 'g1',
-                    description: 'Dinner',
-                    amount: 120,
-                    currency: 'USD',
-                    expenseDate: new Date(),
-                    paidBy: 'me',
-                    createdBy: 'me',
-                    isDeleted: false,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    splits: [],
-                },
-            ],
-        });
-        const { fetchGroupPairwiseDebts } = require('../../../services/settlements.service');
-        fetchGroupPairwiseDebts.mockResolvedValue([
-            { fromUserId: 'u2', toUserId: 'me', amount: 40, currency: 'USD' },
-        ]);
-
-        const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
-        expect(await findByTestId('hero-group-stats')).toBeTruthy();
-        expect(await findByText('$120.00')).toBeTruthy();
-        expect(await findByText('$40.00')).toBeTruthy();
-    });
-
     it('renders the search input without the balance banner', async () => {
         const { findByTestId, queryByTestId } = renderWithQuery(<GroupDetailScreen />);
         expect(await findByTestId('detail-search-input')).toBeTruthy();
@@ -198,20 +176,20 @@ describe('GroupDetailScreen', () => {
 
     it('navigates back when the hero back button is tapped', async () => {
         const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
-        fireEvent.press(await findByTestId('hero-back-btn'));
+        fireEvent.press(await findByTestId('appbar-back'));
         expect(mockGoBack).toHaveBeenCalled();
     });
 
     it('navigates to EditGroup via the kebab menu', async () => {
         const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
-        fireEvent.press(await findByTestId('hero-menu-btn'));
+        fireEvent.press(await findByTestId('appbar-menu'));
         fireEvent.press(await findByText('groups.editGroup'));
         expect(mockNavigate).toHaveBeenCalledWith('EditGroup', { groupId: 'g1' });
     });
 
     it('invokes exportGroupCsv when Export is chosen from the share sheet', async () => {
         const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
-        fireEvent.press(await findByTestId('hero-share-btn'));
+        fireEvent.press(await findByTestId('appbar-share'));
         fireEvent.press(await findByTestId('share-sheet-export'));
         await waitFor(() => expect(mockExport).toHaveBeenCalled());
     });
@@ -289,10 +267,10 @@ describe('GroupDetailScreen', () => {
         useAppStore.setState({ currentUser: { id: 'me', name: 'Me' } as never });
         mockFetchSettlements.mockResolvedValue([settlement]);
 
-        const { findByTestId, findByText } = renderWithQuery(<GroupDetailScreen />);
+        const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('settlement-press-st1'));
         fireEvent.press(await findByTestId('detail-delete-btn'));
-        fireEvent.press(await findByText('common.delete'));
+        // Alert.alert is auto-confirmed by the mock at the top of this file.
 
         await waitFor(() => {
             expect(mockDeleteSettlement).toHaveBeenCalledWith('st1');
@@ -331,10 +309,11 @@ describe('GroupDetailScreen', () => {
         });
 
         const { findByText, findByTestId } = renderWithQuery(<GroupDetailScreen />);
-        fireEvent.press(await findByText('Dinner'));
+        fireEvent.press(await findByTestId(`expense-row-e1`));
         await waitFor(async () => {
-            expect(await findByTestId('detail-edit-btn')).toBeTruthy();
+            expect(await findByTestId('detail-kebab-btn')).toBeTruthy();
         });
+        fireEvent.press(await findByTestId('detail-kebab-btn'));
         fireEvent.press(await findByTestId('detail-edit-btn'));
         expect(mockNavigate).toHaveBeenCalledWith('AddExpense', {
             expenseId: 'e1',

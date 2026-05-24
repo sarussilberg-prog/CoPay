@@ -12,6 +12,7 @@ import {
     RefreshControl,
     TouchableOpacity,
     TextInput,
+    ListRenderItem,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -98,12 +99,14 @@ export function GroupsListScreen() {
 
     const loadAll = useCallback(async () => {
         try {
-            await Promise.all([fetchGroups(), fetchBalanceSummary()]);
-            void prefetchActivityFeed();
+            await fetchGroups();
             setLoadError(false);
         } catch {
             setLoadError(true);
+            return;
         }
+        void fetchBalanceSummary();
+        void prefetchActivityFeed();
     }, []);
 
     useEffect(() => {
@@ -165,6 +168,23 @@ export function GroupsListScreen() {
     }, [groups, trimmedQuery, filters, balanceNetsByGroup, sortLocale]);
 
     const filterActive = isAnyFilterActive(filters);
+
+    type FilteredRow = (typeof filteredRows)[number];
+
+    const renderItem = useCallback<ListRenderItem<FilteredRow>>(
+        ({ item }) => (
+            <GroupCard
+                group={item.group}
+                balanceDisplay={balanceDisplays.get(item.group.id)}
+                searchQuery={trimmedQuery || undefined}
+                matchedMemberNames={
+                    item.matched.length > 0 ? item.matched : undefined
+                }
+                onPress={handleGroupPress}
+            />
+        ),
+        [balanceDisplays, trimmedQuery, handleGroupPress],
+    );
 
     if (isLoading && groups.length === 0) {
         return <LoadingIndicator />;
@@ -237,17 +257,11 @@ export function GroupsListScreen() {
                 <FlatList
                     data={filteredRows}
                     keyExtractor={item => item.group.id}
-                    renderItem={({ item }) => (
-                        <GroupCard
-                            group={item.group}
-                            balanceDisplay={balanceDisplays.get(item.group.id)}
-                            searchQuery={trimmedQuery || undefined}
-                            matchedMemberNames={
-                                item.matched.length > 0 ? item.matched : undefined
-                            }
-                            onPress={handleGroupPress}
-                        />
-                    )}
+                    renderItem={renderItem}
+                    initialNumToRender={12}
+                    maxToRenderPerBatch={8}
+                    windowSize={7}
+                    removeClippedSubviews
                     className="flex-1"
                     contentContainerStyle={{
                         paddingHorizontal: 16,

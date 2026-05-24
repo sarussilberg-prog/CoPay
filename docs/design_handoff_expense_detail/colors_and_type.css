@@ -1,0 +1,265 @@
+/* =====================================================================
+   Kupa — Colors & Type tokens
+   Source of truth: cost-share-app/apps/mobile/theme/* + tailwind.config.js
+   ===================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+    /* ---------- BRAND -------------------------------------------------- */
+    /* "kupa" wordmark renders in --primary-dark; logo art is deep navy. */
+    --brand-name: "kupa";
+    --brand-wordmark-color: #3B82F6; /* primary-dark — see AppBrandTitle.tsx */
+    --brand-logo-navy: #1E3A8A;      /* deep navy used in logo.png */
+
+    /* ---------- PRIMARY (light-blue palette) -------------------------- */
+    --primary: #60A5FA;              /* Blue 400 — default brand */
+    --primary-dark: #3B82F6;         /* Blue 500 — pressed / wordmark / focused */
+    --primary-light: #93C5FD;        /* Blue 300 — tints, hover backgrounds */
+    --primary-extra-light: #DBEAFE;  /* Blue 100 — secondary-button bg, halos */
+
+    /* Android adaptive icon background */
+    --primary-sky-tint: #E6F4FE;     /* Sky 100 — splash/icon backdrop */
+
+    /* ---------- SEMANTIC ---------------------------------------------- */
+    --success: #10B981;              /* Emerald 500 — "you are owed" */
+    --success-bg: #ECFDF5;           /* Emerald 50  — chip bg */
+    --success-border: #A7F3D0;       /* Emerald 200 — chip border */
+    --success-text: #047857;         /* Emerald 700 — chip text */
+
+    --warning: #F59E0B;              /* Amber 500 */
+    --warning-bg: #FFFBEB;
+
+    --error: #EF4444;                /* Red 500 — "you owe" */
+    --error-bg: #FEF2F2;             /* Red 50 — chip bg */
+    --error-border: #FECACA;         /* Red 200 */
+    --error-text: #B91C1C;           /* Red 700 */
+
+    --info: #60A5FA;                 /* same as primary */
+
+    /* ---------- NEUTRALS (Tailwind gray-50…900) ----------------------- */
+    --gray-50:  #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+
+    /* Slate is used for the profile/dashboard backdrop & dividers. */
+    --slate-50:  #F8FAFC;
+    --slate-100: #F1F5F9;
+    --slate-200: #E2E8F0;
+    --slate-400: #94A3B8;
+    --slate-500: #64748B;
+    --slate-600: #475569;
+    --slate-900: #0F172A;
+
+    /* ---------- SURFACES --------------------------------------------- */
+    --bg-primary:   #FFFFFF;
+    --bg-secondary: #F8FAFC;         /* slate-50 — app shells, list backgrounds */
+    --bg-tertiary:  #F3F4F6;         /* gray-100 — chips, category tiles */
+
+    /* WebFrame letterbox (when the mobile app renders inside a browser). */
+    --bg-letterbox: #0F172A;         /* slate-900 */
+
+    /* ---------- TEXT ------------------------------------------------- */
+    --text-primary:   #111827;       /* gray-900 — titles, amounts */
+    --text-secondary: #6B7280;       /* gray-500 — meta */
+    --text-tertiary:  #9CA3AF;       /* gray-400 — placeholders, chevrons */
+    --text-inverse:   #FFFFFF;
+
+    /* ---------- BORDERS / DIVIDERS ----------------------------------- */
+    --border:        #E5E7EB;        /* gray-200 — default */
+    --border-strong: #D1D5DB;        /* gray-300 — input default */
+    --border-soft:   #F1F5F9;        /* slate-100 — internal dividers */
+    --border-card:   #E2E8F0;        /* slate-200/80 — most card outlines */
+    --border-tint:   rgba(37, 99, 235, 0.2); /* primary-dark @ 20% — FAB outline */
+
+    /* ---------- GROUP TYPE GRADIENTS (avatar fallbacks) -------------- */
+    --grad-trip:    linear-gradient(135deg, #60A5FA, #3B82F6);
+    --grad-home:    linear-gradient(135deg, #34D399, #10B981);
+    --grad-couple:  linear-gradient(135deg, #F472B6, #EC4899);
+    --grad-general: linear-gradient(135deg, #A78BFA, #7C3AED);
+    --grad-work:    linear-gradient(135deg, #FBBF24, #D97706);
+    --grad-event:   linear-gradient(135deg, #FB7185, #E11D48);
+    --grad-friends: linear-gradient(135deg, #38BDF8, #0284C7);
+    --grad-other:   linear-gradient(135deg, #94A3B8, #475569);
+
+    /* ---------- SPACING (4-px scale) --------------------------------- */
+    --space-xs:  4px;
+    --space-sm:  8px;
+    --space-md:  12px;
+    --space-base:16px;
+    --space-lg:  20px;
+    --space-xl:  24px;
+    --space-2xl: 32px;
+    --space-3xl: 40px;
+    --space-4xl: 48px;
+    --space-5xl: 64px;
+
+    /* ---------- RADII ------------------------------------------------ */
+    --radius-none: 0;
+    --radius-sm:   4px;     /* chips, small badges */
+    --radius-md:   8px;     /* breakdown rows, inner controls */
+    --radius-lg:   12px;    /* dashboard cards, secondary buttons */
+    --radius-xl:   16px;    /* primary buttons, inputs, expense cards */
+    --radius-2xl:  20px;    /* group cards, sheets */
+    --radius-3xl:  24px;
+    --radius-full: 9999px;  /* avatars, chips, FABs */
+
+    /* ---------- ELEVATION (mobile-tuned shadows) --------------------- */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.20);
+    --shadow-fab: 0 4px 8px rgba(15, 23, 42, 0.14);
+
+    /* ---------- TYPE: sizes (px) ------------------------------------- */
+    --font-size-xs:  12px;
+    --font-size-sm:  14px;
+    --font-size-base:16px;
+    --font-size-lg:  18px;
+    --font-size-xl:  20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 30px;
+    --font-size-4xl: 36px;
+
+    /* ---------- TYPE: line-heights ----------------------------------- */
+    --lh-xs:  16px;
+    --lh-sm:  20px;
+    --lh-base:24px;
+    --lh-lg:  28px;
+    --lh-xl:  28px;
+    --lh-2xl: 32px;
+    --lh-3xl: 36px;
+    --lh-4xl: 40px;
+
+    /* ---------- TYPE: weights ---------------------------------------- */
+    --weight-normal:     400;
+    --weight-medium:     500;
+    --weight-semibold:   600;
+    --weight-bold:       700;
+    --weight-extrabold:  800;
+
+    /* ---------- TYPE: families --------------------------------------- */
+    /* Mobile uses the platform sans (San Francisco / Roboto). Web preview
+       substitutes Inter — a near-identical neo-grotesque. */
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Helvetica Neue", "Arial", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+        monospace;
+}
+
+/* =====================================================================
+   Semantic role styles — apply to plain HTML inside previews / kits.
+   These mirror the most common NativeWind class combinations used in
+   the Kupa codebase (Text className="text-2xl font-bold …" → h2, etc.).
+   ===================================================================== */
+
+html {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* Display — used for the Kupa wordmark only. */
+.brand-wordmark,
+.text-brand {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-3xl);     /* 30 */
+    line-height: var(--lh-3xl);
+    font-weight: var(--weight-bold);
+    color: var(--brand-wordmark-color);
+    letter-spacing: -0.01em;
+}
+
+/* Page title / hero number (e.g. balance hero on profile). */
+h1, .text-h1 {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-3xl);
+    line-height: var(--lh-3xl);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+/* Screen title in app bars; group name on hero. */
+h2, .text-h2 {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-2xl);
+    line-height: var(--lh-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+    margin: 0;
+}
+
+/* Section heading inside a screen (e.g. "Simplified Debts"). */
+h3, .text-h3 {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-lg);
+    line-height: var(--lh-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Card titles / list item primary line. */
+h4, .text-h4 {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: var(--lh-base);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Body copy. */
+p, .text-body {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: var(--lh-base);
+    font-weight: var(--weight-normal);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Meta / secondary captions ("paid by · Aug 14"). */
+.text-meta {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-xs);
+    line-height: var(--lh-xs);
+    color: var(--text-secondary);
+}
+
+/* Uppercase eyebrow used above cards ("BALANCE OVERVIEW"). */
+.text-eyebrow {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-xs);
+    line-height: var(--lh-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Tabular numbers — amounts in chips, balance hero, breakdowns. */
+.tabular-nums,
+.text-amount {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Mono — never used in the product today; reserved for future code/IDs. */
+code, .text-mono {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+}

@@ -26,9 +26,6 @@ import {
     GroupMemberLite,
     GroupMessage,
     Settlement,
-    calculateGroupTotalSpent,
-    calculateGroupTotalUnsettled,
-    sortCurrencyAmounts,
 } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
@@ -66,8 +63,7 @@ import { prefetchAddExpense } from '../../hooks/queries/prefetchAddExpense';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
-import { GroupHero } from '../../components/GroupHero';
-import { QuickActionsRow } from '../../components/QuickActionsRow';
+import { GroupSummaryCard } from '../../components/groupDetail/GroupSummaryCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FeedItemRow } from '../../components/FeedItemRow';
 import {
@@ -96,7 +92,6 @@ import {
 } from '../../hooks/queries/useSettlementQueries';
 import { AppIcon } from '../../components/AppIcon';
 import { FeedItemDetailSheet } from '../../components/FeedItemDetailSheet';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { colors } from '../../theme';
 import Toast from 'react-native-toast-message';
 
@@ -161,9 +156,6 @@ export function GroupDetailScreen() {
         | { kind: 'settlement'; settlement: Settlement }
         | null
     >(null);
-    const [pendingDelete, setPendingDelete] = useState<'expense' | 'settlement' | null>(
-        null,
-    );
     const [menuOpen, setMenuOpen] = useState(false);
     const [shareSheetOpen, setShareSheetOpen] = useState(false);
     const [archiveBusy, setArchiveBusy] = useState(false);
@@ -190,19 +182,18 @@ export function GroupDetailScreen() {
         [expenses, groupId],
     );
 
-    const heroStats = useMemo(() => {
-        const defaultCurrency = displayGroup?.defaultCurrency ?? 'USD';
+    const groupBalance = useAppStore(s => s.groupBalances[groupId]);
+    const balance = useMemo(() => {
+        const net = groupBalance?.net ?? 0;
         return {
-            totalSpent: sortCurrencyAmounts(
-                calculateGroupTotalSpent(groupExpenses),
-                defaultCurrency,
-            ),
-            totalUnsettled: sortCurrencyAmounts(
-                calculateGroupTotalUnsettled(pairwiseDebts),
-                defaultCurrency,
-            ),
+            net,
+            currency: groupBalance?.currency ?? displayGroup?.defaultCurrency ?? 'USD',
+            isSettled: Math.abs(net) < 0.01,
         };
-    }, [groupExpenses, pairwiseDebts, displayGroup?.defaultCurrency]);
+    }, [groupBalance, displayGroup?.defaultCurrency]);
+
+    const noteHasContent = Boolean(displayGroup?.note?.trim());
+    const settlementCount = pairwiseDebts.length;
 
     const feedUserIds = useMemo(
         () => collectFeedUserIds(groupExpenses, messages, settlements),
@@ -480,26 +471,37 @@ export function GroupDetailScreen() {
     }, [feedDetailItem, navigation, groupId]);
 
     const handleFeedDetailDeleteRequest = useCallback(() => {
-        if (!feedDetailItem) return;
-        setPendingDelete(feedDetailItem.kind);
-    }, [feedDetailItem]);
-
-    const handleConfirmFeedDetailDelete = useCallback(async () => {
-        if (!feedDetailItem || !pendingDelete) return;
-        if (pendingDelete === 'expense' && feedDetailItem.kind === 'expense') {
-            const ok = await deleteExpense(feedDetailItem.expense.id);
-            if (ok) setFeedDetailItem(null);
-        } else if (
-            pendingDelete === 'settlement' &&
-            feedDetailItem.kind === 'settlement'
-        ) {
-            const deleted = await deleteSettlementMutation.mutateAsync(
-                feedDetailItem.settlement.id,
-            );
-            if (deleted) setFeedDetailItem(null);
-        }
-        setPendingDelete(null);
-    }, [feedDetailItem, pendingDelete, deleteSettlementMutation]);
+        // Capture the current item in a closure so the eventual delete
+        // call doesn't race with state changes if the sheet's selection
+        // shifts while the alert is open.
+        const item = feedDetailItem;
+        if (!item) return;
+        const confirmTitle =
+            item.kind === 'expense'
+                ? t('expenses.deleteExpenseConfirm')
+                : t('settleUp.confirmDelete');
+        Alert.alert(confirmTitle, undefined, [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('common.delete'),
+                style: 'destructive',
+                onPress: () => {
+                    void (async () => {
+                        if (item.kind === 'expense') {
+                            const ok = await deleteExpense(item.expense.id);
+                            if (ok) setFeedDetailItem(null);
+                        } else {
+                            const deleted =
+                                await deleteSettlementMutation.mutateAsync(
+                                    item.settlement.id,
+                                );
+                            if (deleted) setFeedDetailItem(null);
+                        }
+                    })();
+                },
+            },
+        ]);
+    }, [feedDetailItem, t, deleteSettlementMutation]);
 
     const handleSettlementEditSubmit = useCallback(
         async (values: SettleUpFormValues) => {
@@ -589,18 +591,18 @@ export function GroupDetailScreen() {
                 )}
                 ListHeaderComponent={
                     <>
-                        <GroupHero
+                        <GroupSummaryCard
                             group={displayGroup}
-                            memberCount={memberLites.length}
-                            stats={heroStats}
+                            members={memberLites}
+                            balance={balance}
+                            settlementCount={settlementCount}
+                            noteHasContent={noteHasContent}
                             onBack={handleBack}
-                            onMenu={handleOpenGroupMenu}
                             onShare={handleShare}
-                        />
-                        <QuickActionsRow
-                            onSettleUp={handleSettleUp}
-                            onBalances={handleBalances}
-                            onNote={handleNote}
+                            onMenu={handleOpenGroupMenu}
+                            onOpenBalances={handleBalances}
+                            onOpenNote={handleNote}
+                            onOpenSettleUp={handleSettleUp}
                         />
                         <View className="px-4 mt-3 mb-2 flex-row items-center">
                             <View className="flex-1 flex-row items-center rounded-full bg-gray-100 px-3 h-9">
@@ -767,27 +769,6 @@ export function GroupDetailScreen() {
                 onClose={() => setFeedDetailItem(null)}
                 onEdit={handleFeedDetailEdit}
                 onDelete={handleFeedDetailDeleteRequest}
-            />
-
-            <ConfirmDialog
-                visible={pendingDelete !== null}
-                title={
-                    pendingDelete === 'expense'
-                        ? t('expenses.deleteExpense')
-                        : t('settleUp.delete')
-                }
-                message={
-                    pendingDelete === 'expense'
-                        ? t('expenses.deleteExpenseConfirm')
-                        : t('settleUp.confirmDelete')
-                }
-                confirmText={t('common.delete')}
-                cancelText={t('common.cancel')}
-                onConfirm={() => {
-                    void handleConfirmFeedDetailDelete();
-                }}
-                onCancel={() => setPendingDelete(null)}
-                destructive
             />
 
             {editingSettlement && (

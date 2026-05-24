@@ -28,7 +28,7 @@ export const ActivityItem = React.memo(function ActivityItem({
     const isMessage = activity.activityType === 'message';
     const isExpense = activity.activityType === 'expense';
     const timestamp = formatFeedDateTime(
-        new Date(activity.activityDate),
+        new Date(activity.createdAt),
         language,
     );
     const pressable = Boolean(onPress);

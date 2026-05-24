@@ -18,7 +18,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kupa.mobile",
-      "associatedDomains": ["applinks:kupa.pro"],
+      "associatedDomains": [
+        "applinks:kupa.pro"
+      ],
       "icon": "./assets/icon.png",
       "infoPlist": {
         "CFBundleDisplayName": "Kupa",
@@ -40,10 +42,21 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "kupa.pro", "pathPattern": "/i/.*" },
-            { "scheme": "https", "host": "kupa.pro", "pathPattern": "/g/.*" }
+            {
+              "scheme": "https",
+              "host": "kupa.pro",
+              "pathPattern": "/i/.*"
+            },
+            {
+              "scheme": "https",
+              "host": "kupa.pro",
+              "pathPattern": "/g/.*"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -67,6 +80,12 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a group or profile image."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ecf771fd-38ce-480e-afc6-b443606f6cef"
+      }
+    },
+    "owner": "navesarussi1"
   }
 }

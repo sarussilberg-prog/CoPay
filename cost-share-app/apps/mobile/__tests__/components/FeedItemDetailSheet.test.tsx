@@ -43,10 +43,10 @@ const memberMap = {
 };
 
 describe('FeedItemDetailSheet', () => {
-    it('shows expense details and action buttons', () => {
+    it('shows expense details and exposes edit/delete via the kebab menu', () => {
         const onEdit = jest.fn();
         const onDelete = jest.fn();
-        const { getByTestId, getByText } = renderWithQuery(
+        const { getByTestId, getByText, queryByTestId } = renderWithQuery(
             <FeedItemDetailSheet
                 item={{ kind: 'expense', expense }}
                 memberMap={memberMap}
@@ -60,8 +60,16 @@ describe('FeedItemDetailSheet', () => {
         expect(getByTestId('expense-detail-sheet')).toBeTruthy();
         expect(getByText('Dinner')).toBeTruthy();
         expect(getByText('USD 100.00')).toBeTruthy();
+
+        // Edit/Delete live inside a popover that opens via the kebab button.
+        expect(queryByTestId('detail-edit-btn')).toBeNull();
+        expect(queryByTestId('detail-delete-btn')).toBeNull();
+
+        fireEvent.press(getByTestId('detail-kebab-btn'));
         fireEvent.press(getByTestId('detail-edit-btn'));
         expect(onEdit).toHaveBeenCalled();
+
+        fireEvent.press(getByTestId('detail-kebab-btn'));
         fireEvent.press(getByTestId('detail-delete-btn'));
         expect(onDelete).toHaveBeenCalled();
     });

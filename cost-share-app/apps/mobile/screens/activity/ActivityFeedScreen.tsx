@@ -15,14 +15,26 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { RecentActivity } from '@cost-share/shared';
+import {
+    ExpenseWithDelta,
+    GroupMemberLite,
+    RecentActivity,
+} from '@cost-share/shared';
 import { useActivityQuery } from '../../hooks/queries/useActivityQuery';
 import { ACTIVITY_INITIAL_SKELETON_COUNT } from '../../services/activity.service';
+import {
+    deleteExpense,
+    getExpenseWithSplitsById,
+} from '../../services/expenses.service';
+import { decorateExpense } from '../../services/expense-delta';
+import { fetchProfilesByUserIds } from '../../services/groups.service';
 import { resolveAutoTextInputStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 import { EmptyState } from '../../components/EmptyState';
 import { ActivityItem } from '../../components/ActivityItem';
 import { ActivityItemSkeleton } from '../../components/ActivityItemSkeleton';
 import { AppIcon } from '../../components/AppIcon';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { FeedItemDetailSheet } from '../../components/FeedItemDetailSheet';
 import {
     ActivityFiltersSheet,
     DEFAULT_ACTIVITY_FILTERS,
@@ -61,6 +73,13 @@ export function ActivityFeedScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<ActivityFilters>(DEFAULT_ACTIVITY_FILTERS);
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [detailExpense, setDetailExpense] = useState<ExpenseWithDelta | null>(
+        null,
+    );
+    const [detailMembers, setDetailMembers] = useState<
+        Record<string, GroupMemberLite>
+    >({});
+    const [pendingDelete, setPendingDelete] = useState(false);
     const canLoadMoreRef = useRef(false);
 
     const activities = useMemo(
@@ -118,13 +137,29 @@ export function ActivityFeedScreen() {
     const filterActive = isAnyActivityFilterActive(filters);
     const showInitialSkeleton = isLoading && activities.length === 0;
 
+    const openExpenseDetail = useCallback(
+        async (expenseId: string) => {
+            const expense = await getExpenseWithSplitsById(expenseId);
+            if (!expense) return;
+            const decorated = decorateExpense(expense, currentUser?.id ?? '');
+            const userIds = Array.from(
+                new Set([
+                    expense.paidBy,
+                    expense.createdBy,
+                    ...expense.splits.map((s) => s.userId),
+                ].filter(Boolean)),
+            );
+            const profiles = await fetchProfilesByUserIds(userIds);
+            setDetailMembers(profiles);
+            setDetailExpense(decorated);
+        },
+        [currentUser?.id],
+    );
+
     const handleActivityPress = useCallback(
         (activity: RecentActivity) => {
             if (activity.activityType === 'expense') {
-                navigation.navigate('Groups', {
-                    screen: 'ExpenseDetail',
-                    params: { expenseId: activity.id, groupId: activity.groupId },
-                });
+                void openExpenseDetail(activity.id);
                 return;
             }
             if (
@@ -137,8 +172,36 @@ export function ActivityFeedScreen() {
                 });
             }
         },
-        [navigation],
+        [navigation, openExpenseDetail],
     );
+
+    const handleDetailEdit = useCallback(() => {
+        if (!detailExpense) return;
+        const { id: expenseId, groupId } = detailExpense;
+        setDetailExpense(null);
+        navigation.navigate('Groups', {
+            screen: 'AddExpense',
+            params: { expenseId, groupId },
+        });
+    }, [detailExpense, navigation]);
+
+    const handleDetailDeleteRequest = useCallback(() => {
+        if (!detailExpense) return;
+        setPendingDelete(true);
+    }, [detailExpense]);
+
+    const handleConfirmDelete = useCallback(async () => {
+        if (!detailExpense) {
+            setPendingDelete(false);
+            return;
+        }
+        const ok = await deleteExpense(detailExpense.id);
+        setPendingDelete(false);
+        if (ok) {
+            setDetailExpense(null);
+            void refetch();
+        }
+    }, [detailExpense, refetch]);
 
     const renderActivity = useCallback(
         ({ item }: { item: RecentActivity }) => (
@@ -282,6 +345,30 @@ export function ActivityFeedScreen() {
                 availableGroups={availableGroups}
                 onChange={setFilters}
                 onClose={() => setFiltersOpen(false)}
+            />
+
+            <FeedItemDetailSheet
+                item={
+                    detailExpense ? { kind: 'expense', expense: detailExpense } : null
+                }
+                memberMap={detailMembers}
+                currentUserId={currentUser?.id ?? ''}
+                onClose={() => setDetailExpense(null)}
+                onEdit={handleDetailEdit}
+                onDelete={handleDetailDeleteRequest}
+            />
+
+            <ConfirmDialog
+                visible={pendingDelete}
+                title={t('expenses.deleteExpense')}
+                message={t('expenses.deleteExpenseConfirm')}
+                confirmText={t('common.delete')}
+                cancelText={t('common.cancel')}
+                onConfirm={() => {
+                    void handleConfirmDelete();
+                }}
+                onCancel={() => setPendingDelete(false)}
+                destructive
             />
         </SafeAreaView>
     );

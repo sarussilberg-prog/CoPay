@@ -59,10 +59,8 @@ export function useUserGroupMembershipsRealtime(
                                 (payload.eventType === 'UPDATE' &&
                                     payload.new?.is_active === true)
                             ) {
-                                await Promise.all([
-                                    fetchGroups(),
-                                    fetchBalanceSummary(),
-                                ]);
+                                await fetchGroups();
+                                void fetchBalanceSummary();
                             }
                         } catch (err) {
                             console.error(

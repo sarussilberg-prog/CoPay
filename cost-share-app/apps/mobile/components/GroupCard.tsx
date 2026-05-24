@@ -23,7 +23,7 @@ interface GroupCardProps {
     onPress: (groupId: string) => void;
 }
 
-export function GroupCard({
+function GroupCardBase({
     group,
     balanceDisplay,
     searchQuery,
@@ -122,3 +122,5 @@ export function GroupCard({
         </TouchableOpacity>
     );
 }
+
+export const GroupCard = React.memo(GroupCardBase);

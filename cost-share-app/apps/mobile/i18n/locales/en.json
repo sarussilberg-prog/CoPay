@@ -160,8 +160,9 @@
             }
         },
         "summary": {
-            "youAreOwed": "You are owed {{amount}}",
-            "youOwe": "You owe {{amount}}"
+            "youAreOwed": "You have <1>{{amount}}</1> to your credit",
+            "youOwe": "You owe <1>{{amount}}</1>",
+            "noOpenPayments": "No open payments"
         },
         "hero": {
             "spentTogether": "Spent together",
@@ -173,6 +174,9 @@
         },
         "bigCreateCta": "Create a group",
         "settings": "Group settings",
+        "detail": {
+            "title": "Group"
+        },
         "menu": {
             "title": "Group options"
         },
@@ -226,10 +230,20 @@
         "expense": {
             "youLent": "You lent {{amount}}",
             "youBorrowed": "You borrowed {{amount}}",
-            "settled": "Settled"
+            "settled": "Settled",
+            "fromPayer": "From {{name}}",
+            "toNPeople_one": "To {{count}} person",
+            "toNPeople_other": "To {{count}} people",
+            "splitLent": "Lent {{amount}}",
+            "splitOwes": "Owes {{name}}",
+            "paidBadge": "PAID",
+            "totalLabel": "Total",
+            "splitBetweenCount_one": "Split between · {{count}} person",
+            "splitBetweenCount_other": "Split between · {{count}} people"
         },
         "feedDetail": {
             "expenseTitle": "Expense details",
+            "expenseHeaderLabel": "Expense",
             "settlementTitle": "Settlement details",
             "yourShare": "Your share"
         },
@@ -578,6 +592,7 @@
         "closedGroups": "Settled groups",
         "activeGroups": "Unsettled groups",
         "friends": "Friends",
+        "friendsCount": "{{count}} friends",
         "loadError": "Failed to load dashboard",
         "settled": "Settled up",
         "owesYou": "owes you",

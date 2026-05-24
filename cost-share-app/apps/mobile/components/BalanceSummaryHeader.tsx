@@ -38,9 +38,10 @@ export function BalanceSummaryHeader({ rows }: BalanceSummaryHeaderProps) {
                             className="text-sm font-medium text-green-600"
                             style={{ textAlign: align, writingDirection: direction }}
                         >
+                            {/* <1>…</1> markers are for the SummaryBalanceStrip <Trans> consumer; strip them here. */}
                             {t('groups.summary.youAreOwed', {
                                 amount: formatAmount(row.owed, row.currency),
-                            })}
+                            }).replace(/<\/?1>/g, '')}
                         </Text>
                     )}
                     {row.owe >= 0.01 && (
@@ -50,7 +51,7 @@ export function BalanceSummaryHeader({ rows }: BalanceSummaryHeaderProps) {
                         >
                             {t('groups.summary.youOwe', {
                                 amount: formatAmount(row.owe, row.currency),
-                            })}
+                            }).replace(/<\/?1>/g, '')}
                         </Text>
                     )}
                 </View>

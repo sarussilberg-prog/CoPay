@@ -33,6 +33,64 @@ import { useAppStore } from '../store';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
 
+type GroupArchiveState = { mine: boolean; auto: boolean };
+
+async function fetchGroupsArchiveState(): Promise<Map<string, GroupArchiveState>> {
+    const { data, error } = await supabase.rpc('get_user_groups_archive_state');
+    if (error) {
+        console.error('fetchGroupsArchiveState failed:', error);
+        return new Map();
+    }
+
+    const archiveByGroup = new Map<string, GroupArchiveState>();
+    for (const row of data ?? []) {
+        archiveByGroup.set(row.group_id as string, {
+            mine: Boolean(row.is_archived_by_me),
+            auto: Boolean(row.is_auto_archived),
+        });
+    }
+    return archiveByGroup;
+}
+
+function applyArchiveStateToStore(archiveByGroup: Map<string, GroupArchiveState>): void {
+    if (archiveByGroup.size === 0) return;
+
+    const store = useAppStore.getState();
+    const current = store.groups;
+    if (current.length === 0) return;
+
+    let changed = false;
+    const updated = current.map(group => {
+        const state = archiveByGroup.get(group.id);
+        if (!state) return group;
+        if (
+            group.isArchivedByMe === state.mine &&
+            group.isAutoArchived === state.auto
+        ) {
+            return group;
+        }
+        changed = true;
+        return {
+            ...group,
+            isArchivedByMe: state.mine,
+            isAutoArchived: state.auto,
+        };
+    });
+
+    if (changed) {
+        store.setGroups(updated);
+    }
+}
+
+/** Heavy RPC — runs after the list is visible; updates archive badges/filters. */
+function hydrateGroupsArchiveStateInBackground(): void {
+    void fetchGroupsArchiveState()
+        .then(applyArchiveStateToStore)
+        .catch(err => {
+            console.error('hydrateGroupsArchiveStateInBackground failed:', err);
+        });
+}
+
 async function filterActiveMemberIds(memberIds: string[]): Promise<string[]> {
     if (memberIds.length === 0) return [];
     const { data, error } = await supabase
@@ -102,7 +160,9 @@ async function loadBalanceData(groupId: string, userId?: string) {
     return { defaultCurrency, expenses, splits, settlements, userIds };
 }
 
-export async function fetchGroups(): Promise<GroupWithMembers[]> {
+let fetchGroupsInFlight: Promise<GroupWithMembers[]> | null = null;
+
+async function fetchGroupsInternal(): Promise<GroupWithMembers[]> {
     const userId = await getCurrentUserId();
     if (!userId) return [];
 
@@ -120,44 +180,34 @@ export async function fetchGroups(): Promise<GroupWithMembers[]> {
             return [];
         }
 
-        const [groupsRes, archiveRes] = await Promise.all([
-            supabase
-                .from('groups')
-                .select(
-                    '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url, is_active))',
-                )
-                .in('id', groupIds)
-                .eq('is_active', true)
-                .eq('group_members.is_active', true)
-                .order('created_at', { ascending: false }),
-            supabase.rpc('get_user_groups_archive_state'),
-        ]);
-        if (groupsRes.error) throw groupsRes.error;
-        if (archiveRes.error) throw archiveRes.error;
+        const { data, error: groupsErr } = await supabase
+            .from('groups')
+            .select(
+                '*, group_members!inner(user_id, is_active, profiles(id, name, is_active))',
+            )
+            .in('id', groupIds)
+            .eq('is_active', true)
+            .eq('group_members.is_active', true)
+            .order('created_at', { ascending: false });
+        if (groupsErr) throw groupsErr;
 
-        const archiveByGroup = new Map<string, { mine: boolean; auto: boolean }>();
-        for (const row of archiveRes.data ?? []) {
-            archiveByGroup.set(row.group_id as string, {
-                mine: Boolean(row.is_archived_by_me),
-                auto: Boolean(row.is_auto_archived),
-            });
-        }
-
-        const groups = (groupsRes.data ?? []).map(row => {
-            const base = groupWithMembersFromRow(row);
-            const state = archiveByGroup.get(base.id);
-            return {
-                ...base,
-                isArchivedByMe: state?.mine ?? false,
-                isAutoArchived: state?.auto ?? false,
-            };
-        });
+        const groups = (data ?? []).map(row => groupWithMembersFromRow(row));
         useAppStore.getState().setGroups(groups);
+        hydrateGroupsArchiveStateInBackground();
         return groups;
     } catch (error) {
         console.error('Failed to fetch groups:', error);
         throw error;
     }
+}
+
+export async function fetchGroups(): Promise<GroupWithMembers[]> {
+    if (fetchGroupsInFlight) return fetchGroupsInFlight;
+
+    fetchGroupsInFlight = fetchGroupsInternal().finally(() => {
+        fetchGroupsInFlight = null;
+    });
+    return fetchGroupsInFlight;
 }
 
 export type ArchiveGroupError = 'has_balance' | 'not_a_member' | 'unknown';

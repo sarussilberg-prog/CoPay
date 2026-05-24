@@ -3,7 +3,7 @@
  * Stack and tab navigation structure
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -17,6 +17,7 @@ import { useRtlLayout } from '../hooks/useRtlLayout';
 import { AppIcon, AppIconName } from '../components/AppIcon';
 import { colors } from '../theme';
 import { useInviteRedemption } from '../hooks/useInviteRedemption';
+import { prefetchGroupsList } from '../hooks/queries/prefetchGroupsList';
 
 function HeaderBackButton({ onPress }: { onPress: () => void }) {
     const isRtl = useRtlLayout();
@@ -249,6 +250,10 @@ function ProfileStack() {
 export function AppNavigator() {
     const { t } = useTranslation();
     useInviteRedemption();
+
+    useEffect(() => {
+        prefetchGroupsList();
+    }, []);
 
     return (
         <Tab.Navigator

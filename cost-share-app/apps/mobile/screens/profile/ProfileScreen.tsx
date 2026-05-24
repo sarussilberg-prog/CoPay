@@ -169,12 +169,9 @@ export function ProfileScreen() {
 
                     {dashboard.friends.length > 0 ? (
                         <View className="mx-4 mb-8">
-                            <View className="items-center mb-2">
-                                <Text className="text-xs text-slate-400">{dashboard.friends.length}</Text>
-                                <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                    {t('dashboard.friends')}
-                                </Text>
-                            </View>
+                            <Text className="text-xs font-semibold text-slate-400 text-center mb-2">
+                                {t('dashboard.friendsCount', { count: dashboard.friends.length })}
+                            </Text>
                             <View
                                 className="rounded-xl bg-white border border-slate-200/80 overflow-hidden"
                                 style={shadows.sm}

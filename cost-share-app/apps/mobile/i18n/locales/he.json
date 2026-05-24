@@ -160,8 +160,9 @@
             }
         },
         "summary": {
-            "youAreOwed": "חייבים לך {{amount}}",
-            "youOwe": "אתה חייב {{amount}}"
+            "youAreOwed": "יש לך <1>{{amount}}</1> לזכות",
+            "youOwe": "אתה חייב <1>{{amount}}</1>",
+            "noOpenPayments": "אין תשלומים פתוחים"
         },
         "hero": {
             "spentTogether": "הוציאו ביחד",
@@ -173,6 +174,9 @@
         },
         "bigCreateCta": "פתח קופה",
         "settings": "הגדרות קופה",
+        "detail": {
+            "title": "קבוצה"
+        },
         "menu": {
             "title": "אפשרויות קופה"
         },
@@ -226,10 +230,24 @@
         "expense": {
             "youLent": "הלוויתָ {{amount}}",
             "youBorrowed": "לוויתָ {{amount}}",
-            "settled": "מסודר"
+            "settled": "מסודר",
+            "fromPayer": "מאת {{name}}",
+            "toNPeople_one": "ל-{{count}} אדם",
+            "toNPeople_two": "ל-{{count}} אנשים",
+            "toNPeople_many": "ל-{{count}} אנשים",
+            "toNPeople_other": "ל-{{count}} אנשים",
+            "splitLent": "הלווה {{amount}}",
+            "splitOwes": "חייב ל{{name}}",
+            "paidBadge": "שילם",
+            "totalLabel": "סך הכל",
+            "splitBetweenCount_one": "מתחלק בין · {{count}} אדם",
+            "splitBetweenCount_two": "מתחלק בין · {{count}} אנשים",
+            "splitBetweenCount_many": "מתחלק בין · {{count}} אנשים",
+            "splitBetweenCount_other": "מתחלק בין · {{count}} אנשים"
         },
         "feedDetail": {
             "expenseTitle": "פרטי הוצאה",
+            "expenseHeaderLabel": "הוצאה",
             "settlementTitle": "פרטי סגירת חשבון",
             "yourShare": "החלק שלך"
         },
@@ -582,6 +600,7 @@
         "closedGroups": "קופות ללא יתרה",
         "activeGroups": "קופות עם יתרה",
         "friends": "חברים",
+        "friendsCount": "{{count}} חברים",
         "loadError": "טעינת לוח הבקרה נכשלה",
         "settled": "מסולק",
         "owesYou": "חייב לך",
