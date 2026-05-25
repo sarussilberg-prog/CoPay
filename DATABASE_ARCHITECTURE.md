@@ -1,8 +1,9 @@
 # Database Architecture - Splitwise-like Expense Sharing App
 
 **Technology:** PostgreSQL with Supabase  
-**Last Updated:** 2026-05-19  
+**Last Updated:** 2026-05-25  
 **Status:** Implemented — Supabase-only (no NestJS API)  
+**Environments:** [`docs/SSOT/SUPABASE_ENVIRONMENTS.md`](docs/SSOT/SUPABASE_ENVIRONMENTS.md) — `dev` branch → dev project, `main` → production  
 **Canonical schema (apply this):** [`cost-share-app/supabase/schema.sql`](cost-share-app/supabase/schema.sql)  
 **In-place RLS patch:** [`cost-share-app/supabase/fix-rls-group-members-recursion.sql`](cost-share-app/supabase/fix-rls-group-members-recursion.sql)
 

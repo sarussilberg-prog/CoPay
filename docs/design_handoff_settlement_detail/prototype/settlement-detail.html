@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Kupa · Settlement detail popup</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0F172A; font-family: var(--font-sans); }
+    body { display: flex; align-items: center; justify-content: center; }
+    @keyframes kupa-spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const SETTLEMENT = {
+    from: { name: 'David', initials: 'D' },
+    to:   { name: 'You',   initials: 'YO' },
+    amount: 18.00,
+    currency: 'USD',
+    date: 'Wednesday, August 13',
+    time: '6:10 PM',
+    method: 'bank_transfer', // cash, bank_transfer, venmo, paypal, credit_card, other
+    methodLabel: 'Bank transfer',
+    isCurrentUserRecipient: true, // for involvement copy
+};
+
+const SAFE_TOP = 62;
+
+function FadedGroupScreen() {
+    return (
+        <div style={{ height: '100%', background: 'var(--bg-secondary)', paddingTop: SAFE_TOP, filter: 'brightness(.85)' }}>
+            <div style={{ padding: '8px 8px 6px 8px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <IconButton name="chevron-back" />
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>Group</div>
+                <div style={{ display: 'flex', gap: 0 }}>
+                    <IconButton name="share-outline" />
+                    <IconButton name="ellipsis-vertical" />
+                </div>
+            </div>
+            <div style={{ padding: '6px 16px 12px 16px', background: '#fff' }}>
+                <div style={{ borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border-card)', boxShadow: 'var(--shadow-sm)', background: '#fff' }}>
+                    <div style={{ height: 150, position: 'relative' }}>
+                        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&fit=crop"
+                             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SettlementDetail({ onClose }) {
+    const menuItemBtn = {
+        display: 'flex', alignItems: 'center', gap: 10,
+        width: '100%', padding: '10px 12px',
+        background: 'transparent', border: 0,
+        borderRadius: 8, cursor: 'pointer',
+        fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+        fontFamily: 'var(--font-sans)', textAlign: 'left',
+        WebkitTapHighlightColor: 'transparent',
+    };
+
+    const fromIsYou = SETTLEMENT.from.name === 'You';
+    const toIsYou = SETTLEMENT.to.name === 'You';
+    const involvementMain = toIsYou
+        ? `You received ${SETTLEMENT.currency} ${SETTLEMENT.amount.toFixed(2)}`
+        : fromIsYou
+            ? `You paid ${SETTLEMENT.currency} ${SETTLEMENT.amount.toFixed(2)}`
+            : `${SETTLEMENT.from.name} paid ${SETTLEMENT.to.name}`;
+
+    return (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+            <div onClick={onClose} style={{ flex: 1, background: 'rgba(15,23,42,0.55)' }} />
+            <div style={{
+                background: '#fff',
+                borderRadius: '24px 24px 0 0',
+                boxShadow: '0 -8px 24px rgba(0,0,0,0.15)',
+                maxHeight: '88%', overflow: 'auto',
+                fontFamily: 'var(--font-sans)',
+            }}>
+                {/* Handle */}
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 8 }}>
+                    <div style={{ width: 40, height: 4, borderRadius: 9999, background: 'var(--gray-200)' }} />
+                </div>
+
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px 4px 8px', position: 'relative' }}>
+                    <IconButton name="close" onClick={onClose} size={22} color="var(--gray-600)" />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Settlement</span>
+                    <IconButton name="ellipsis-vertical" size={20} color="var(--gray-600)" />
+                    <div style={{
+                        position: 'absolute', top: 38, right: 8,
+                        background: '#fff', borderRadius: 12,
+                        border: '1px solid var(--border-card)',
+                        boxShadow: '0 8px 20px rgba(15,23,42,0.12)',
+                        minWidth: 160, padding: 4, zIndex: 5,
+                        display: 'none',
+                    }}>
+                        <button style={menuItemBtn}>
+                            <Icon name="pencil" size={16} color="var(--gray-700)" />
+                            <span style={{ flex: 1 }}>Edit</span>
+                        </button>
+                        <button style={{ ...menuItemBtn, color: 'var(--error)' }}>
+                            <Icon name="trash-outline" size={16} color="var(--error)" />
+                            <span style={{ flex: 1, color: 'var(--error)' }}>Delete</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Hero — green tinted card, large from → to flow */}
+                <div style={{ padding: '4px 16px 0 16px' }}>
+                    <div style={{
+                        height: 180, borderRadius: 16, overflow: 'hidden', position: 'relative',
+                        border: '1px solid var(--success-border)',
+                        background: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        {/* Scrim for chip legibility */}
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.18) 100%)' }} />
+
+                        {/* PAYMENT chip — top-left */}
+                        <span style={{
+                            position: 'absolute', top: 10, left: 10, zIndex: 2,
+                            padding: '4px 10px', borderRadius: 9999,
+                            background: 'rgba(0,0,0,0.45)', color: '#fff',
+                            fontSize: 11, fontWeight: 600,
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                        }}>
+                            <Icon name="checkmark-circle" size={12} color="#fff" />
+                            Payment
+                        </span>
+
+                        {/* Date — top-right */}
+                        <span style={{
+                            position: 'absolute', top: 12, right: 14, zIndex: 2,
+                            fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.92)',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                        }}>
+                            {SETTLEMENT.date}
+                        </span>
+
+                        {/* From → To flow (centered) */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 2, width: '100%', padding: '0 14px', boxSizing: 'border-box' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 96, flexShrink: 0 }}>
+                                <MemberAvatar initials={SETTLEMENT.from.initials} size="md" style={{ background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,0.25)' }} />
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.35)', textAlign: 'center', width: 96, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {SETTLEMENT.from.name}
+                                </div>
+                                <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                    Paid
+                                </div>
+                            </div>
+
+                            {/* Arrow + amount */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1, minWidth: 0, padding: '0 6px' }}>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em', textShadow: '0 1px 3px rgba(0,0,0,0.35)', whiteSpace: 'nowrap' }}>
+                                    {SETTLEMENT.currency} {SETTLEMENT.amount.toFixed(2)}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                                    <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.85)', borderRadius: 9999 }} />
+                                    <Icon name="chevron-forward" size={18} color="rgba(255,255,255,0.95)" />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: 96, flexShrink: 0 }}>
+                                <MemberAvatar initials={SETTLEMENT.to.initials} size="md" style={{ background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,0.25)' }} />
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.35)', textAlign: 'center', width: 96, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {SETTLEMENT.to.name}
+                                </div>
+                                <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                    Received
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Involvement strip — green tinted */}
+                <div style={{ margin: '14px 16px 24px 16px', padding: '14px 14px', borderRadius: 12, background: 'var(--success-bg)', border: '1px solid var(--success-border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9999, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name={toIsYou ? 'arrow-down-circle-outline' : 'arrow-up-circle-outline'} size={20} color="var(--success)" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--success-text)' }}>
+                            {toIsYou
+                                ? `You received ${SETTLEMENT.currency} ${SETTLEMENT.amount.toFixed(2)}`
+                                : fromIsYou
+                                    ? `You paid ${SETTLEMENT.currency} ${SETTLEMENT.amount.toFixed(2)}`
+                                    : `${SETTLEMENT.from.name} paid ${SETTLEMENT.to.name}`}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--success-text)', opacity: 0.8, marginTop: 2 }}>
+                            {toIsYou
+                                ? `From ${SETTLEMENT.from.name} · via ${SETTLEMENT.methodLabel}`
+                                : fromIsYou
+                                    ? `To ${SETTLEMENT.to.name} · via ${SETTLEMENT.methodLabel}`
+                                    : `via ${SETTLEMENT.methodLabel}`}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MetaRow({ icon, label, value, isLast }) {
+    return (
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+            borderBottom: isLast ? 'none' : '1px solid var(--border-soft)',
+        }}>
+            <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: 'var(--gray-50)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <Icon name={icon} size={16} color="var(--gray-600)" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="text-eyebrow" style={{ fontSize: 9 }}>{label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginTop: 1 }}>{value}</div>
+            </div>
+        </div>
+    );
+}
+
+function Stage() {
+    const [scale, setScale] = React.useState(1);
+    React.useEffect(() => {
+        const compute = () => setScale(Math.min(1, (window.innerWidth - 48) / 402, (window.innerHeight - 48) / 874));
+        compute();
+        window.addEventListener('resize', compute);
+        return () => window.removeEventListener('resize', compute);
+    }, []);
+    return (
+        <div style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+            <IOSDevice width={402} height={874}>
+                <div style={{ position: 'relative', height: '100%' }}>
+                    <FadedGroupScreen />
+                    <SettlementDetail onClose={() => {}} />
+                </div>
+            </IOSDevice>
+        </div>
+    );
+}
+
+ReactDOM.createRoot(document.getElementById('stage')).render(<Stage />);
+</script>
+</body>
+</html>

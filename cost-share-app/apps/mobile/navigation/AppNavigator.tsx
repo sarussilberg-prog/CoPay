@@ -18,6 +18,7 @@ import { AppIcon, AppIconName } from '../components/AppIcon';
 import { colors } from '../theme';
 import { useInviteRedemption } from '../hooks/useInviteRedemption';
 import { prefetchGroupsList } from '../hooks/queries/prefetchGroupsList';
+import { prefetchDashboard } from '../hooks/queries/prefetchDashboard';
 
 function HeaderBackButton({ onPress }: { onPress: () => void }) {
     const isRtl = useRtlLayout();
@@ -253,6 +254,7 @@ export function AppNavigator() {
 
     useEffect(() => {
         prefetchGroupsList();
+        prefetchDashboard();
     }, []);
 
     return (

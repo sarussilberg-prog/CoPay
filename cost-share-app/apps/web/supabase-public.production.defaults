@@ -1,0 +1,4 @@
+# Production Supabase — used when VERCEL_ENV=production (main branch / kupa.pro).
+# Project: jfqxjjjbpxbwwvoygahu
+NEXT_PUBLIC_SUPABASE_URL=https://jfqxjjjbpxbwwvoygahu.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_Cl5irAbtgdv9ACUSMuZBKA_yLqIejR9

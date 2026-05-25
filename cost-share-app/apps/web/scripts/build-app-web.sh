@@ -7,11 +7,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Committed defaults for CI/Vercel when dashboard env is unset (public anon key only).
-# Note: .env.production is excluded by .vercelignore (.env*); use supabase-public.defaults.
+# kupa-dev Vercel project → always development Supabase (never kupa.pro prod DB).
+# kupa-prod / VERCEL_ENV=production → production; other previews → development.
+# See docs/SSOT/SUPABASE_ENVIRONMENTS.md
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-for defaults_file in \
-  "$SCRIPT_DIR/supabase-public.defaults" \
-  "$WEB_DIR/.env.production"; do
+KUPA_DEV_VERCEL_PROJECT_ID="prj_W8uZeTmZW0rdAnxEr9ywqMvH5yb8"
+if [[ "${VERCEL_PROJECT_ID:-}" == "$KUPA_DEV_VERCEL_PROJECT_ID" ]]; then
+  DEFAULTS_FILE="$SCRIPT_DIR/supabase-public.development.defaults"
+elif [[ "${VERCEL_ENV:-}" == "production" ]]; then
+  DEFAULTS_FILE="$SCRIPT_DIR/supabase-public.production.defaults"
+else
+  DEFAULTS_FILE="$SCRIPT_DIR/supabase-public.development.defaults"
+fi
+
+for defaults_file in "$DEFAULTS_FILE"; do
   if [[ -f "$defaults_file" ]]; then
     set -a
     # shellcheck disable=SC1090
@@ -19,6 +28,16 @@ for defaults_file in \
     set +a
   fi
 done
+
+# Local-only override (never on Vercel). Committed apps/web/.env.production had prod keys
+# and overwrote kupa-dev preview — use supabase-public.*.defaults + dashboard env on CI.
+if [[ -z "${VERCEL:-}" && "${VERCEL_PROJECT_ID:-}" != "$KUPA_DEV_VERCEL_PROJECT_ID" && -f "$WEB_DIR/.env.production" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$WEB_DIR/.env.production"
+  set +a
+fi
+
 
 # Expo build; also accepts Next.js and Vercel Supabase integration variable names
 export EXPO_PUBLIC_SUPABASE_URL="${EXPO_PUBLIC_SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-${SUPABASE_URL:-}}}"

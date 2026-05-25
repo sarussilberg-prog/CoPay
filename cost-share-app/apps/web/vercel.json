@@ -1,12 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://drxfbicunusmipdgbgdk.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_YkB0Syx43FA7kDbqzAsF6A_6pir6C3S",
-    "EXPO_PUBLIC_SUPABASE_URL": "https://drxfbicunusmipdgbgdk.supabase.co",
-    "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_YkB0Syx43FA7kDbqzAsF6A_6pir6C3S"
-  },
   "installCommand": "cd ../.. && npm install --include=optional",
   "buildCommand": "bash scripts/build-app-web.sh",
   "outputDirectory": "../mobile/dist",

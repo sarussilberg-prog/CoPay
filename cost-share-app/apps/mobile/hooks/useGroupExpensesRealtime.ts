@@ -39,6 +39,9 @@ function invalidateGroupDerivedCaches(groupId: string): void {
     void queryClient.invalidateQueries({
         queryKey: queryKeys.groupSimplifiedDebtsByCurrency(groupId),
     });
+    void queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard,
+    });
     scheduleBalanceRefetch(groupId);
 }
 

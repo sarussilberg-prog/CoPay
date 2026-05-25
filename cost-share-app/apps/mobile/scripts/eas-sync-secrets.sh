@@ -5,12 +5,28 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ENV_FILE="${ROOT}/.env"
+ENV_FILE="${1:-${ROOT}/.env}"
 
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Missing ${ENV_FILE}. Copy from .env.example and fill values."
+  echo "Missing ${ENV_FILE}." >&2
+  echo "  Dev:  bash scripts/eas-sync-secrets.sh" >&2
+  echo "  Prod: bash scripts/eas-sync-secrets.sh .env.production" >&2
   exit 1
 fi
+
+case "$(basename "$ENV_FILE")" in
+  .env.production|.env.production.local)
+    if ! grep -q 'jfqxjjjbpxbwwvoygahu' "$ENV_FILE" 2>/dev/null; then
+      echo "✗ ${ENV_FILE} must use production URL (jfqxjjjbpxbwwvoygahu)" >&2
+      exit 1
+    fi
+    ;;
+  *)
+    if ! grep -q 'drxfbicunusmipdgbgdk' "$ENV_FILE" 2>/dev/null; then
+      echo "⚠️  ${ENV_FILE} does not contain dev project ref (drxfbicunusmipdgbgdk)" >&2
+    fi
+    ;;
+esac
 
 # shellcheck disable=SC1090
 set -a

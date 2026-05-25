@@ -1,6 +1,6 @@
 import { Text } from '../../components/AppText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, ScrollView, RefreshControl, TouchableOpacity, type DimensionValue } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -10,7 +10,6 @@ import { useDashboardQuery } from '../../hooks/queries/useDashboardQuery';
 import { useProfileBalanceSummary } from '../../hooks/useProfileBalanceSummary';
 import { useFriendBalancesDisplay } from '../../hooks/useFriendBalancesDisplay';
 import { AppIcon } from '../../components/AppIcon';
-import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { ProfileHeaderRow } from '../../components/dashboard/ProfileHeaderRow';
 import { BalanceHeroCard } from '../../components/dashboard/BalanceHeroCard';
@@ -23,12 +22,79 @@ import { useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQu
 import { getCurrentUserId } from '../../lib/auth';
 import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
+function SkeletonBar({ width, height = 12 }: { width: DimensionValue; height?: number }) {
+    return <View className="bg-slate-100 rounded" style={{ width, height }} />;
+}
+
+function BalanceHeroCardSkeleton() {
+    return (
+        <View
+            className="rounded-xl mx-4 mb-4 bg-white border border-slate-200/80 overflow-hidden"
+            style={shadows.sm}
+            testID="balance-hero-skeleton"
+        >
+            <View className="px-4 pt-4 pb-3 border-b border-slate-100 items-center">
+                <SkeletonBar width={120} height={10} />
+            </View>
+            <View className="px-4 py-6 items-center gap-3">
+                <SkeletonBar width={100} height={10} />
+                <SkeletonBar width={160} height={28} />
+            </View>
+        </View>
+    );
+}
+
+function StatGroupSkeleton() {
+    const tile = (
+        <View className="flex-1 items-center justify-center py-5 gap-2">
+            <SkeletonBar width={40} height={22} />
+            <SkeletonBar width={80} height={10} />
+        </View>
+    );
+    return (
+        <View
+            className="flex-row mx-4 mb-5 rounded-xl bg-white border border-slate-200/80 overflow-hidden"
+            style={shadows.sm}
+            testID="stat-group-skeleton"
+        >
+            {tile}
+            <View className="w-px bg-slate-100 self-stretch my-3" />
+            {tile}
+        </View>
+    );
+}
+
+function FriendListSkeleton({ rows = 3 }: { rows?: number }) {
+    return (
+        <View className="mx-4 mb-8" testID="friend-list-skeleton">
+            <View
+                className="rounded-xl bg-white border border-slate-200/80 overflow-hidden"
+                style={shadows.sm}
+            >
+                {Array.from({ length: rows }, (_, idx) => (
+                    <View
+                        key={`friend-skeleton-${idx}`}
+                        className={`flex-row items-center px-4 py-3.5 ${idx === rows - 1 ? '' : 'border-b border-slate-100'}`}
+                    >
+                        <View className="w-10 h-10 rounded-full bg-slate-100" />
+                        <View className="flex-1 mx-3">
+                            <SkeletonBar width="60%" height={14} />
+                        </View>
+                        <SkeletonBar width={70} height={14} />
+                    </View>
+                ))}
+            </View>
+        </View>
+    );
+}
+
 export function ProfileScreen() {
     const { t } = useTranslation();
     const navigation = useNavigation<any>();
     const currentUser = useAppStore((s) => s.currentUser);
 
-    const { data: dashboard, isLoading, isRefetching, refetch, isError } = useDashboardQuery();
+    const { data: dashboard, isLoading, refetch, isError } = useDashboardQuery();
+    const [isManualRefreshing, setIsManualRefreshing] = useState(false);
     const { summary: balanceSummary, conversion } = useProfileBalanceSummary(dashboard?.balanceSummary);
     const friendDisplays = useFriendBalancesDisplay(
         dashboard?.friends,
@@ -37,8 +103,13 @@ export function ProfileScreen() {
     const incomingQ = useIncomingFriendRequestsQuery();
     const pendingCount = incomingQ.data?.length ?? 0;
 
-    const handleRefresh = useCallback(() => {
-        void refetch();
+    const handleRefresh = useCallback(async () => {
+        setIsManualRefreshing(true);
+        try {
+            await refetch();
+        } finally {
+            setIsManualRefreshing(false);
+        }
     }, [refetch]);
     const handleOpenSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
     const handleEditProfile = useCallback(() => navigation.navigate('EditProfile'), [navigation]);
@@ -63,7 +134,8 @@ export function ProfileScreen() {
 
     const isRtl = useRtlLayout();
 
-    if (isLoading && !dashboard) return <LoadingIndicator />;
+    const showLoadingSkeletons = isLoading && !dashboard;
+    const showError = isError || (!isLoading && !dashboard);
 
     return (
         <SafeAreaView className="flex-1 bg-slate-100" edges={['top']}>
@@ -87,7 +159,7 @@ export function ProfileScreen() {
                 contentContainerClassName="pb-10"
                 refreshControl={
                     <RefreshControl
-                        refreshing={isRefetching}
+                        refreshing={isManualRefreshing}
                         onRefresh={handleRefresh}
                         tintColor={colors.primary}
                     />
@@ -99,7 +171,7 @@ export function ProfileScreen() {
                 onEditPress={handleEditProfile}
             />
 
-            {isError || !dashboard ? (
+            {showError ? (
                 <EmptyState
                     iconName="alert-circle-outline"
                     title={t('dashboard.loadError')}
@@ -107,7 +179,13 @@ export function ProfileScreen() {
                     actionTitle={t('common.retry')}
                     onAction={handleRefresh}
                 />
-            ) : (
+            ) : showLoadingSkeletons ? (
+                <>
+                    <BalanceHeroCardSkeleton />
+                    <StatGroupSkeleton />
+                    <FriendListSkeleton />
+                </>
+            ) : dashboard ? (
                 <>
                     <BalanceHeroCard
                         summary={balanceSummary ?? dashboard.balanceSummary}
@@ -194,7 +272,7 @@ export function ProfileScreen() {
                         </View>
                     ) : null}
                 </>
-            )}
+            ) : null}
             </ScrollView>
             <FriendGroupBalancesSheet
                 visible={selectedFriend !== null}

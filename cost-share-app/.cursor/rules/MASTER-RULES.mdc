@@ -1,7 +1,15 @@
 # MASTER RULES - AI Development Guide
 
 **Purpose:** Quick reference for AI agents developing this project  
-**Last Updated:** May 18, 2026
+**Last Updated:** 2026-05-25
+
+## Supabase environments (read first)
+
+**SSOT:** [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../../../docs/SSOT/SUPABASE_ENVIRONMENTS.md)
+
+- `main` → production `jfqxjjjbpxbwwvoygahu`
+- `dev` → development `drxfbicunusmipdgbgdk`
+- MCP defaults to **dev** — no seed/destructive SQL on production without user approval
 
 ---
 

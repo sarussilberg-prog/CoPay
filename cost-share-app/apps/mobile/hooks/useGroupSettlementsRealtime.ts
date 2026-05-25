@@ -56,6 +56,9 @@ export function useGroupSettlementsRealtime(
                         void queryClient.invalidateQueries({
                             queryKey: queryKeys.groupSimplifiedDebtsByCurrency(groupId),
                         });
+                        void queryClient.invalidateQueries({
+                            queryKey: queryKeys.dashboard,
+                        });
                         scheduleBalanceRefetch(groupId);
                     } catch (err) {
                         console.error('settlements realtime payload error:', err);

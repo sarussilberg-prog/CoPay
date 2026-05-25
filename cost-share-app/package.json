@@ -31,7 +31,10 @@
         "web": "cd apps/web && npm run dev",
         "seed": "DOTENV_CONFIG_PATH=./supabase/.env ts-node -r dotenv/config scripts/seed.ts",
         "supabase:fix": "bash scripts/supabase-apply-patches.sh",
-        "supabase:verify": "bash scripts/verify-supabase-schema.sh"
+        "supabase:verify": "bash scripts/verify-supabase-schema.sh",
+        "supabase:link:dev": "SUPABASE_ENV=development bash scripts/supabase-link.sh",
+        "supabase:link:prod": "SUPABASE_ENV=production CONFIRM_PRODUCTION=yes bash scripts/supabase-link.sh",
+        "supabase:bootstrap:prod": "bash scripts/supabase-bootstrap-production.sh"
     },
     "devDependencies": {
         "@supabase/supabase-js": "^2.45.0",

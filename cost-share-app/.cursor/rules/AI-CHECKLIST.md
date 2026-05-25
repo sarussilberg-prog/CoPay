@@ -35,6 +35,15 @@ Use this checklist to verify your work before marking a task as complete.
 
 ---
 
+## 🗄️ SUPABASE ENVIRONMENT (mandatory)
+
+- [ ] Read [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../../../docs/SSOT/SUPABASE_ENVIRONMENTS.md)
+- [ ] **`git branch --show-current`** — `main` → production (`jfqxjjjbpxbwwvoygahu`), else → dev (`drxfbicunusmipdgbgdk`)
+- [ ] **Env URL** matches branch before any DB/MCP/seed/`supabase:fix`
+- [ ] **No seed / destructive SQL** on production without explicit user approval
+
+---
+
 ## 🏗️ ARCHITECTURE VERIFICATION
 
 - [ ] **No `supabase.from()`** in screens/components

@@ -93,19 +93,19 @@ cd cost-share-app
 npm install
 ```
 
-2. **Configure Supabase env (see `.env.example` in each app):**
+2. **Configure Supabase env** — see [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../docs/SSOT/SUPABASE_ENVIRONMENTS.md):
 ```bash
+# Local dev → development project (drxfbicunusmipdgbgdk)
 cp apps/mobile/.env.example apps/mobile/.env
 cp apps/web/.env.example apps/web/.env.local
-# Fill keys from Supabase → Project Settings → API
-# Enable Google provider + redirect URLs (documented in .env.example files)
+cp supabase/.env.example supabase/.env
+# Fill keys from Supabase → Kupa - dev → Project Settings → API
 ```
 
-3. **Apply database schema (one-time):**
-   - Paste `supabase/schema.sql` into Supabase SQL Editor → Run
-   - Or on an existing project: `cd cost-share-app && npm run supabase:fix` (CLI; applies RLS + grant patches)
-   - Copy `supabase/.env.example` → `supabase/.env` (service role for dev scripts only)
-   - `npm run seed` (optional sample data)
+3. **Apply database schema:**
+   - **Development:** `npm run supabase:fix` or SQL Editor on dev project
+   - **Production (one-time, empty project):** see SUPABASE_ENVIRONMENTS.md → `npm run supabase:bootstrap:prod`
+   - `npm run seed` — **development only**
    - Verify: `npm run supabase:verify`
 
 ### Running the Project

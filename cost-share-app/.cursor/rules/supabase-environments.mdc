@@ -1,0 +1,22 @@
+---
+description: Mandatory Supabase dev vs production separation — read before any DB or env change
+globs:
+alwaysApply: true
+---
+
+# Supabase environments (non-negotiable)
+
+**Full SSOT:** [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../../../docs/SSOT/SUPABASE_ENVIRONMENTS.md)
+
+| Branch | Project ref | URL |
+|--------|-------------|-----|
+| `dev` | `drxfbicunusmipdgbgdk` | https://drxfbicunusmipdgbgdk.supabase.co |
+| `main` | `jfqxjjjbpxbwwvoygahu` | https://jfqxjjjbpxbwwvoygahu.supabase.co |
+
+Before any Supabase/MCP/seed/`supabase:fix`/RLS work:
+
+1. `git branch --show-current`
+2. Confirm env URL contains the correct ref
+3. MCP defaults to **dev** — production DB only when user explicitly asks
+
+**Never** seed production. **Never** run destructive SQL on production without user confirmation.

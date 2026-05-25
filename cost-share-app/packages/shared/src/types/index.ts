@@ -542,9 +542,12 @@ export type FeedItem =
 // ============================================
 
 /**
- * Profile dashboard payload — supabase.rpc('get_user_dashboard')
- * Headlines are null when balances span multiple currencies (server-side).
- * Profile screen may fill totals client-side via FX conversion (REQ-PROF-07).
+ * Profile dashboard payload — supabase.rpc('get_user_dashboard').
+ * `byCurrency` is the source of truth.
+ * `totalOwed` / `totalOwedToUser` are ALWAYS `null` from the server; the
+ * profile-screen hook (`useProfileBalanceSummary`) derives them in the user's
+ * `defaultCurrency`, applying FX when foreign rows are present. This keeps the
+ * rendered amount and the rendered currency tag impossible to mismatch.
  */
 export interface BalanceSummary {
     totalOwed: number | null;

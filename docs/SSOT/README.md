@@ -14,6 +14,7 @@
 
 | If you are… | Read first | Then (only if needed) |
 |-------------|------------|------------------------|
+| **Any Supabase / env / deploy work** | [SUPABASE_ENVIRONMENTS.md](./SUPABASE_ENVIRONMENTS.md) | — |
 | Adding/changing product behavior | [SRS.md](./SRS.md) → `REQ-*` | [CODE QUALITY.md](./CODE%20QUALITY.md) |
 | Fixing UI / mobile screen | [CODE QUALITY.md](./CODE%20QUALITY.md) § Mobile | `MASTER-RULES.mdc`, `frontend.mdc` |
 | Data / queries / RLS | [CODE QUALITY.md](./CODE%20QUALITY.md) § Auth & RLS | `supabase/schema.sql`, `apps/mobile/services/` |
@@ -30,6 +31,7 @@
 | 1 | [SRS.md](./SRS.md) | **What** — features, rules (`REQ-*`) |
 | 2 | [CODE QUALITY.md](./CODE QUALITY.md) | **How** — Supabase-only architecture |
 | 3 | [DATABASE_ARCHITECTURE.md](../../DATABASE_ARCHITECTURE.md) | **Data model** (reference; schema file is canonical for apply) |
+| — | [SUPABASE_ENVIRONMENTS.md](./SUPABASE_ENVIRONMENTS.md) | **Which DB** per branch (`main` = prod, `dev` = dev) |
 
 **Conflict resolution:** SRS wins for product; CODE QUALITY wins for structure. Canonical SQL: `cost-share-app/supabase/schema.sql`.
 

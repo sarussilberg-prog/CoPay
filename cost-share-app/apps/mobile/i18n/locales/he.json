@@ -528,7 +528,19 @@
         "toastRecorded": "התשלום נרשם",
         "toastUpdated": "התשלום עודכן",
         "toastDeleted": "התשלום נמחק",
-        "notInvolved": "אינך מעורב/ת בחוב הזה"
+        "notInvolved": "אינך מעורב/ת בחוב הזה",
+        "detailHeaderLabel": "תשלום",
+        "payment": "תשלום",
+        "paid": "שולם",
+        "received": "התקבל",
+        "youReceivedAmount": "קיבלת {{amount}}",
+        "youPaidAmount": "שילמת {{amount}}",
+        "someonePaid": "{{from}} שילם ל-{{to}}",
+        "fromVia": "מ-{{name}} · באמצעות {{method}}",
+        "toVia": "ל-{{name}} · באמצעות {{method}}",
+        "fromName": "מ-{{name}}",
+        "toName": "ל-{{name}}",
+        "via": "באמצעות {{method}}"
     },
     "feed": {
         "settlement": "{{from}} שילם/ה ל-{{to}} {{amount}}",

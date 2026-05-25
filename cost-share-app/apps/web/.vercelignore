@@ -3,7 +3,6 @@
 ../../.dev-logs
 node_modules
 .next
-../mobile/dist
 ../mobile/.expo
 ../mobile/ios
 ../mobile/android

@@ -1,0 +1,17 @@
+{
+  "name": "kupa",
+  "private": true,
+  "description": "Repo root — mobile/web scripts live in cost-share-app",
+  "scripts": {
+    "dev:mobile": "npm run dev:mobile --prefix cost-share-app",
+    "dev:mobile:device": "npm run dev:mobile:device --prefix cost-share-app",
+    "mobile:open:iphone": "npm run mobile:open:iphone --prefix cost-share-app",
+    "mobile:ios:device": "npm run mobile:ios:device --prefix cost-share-app",
+    "mobile:ios:signing": "npm run mobile:ios:signing --prefix cost-share-app",
+    "mobile:ios:clean": "npm run mobile:ios:clean --prefix cost-share-app",
+    "mobile:ios": "npm run mobile:ios --prefix cost-share-app",
+    "mobile:open": "npm run mobile:open --prefix cost-share-app",
+    "mobile:eas:build:ios": "npm run mobile:eas:build:ios --prefix cost-share-app",
+    "mobile:eas:submit:ios": "npm run mobile:eas:submit:ios --prefix cost-share-app"
+  }
+}

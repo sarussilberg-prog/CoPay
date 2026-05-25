@@ -269,6 +269,7 @@ describe('GroupDetailScreen', () => {
 
         const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('settlement-press-st1'));
+        fireEvent.press(await findByTestId('detail-kebab-btn'));
         fireEvent.press(await findByTestId('detail-delete-btn'));
         // Alert.alert is auto-confirmed by the mock at the top of this file.
 

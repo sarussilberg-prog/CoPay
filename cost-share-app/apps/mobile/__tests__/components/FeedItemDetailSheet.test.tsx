@@ -2,7 +2,22 @@ import React from 'react';
 import { fireEvent } from '@testing-library/react-native';
 import { renderWithQuery } from '../helpers/renderWithQuery';
 import { FeedItemDetailSheet } from '../../components/FeedItemDetailSheet';
-import type { ExpenseWithDelta } from '@cost-share/shared';
+import type { ExpenseWithDelta, Settlement } from '@cost-share/shared';
+
+const baseSettlement: Settlement = {
+    id: 'st1',
+    groupId: 'g1',
+    fromUserId: 'u1',
+    toUserId: 'u2',
+    amount: 30,
+    currency: 'USD',
+    settlementDate: new Date('2026-08-13'),
+    paymentMethod: 'bank_transfer',
+    createdBy: 'u1',
+    createdAt: new Date('2026-08-13'),
+    updatedAt: new Date('2026-08-13'),
+    deletedAt: null,
+};
 
 const expense: ExpenseWithDelta = {
     id: 'e1',
@@ -74,9 +89,10 @@ describe('FeedItemDetailSheet', () => {
         expect(onDelete).toHaveBeenCalled();
     });
 
-    it('shows edit/delete for settlements to any group member', () => {
+    it('exposes settlement edit/delete via the kebab menu', () => {
         const onEdit = jest.fn();
-        const { getByTestId } = renderWithQuery(
+        const onDelete = jest.fn();
+        const { getByTestId, queryByTestId } = renderWithQuery(
             <FeedItemDetailSheet
                 item={{
                     kind: 'settlement',
@@ -98,13 +114,92 @@ describe('FeedItemDetailSheet', () => {
                 currentUserId="u3"
                 onClose={jest.fn()}
                 onEdit={onEdit}
-                onDelete={jest.fn()}
+                onDelete={onDelete}
             />,
         );
 
         expect(getByTestId('settlement-detail-sheet')).toBeTruthy();
-        expect(getByTestId('detail-edit-btn')).toBeTruthy();
+        expect(queryByTestId('detail-edit-btn')).toBeNull();
+        expect(queryByTestId('detail-delete-btn')).toBeNull();
+
+        fireEvent.press(getByTestId('detail-kebab-btn'));
         fireEvent.press(getByTestId('detail-edit-btn'));
-        expect(onEdit).toHaveBeenCalled();
+        expect(onEdit).toHaveBeenCalledTimes(1);
+
+        fireEvent.press(getByTestId('detail-kebab-btn'));
+        fireEvent.press(getByTestId('detail-delete-btn'));
+        expect(onDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders the "you received" involvement strip when current user is the recipient', () => {
+        const { getByText } = renderWithQuery(
+            <FeedItemDetailSheet
+                item={{ kind: 'settlement', settlement: baseSettlement }}
+                memberMap={memberMap}
+                currentUserId="u2"
+                onClose={jest.fn()}
+                onEdit={jest.fn()}
+                onDelete={jest.fn()}
+            />,
+        );
+
+        expect(getByText('settleUp.youReceivedAmount')).toBeTruthy();
+        expect(getByText('settleUp.fromVia')).toBeTruthy();
+        expect(getByText('USD 30.00')).toBeTruthy();
+    });
+
+    it('renders the "you paid" involvement strip when current user is the payer', () => {
+        const { getByText } = renderWithQuery(
+            <FeedItemDetailSheet
+                item={{ kind: 'settlement', settlement: baseSettlement }}
+                memberMap={memberMap}
+                currentUserId="u1"
+                onClose={jest.fn()}
+                onEdit={jest.fn()}
+                onDelete={jest.fn()}
+            />,
+        );
+
+        expect(getByText('settleUp.youPaidAmount')).toBeTruthy();
+        expect(getByText('settleUp.toVia')).toBeTruthy();
+        expect(getByText('USD 30.00')).toBeTruthy();
+    });
+
+    it('renders the third-party "someone paid" copy when current user is neither party', () => {
+        const { getByText } = renderWithQuery(
+            <FeedItemDetailSheet
+                item={{ kind: 'settlement', settlement: baseSettlement }}
+                memberMap={memberMap}
+                currentUserId="u3"
+                onClose={jest.fn()}
+                onEdit={jest.fn()}
+                onDelete={jest.fn()}
+            />,
+        );
+
+        expect(getByText('settleUp.someonePaid')).toBeTruthy();
+        expect(getByText('settleUp.via')).toBeTruthy();
+    });
+
+    it('omits the "via …" sub line when paymentMethod is not set', () => {
+        const noMethodSettlement: Settlement = {
+            ...baseSettlement,
+            paymentMethod: undefined,
+        };
+        const { getByText, queryByText } = renderWithQuery(
+            <FeedItemDetailSheet
+                item={{ kind: 'settlement', settlement: noMethodSettlement }}
+                memberMap={memberMap}
+                currentUserId="u2"
+                onClose={jest.fn()}
+                onEdit={jest.fn()}
+                onDelete={jest.fn()}
+            />,
+        );
+
+        expect(getByText('settleUp.youReceivedAmount')).toBeTruthy();
+        expect(getByText('settleUp.fromName')).toBeTruthy();
+        expect(queryByText('settleUp.fromVia')).toBeNull();
+        expect(queryByText('settleUp.via')).toBeNull();
     });
 });

@@ -1,14 +1,31 @@
 #!/usr/bin/env bash
 # Apply idempotent Supabase patches (RLS helpers + anon grants) to the linked remote project.
-# Run from anywhere: bash cost-share-app/scripts/supabase-apply-patches.sh
+# Default: development only. Production requires SUPABASE_ENV=production CONFIRM_PRODUCTION=yes
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SUPABASE_DIR="$ROOT_DIR/supabase"
-PROJECT_REF="${SUPABASE_PROJECT_REF:-drxfbicunusmipdgbgdk}"
+
+# shellcheck source=supabase-env.sh
+source "$SCRIPT_DIR/supabase-env.sh"
+PROJECT_REF="$SUPABASE_PROJECT_REF"
+
+if [[ "$SUPABASE_ENV" == "production" && -f "$ROOT_DIR/supabase/.env.production" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT_DIR/supabase/.env.production"
+  set +a
+fi
+
+if [[ "$SUPABASE_ENV" == "production" && "${CONFIRM_PRODUCTION:-}" != "yes" ]]; then
+  echo "✗ Refusing to patch PRODUCTION without CONFIRM_PRODUCTION=yes" >&2
+  echo "  Target: $SUPABASE_URL" >&2
+  exit 1
+fi
 
 cd "$ROOT_DIR"
+echo "▶ Environment: $SUPABASE_ENV ($SUPABASE_URL)"
 
 if ! command -v supabase >/dev/null 2>&1; then
   echo "✗ supabase CLI not found. Install: https://supabase.com/docs/guides/cli"
