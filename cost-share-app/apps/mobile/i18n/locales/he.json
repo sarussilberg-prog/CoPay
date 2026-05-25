@@ -268,8 +268,8 @@
             "expenseHeaderLabel": "הוצאה",
             "settlementTitle": "פרטי סגירת חשבון",
             "yourShare": "החלק שלך",
-            "showFullBreakdown": "לפירוט מלא",
-            "hideFullBreakdown": "הסתר פירוט"
+            "showFullBreakdown": "לפירוט החלוקה",
+            "hideFullBreakdown": "הסתר חלוקה"
         },
         "message": {
             "composerPlaceholder": "כתוב הודעה…",

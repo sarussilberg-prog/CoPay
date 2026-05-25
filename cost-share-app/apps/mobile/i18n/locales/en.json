@@ -256,8 +256,8 @@
             "expenseHeaderLabel": "Expense",
             "settlementTitle": "Settlement details",
             "yourShare": "Your share",
-            "showFullBreakdown": "Full breakdown",
-            "hideFullBreakdown": "Hide breakdown"
+            "showFullBreakdown": "Show split breakdown",
+            "hideFullBreakdown": "Hide split breakdown"
         },
         "message": {
             "composerPlaceholder": "Write a message…",

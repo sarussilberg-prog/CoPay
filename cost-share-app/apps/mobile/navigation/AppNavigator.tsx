@@ -152,12 +152,12 @@ function GroupsStack() {
             <Stack.Screen
                 name="AddExpense"
                 component={AddExpenseScreen}
-                options={{ title: t('expenses.addExpense') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="EditExpense"
                 component={AddExpenseScreen}
-                options={{ title: t('expenses.editExpense') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="ExpenseDetail"
@@ -202,12 +202,12 @@ function ActivityStack() {
             <Stack.Screen
                 name="AddExpense"
                 component={AddExpenseScreen}
-                options={{ title: t('expenses.addExpense') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="EditExpense"
                 component={AddExpenseScreen}
-                options={{ title: t('expenses.editExpense') }}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     );

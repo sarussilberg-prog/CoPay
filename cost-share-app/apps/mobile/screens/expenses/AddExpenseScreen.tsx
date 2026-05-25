@@ -16,9 +16,11 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    Keyboard,
     StyleSheet,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -372,7 +374,7 @@ export function AddExpenseScreen() {
               });
         stopLoading();
         if (result) {
-            navigation.navigate('Groups', { screen: 'GroupDetail', params: { groupId } });
+            navigation.goBack();
         }
     }, [
         canSave,
@@ -448,6 +450,8 @@ export function AddExpenseScreen() {
 
     return (
         <SafeAreaView edges={['top']} style={styles.root}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={styles.dismissArea}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
@@ -565,6 +569,8 @@ export function AddExpenseScreen() {
                     ) : null}
                 </View>
             </View>
+                </View>
+            </TouchableWithoutFeedback>
 
             {/* Editor sheet */}
             <EditPayerSplitSheet
@@ -651,6 +657,9 @@ const styles = StyleSheet.create({
     root: {
         flex: 1,
         backgroundColor: '#FFFFFF',
+    },
+    dismissArea: {
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
