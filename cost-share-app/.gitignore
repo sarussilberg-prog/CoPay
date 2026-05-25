@@ -19,6 +19,7 @@ dist/
 !.env.example
 supabase/.env.production
 apps/mobile/.env.production
+apps/web/.env.production
 
 # Debug
 npm-debug.log*

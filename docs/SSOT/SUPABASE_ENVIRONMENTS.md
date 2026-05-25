@@ -55,6 +55,13 @@
 
 ## Deploy / CI mapping
 
+| Vercel project | Branch | Supabase | URL |
+|----------------|--------|----------|-----|
+| **kupa-dev** | `dev` (Preview only; Ignored Build Step skips other branches) | `drxfbicunusmipdgbgdk` | `kupa-s1lb.vercel.app` |
+| **kupa-prod** | `main` (Production only) | `jfqxjjjbpxbwwvoygahu` | `kupa.pro` |
+
+Legacy single-project mapping (if ever merged back to one Vercel project):
+
 | Target | Branch | Supabase |
 |--------|--------|----------|
 | Vercel Production | `main` | `jfqxjjjbpxbwwvoygahu` |
@@ -65,8 +72,9 @@
 
 Web build script (`apps/web/scripts/build-app-web.sh`) selects defaults from:
 
-- `supabase-public.production.defaults` when `VERCEL_ENV=production`
-- `supabase-public.development.defaults` otherwise
+- **kupa-dev** project id → always `supabase-public.development.defaults`
+- **kupa-prod** / `VERCEL_ENV=production` → `supabase-public.production.defaults`
+- otherwise → `supabase-public.development.defaults`
 
 ---
 
