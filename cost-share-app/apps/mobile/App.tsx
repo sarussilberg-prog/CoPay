@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, type NavigationState } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -20,7 +20,9 @@ import { assertProfileActiveWithTimeout, isAuthSessionAllowed } from './lib/auth
 import { signalDeactivatedAccount } from './lib/signalDeactivatedAccount';
 import { hydrateCurrentUserProfile } from './services/users.service';
 import { queryClient } from './lib/queryClient';
+import { loadNavigationState, saveNavigationState } from './lib/navigationPersistence';
 import { useAppStore } from './store';
+import { useAppRealtime } from './hooks/useAppRealtime';
 import { colors } from './theme';
 import { RtlLayoutProvider } from './hooks/useRtlLayout';
 import type { Session } from '@supabase/supabase-js';
@@ -51,9 +53,46 @@ function WebFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthenticatedNavigation() {
+  const [initialState, setInitialState] = useState<NavigationState | undefined>();
+  const [navReady, setNavReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void loadNavigationState().then((state) => {
+      if (!mounted) return;
+      setInitialState(state);
+      setNavReady(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const onStateChange = useCallback((state: NavigationState | undefined) => {
+    void saveNavigationState(state);
+  }, []);
+
+  if (!navReady) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer initialState={initialState} onStateChange={onStateChange}>
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const { session, setSession } = useAppStore();
+  const currentUserId = useAppStore((s) => s.currentUser?.id ?? null);
+  useAppRealtime(currentUserId);
   const setPendingDeactivationNotice = useAppStore((s) => s.setPendingDeactivationNotice);
   const incomingUrl = Linking.useURL();
 
@@ -223,9 +262,7 @@ export default function App() {
       <SafeAreaProvider>
         <RtlLayoutProvider>
           <WebFrame>
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
+            <AuthenticatedNavigation />
           </WebFrame>
           <Toast />
         </RtlLayoutProvider>

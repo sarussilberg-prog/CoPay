@@ -24,7 +24,6 @@ import { fetchGroups } from '../../services/groups.service';
 import { fetchBalanceSummary } from '../../services/users.service';
 import { prefetchActivityFeed } from '../../hooks/queries/useActivityQuery';
 import { prefetchGroupDetail } from '../../hooks/queries/prefetchGroupDetail';
-import { useUserGroupMembershipsRealtime } from '../../hooks/useUserGroupMembershipsRealtime';
 import { useGroupBalancesDisplay } from '../../hooks/useGroupBalancesDisplay';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
@@ -65,9 +64,6 @@ export function GroupsListScreen() {
     const { isLoading, startLoading, stopLoading } = useLoading();
     const groups = useAppStore(s => s.groups);
     const groupBalances = useAppStore(s => s.groupBalances);
-    const currentUserId = useAppStore(s => s.currentUser?.id ?? null);
-
-    useUserGroupMembershipsRealtime(currentUserId);
 
     const balanceDisplays = useGroupBalancesDisplay(groupBalances);
     const balanceNetsByGroup = useMemo(() => {
