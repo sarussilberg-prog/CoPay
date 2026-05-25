@@ -131,7 +131,7 @@ export default function App() {
           const callbackUrl = globalThis.location.href;
           if (isAuthCallbackUrl(callbackUrl)) {
             await processOAuthCallbackUrl(callbackUrl);
-            globalThis.history.replaceState({}, '', globalThis.location.pathname);
+            globalThis.history.replaceState({}, '', '/');
           }
         }
 

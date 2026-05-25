@@ -88,6 +88,8 @@ describe('auth.service', () => {
     describe('isAuthCallbackUrl', () => {
         it('detects OAuth callback URLs', () => {
             expect(isAuthCallbackUrl('com.kupa.mobile://auth/callback?code=abc')).toBe(true);
+            expect(isAuthCallbackUrl('https://kupa.pro/?code=abc')).toBe(true);
+            expect(isAuthCallbackUrl('https://kupa.pro/auth/callback?code=abc')).toBe(true);
             expect(isAuthCallbackUrl('com.kupa.mobile://invite/i/token')).toBe(false);
         });
     });

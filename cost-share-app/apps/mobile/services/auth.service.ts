@@ -141,10 +141,14 @@ export function getAuthRedirectUri(): string {
     : resolveNativeOAuthRedirectUri();
 }
 
-export function isAuthCallbackUrl(url: string): boolean {
-  if (!url.includes(AUTH_CALLBACK_PATH)) return false;
+/** True when URL carries OAuth redirect params (path or Supabase site-url fallback at `/`). */
+export function hasAuthCallbackParams(url: string): boolean {
   const { params } = QueryParams.getQueryParams(url);
   return Boolean(params.code || params.access_token || params.error || params.error_description);
+}
+
+export function isAuthCallbackUrl(url: string): boolean {
+  return hasAuthCallbackParams(url);
 }
 
 const googleOAuthOptions = (oauthRedirect: string) => ({
