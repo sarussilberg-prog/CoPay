@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { Image } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { MemberAvatar } from '../../components/MemberAvatar';
 
 describe('MemberAvatar', () => {
@@ -13,7 +13,7 @@ describe('MemberAvatar', () => {
         const { getByText } = render(<MemberAvatar name="אברהם סילברג" />);
         const initials = getByText('אס');
         expect(initials.props.className).toContain('text-center');
-        expect(initials.props.style).toEqual(
+        expect(StyleSheet.flatten(initials.props.style)).toEqual(
             expect.objectContaining({ textAlign: 'center', width: '100%' }),
         );
     });

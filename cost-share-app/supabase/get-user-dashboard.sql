@@ -1,7 +1,10 @@
 -- Idempotent: profile dashboard RPC.
--- Totals, byCurrency, active/closed counts, AND friend balances all derive
+-- byCurrency, active/closed counts, AND friend balances all derive
 -- from the same pairwise-debt logic as get_group_pairwise_debts so the profile
 -- summary matches the Settle Up screen exactly.
+-- Headline totals (totalOwed/totalOwedToUser) are always NULL — the client
+-- aggregates byCurrency into the user's defaultCurrency (with FX when needed)
+-- so the rendered amount and currency tag stay coupled.
 -- Apply: supabase db query --linked -f supabase/get-user-dashboard.sql
 
 CREATE OR REPLACE FUNCTION get_user_dashboard(p_user_id UUID)
@@ -13,11 +16,8 @@ AS $$
 DECLARE
     v_default_currency TEXT;
     v_by_currency JSONB;
-    v_total_owed NUMERIC;
-    v_total_owed_to_user NUMERIC;
     v_friends JSONB;
     v_stats JSONB;
-    v_currency_count INT;
     v_active_count INT;
     v_closed_count INT;
 BEGIN
@@ -114,8 +114,7 @@ BEGIN
                 'currency', currency,
                 'owed', ROUND(owed::numeric, 2),
                 'owedToUser', ROUND(owed_to_user::numeric, 2)
-            )), '[]'::jsonb) AS by_currency_json,
-            COUNT(*) AS currency_count
+            )), '[]'::jsonb) AS by_currency_json
         FROM per_currency
     ),
     counts AS (
@@ -162,28 +161,15 @@ BEGIN
     )
     SELECT
         b.by_currency_json,
-        b.currency_count,
         c.active_count,
         c.closed_count,
         f.friends_json
-    INTO v_by_currency, v_currency_count, v_active_count, v_closed_count, v_friends
+    INTO v_by_currency, v_active_count, v_closed_count, v_friends
     FROM by_currency_agg b, counts c, friends_agg f;
 
-    IF v_currency_count = 1 THEN
-        SELECT
-            (elem->>'owed')::numeric,
-            (elem->>'owedToUser')::numeric
-        INTO v_total_owed, v_total_owed_to_user
-        FROM jsonb_array_elements(v_by_currency) elem
-        LIMIT 1;
-    ELSIF v_currency_count = 0 THEN
-        v_total_owed := 0;
-        v_total_owed_to_user := 0;
-    ELSE
-        v_total_owed := NULL;
-        v_total_owed_to_user := NULL;
-    END IF;
-
+    -- Headline totals are deliberately omitted: the client owns headline
+    -- aggregation so the displayed currency tag and the numeric value can
+    -- never disagree. See useProfileBalanceSummary on the mobile side.
     v_stats := jsonb_build_object(
         'closedGroupsCount', COALESCE(v_closed_count, 0),
         'activeGroupsCount', COALESCE(v_active_count, 0)
@@ -191,8 +177,8 @@ BEGIN
 
     RETURN jsonb_build_object(
         'balanceSummary', jsonb_build_object(
-            'totalOwed', v_total_owed,
-            'totalOwedToUser', v_total_owed_to_user,
+            'totalOwed', NULL,
+            'totalOwedToUser', NULL,
             'defaultCurrency', v_default_currency,
             'byCurrency', v_by_currency
         ),

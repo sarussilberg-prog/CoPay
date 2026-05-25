@@ -520,7 +520,19 @@
         "toastRecorded": "Payment recorded",
         "toastUpdated": "Payment updated",
         "toastDeleted": "Payment deleted",
-        "notInvolved": "You're not in this debt"
+        "notInvolved": "You're not in this debt",
+        "detailHeaderLabel": "Settlement",
+        "payment": "Payment",
+        "paid": "PAID",
+        "received": "RECEIVED",
+        "youReceivedAmount": "You received {{amount}}",
+        "youPaidAmount": "You paid {{amount}}",
+        "someonePaid": "{{from}} paid {{to}}",
+        "fromVia": "From {{name}} · via {{method}}",
+        "toVia": "To {{name}} · via {{method}}",
+        "fromName": "From {{name}}",
+        "toName": "To {{name}}",
+        "via": "via {{method}}"
     },
     "feed": {
         "settlement": "{{from}} paid {{to}} {{amount}}",

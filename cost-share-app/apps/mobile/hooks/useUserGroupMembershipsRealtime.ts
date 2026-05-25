@@ -11,6 +11,8 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { fetchGroups } from '../services/groups.service';
 import { fetchBalanceSummary } from '../services/users.service';
+import { queryClient } from '../lib/queryClient';
+import { queryKeys } from './queries/keys';
 
 export function useUserGroupMembershipsRealtime(
     userId: string | undefined | null,
@@ -36,6 +38,7 @@ export function useUserGroupMembershipsRealtime(
                 }) => {
                     void (async () => {
                         try {
+                            void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
                             const store = useAppStore.getState();
 
                             if (payload.eventType === 'DELETE' && payload.old) {
