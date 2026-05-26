@@ -59,7 +59,7 @@ export function DatePickerPopup({
     }, [visible, initialDate]);
 
     useEffect(() => {
-        LocaleConfig.defaultLocale = language === 'he' ? 'he' : 'en';
+        LocaleConfig.defaultLocale = language === 'he' ? 'he' : '';
     }, [language]);
 
     const markedDates = useMemo(
