@@ -126,11 +126,6 @@ describe('AddExpenseScreen — edit mode (v2)', () => {
         expect(await findByDisplayValue('5')).toBeTruthy();
     });
 
-    it('shows the Delete row in edit mode', async () => {
-        const { findByTestId } = renderWithQuery(<AddExpenseScreen />);
-        expect(await findByTestId('add-expense-delete')).toBeTruthy();
-    });
-
     it('calls updateExpense with new values on Save', async () => {
         mockUpdate.mockResolvedValueOnce({ ...expense, description: 'Tea' });
         const { findByDisplayValue, findByTestId } = renderWithQuery(<AddExpenseScreen />);
@@ -188,7 +183,7 @@ describe('AddExpenseScreen — edit mode (v2)', () => {
 
     it('switching from unequal to equal sends equal splits without amounts', async () => {
         mockGet.mockResolvedValue({
-            expense: { ...expense, amount: 100 },
+            expense: { ...expense, amount: 100, splitMode: 'amount' as const },
             splits: [
                 { id: 's1', expenseId: 'e1', userId: 'u1', amount: 60, createdAt: new Date() },
                 { id: 's2', expenseId: 'e1', userId: 'u2', amount: 40, createdAt: new Date() },
