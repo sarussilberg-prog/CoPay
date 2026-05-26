@@ -4,7 +4,6 @@ import { Text } from '../AppText';
 import { MemberAvatar } from '../MemberAvatar';
 import { AppIcon } from '../AppIcon';
 import { colors } from '../../theme';
-import { useRtlLayout } from '../../hooks/useRtlLayout';
 import { StackedAvatarGroup, StackedMember } from './StackedAvatarGroup';
 
 interface CombinedPayerSplitButtonProps {
@@ -24,7 +23,6 @@ export function CombinedPayerSplitButton({
     payerEyebrow,
     testID = 'combined-payer-split',
 }: CombinedPayerSplitButtonProps) {
-    const isRtl = useRtlLayout();
     return (
         <TouchableOpacity
             onPress={onPress}
@@ -93,7 +91,7 @@ export function CombinedPayerSplitButton({
             {/* Right: stacked avatars + chevron */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                 <StackedAvatarGroup members={splitMembers} max={4} />
-                <AppIcon name={isRtl ? 'chevron-back' : 'chevron-forward'} size={14} color={colors.gray400} />
+                <AppIcon name="chevron-forward" size={14} color={colors.gray400} />
             </View>
         </TouchableOpacity>
     );
