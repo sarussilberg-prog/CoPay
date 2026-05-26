@@ -560,7 +560,8 @@
         "youPaid": "You paid {{name}} {{amount}}",
         "paidYou": "{{name}} paid you {{amount}}",
         "inGroup": "in {{group}}",
-        "openInGroup": "Open in {{group}}"
+        "openInGroup": "Open in {{group}}",
+        "earlier": "Earlier"
     },
     "settleUp": {
         "title": "Settle up",

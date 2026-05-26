@@ -576,7 +576,8 @@
         "youPaid": "שילמת ל-{{name}} {{amount}}",
         "paidYou": "{{name}} שילם/ה לך {{amount}}",
         "inGroup": "בקופה {{group}}",
-        "openInGroup": "פתח ב{{group}}"
+        "openInGroup": "פתח ב{{group}}",
+        "earlier": "קודם"
     },
     "settleUp": {
         "title": "סגירת חשבון",

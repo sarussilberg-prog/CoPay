@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from './AppIcon';
+import { useRtlLayout } from '../hooks/useRtlLayout';
 import { colors } from '../theme';
 
 interface MessageComposerSheetProps {
@@ -34,6 +35,7 @@ export function MessageComposerSheet({
     onClose,
 }: MessageComposerSheetProps) {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
     const [body, setBody] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const inputRef = useRef<TextInput | null>(null);
@@ -101,11 +103,19 @@ export function MessageComposerSheet({
                                 className="w-11 h-11 rounded-full bg-primary items-center justify-center"
                                 testID="composer-send"
                             >
-                                <AppIcon
-                                    name={mode === 'edit' ? 'checkmark' : 'send'}
-                                    size={18}
-                                    color="#fff"
-                                />
+                                <View
+                                    style={
+                                        mode !== 'edit' && isRtl
+                                            ? { transform: [{ scaleX: -1 }] }
+                                            : undefined
+                                    }
+                                >
+                                    <AppIcon
+                                        name={mode === 'edit' ? 'checkmark' : 'send'}
+                                        size={18}
+                                        color="#fff"
+                                    />
+                                </View>
                             </TouchableOpacity>
                         </View>
                     </Pressable>

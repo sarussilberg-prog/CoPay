@@ -34,6 +34,7 @@ function snapshotRefetch(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.friendRequestsIncoming });
     void queryClient.invalidateQueries({ queryKey: queryKeys.friendRequestsOutgoing });
     void queryClient.invalidateQueries({ queryKey: queryKeys.activity });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.activityUnreadCount });
 }
 
 const ACTIVITY_INVALIDATE_DEBOUNCE_MS = 500;
@@ -216,34 +217,18 @@ export function useAppRealtime(userId: string | undefined | null): void {
             )
             .on(
                 'postgres_changes' as never,
-                { event: '*', schema: 'public', table: 'expenses' },
-                () => {
-                    try {
-                        invalidateActivityDebounced();
-                    } catch (err) {
-                        console.error('app realtime: expenses activity-feed payload error:', err);
-                    }
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'activity_events',
+                    filter: `user_id=eq.${userId}`,
                 },
-            )
-            .on(
-                'postgres_changes' as never,
-                { event: '*', schema: 'public', table: 'settlements' },
                 () => {
                     try {
                         invalidateActivityDebounced();
+                        void queryClient.invalidateQueries({ queryKey: queryKeys.activityUnreadCount });
                     } catch (err) {
-                        console.error('app realtime: settlements activity-feed payload error:', err);
-                    }
-                },
-            )
-            .on(
-                'postgres_changes' as never,
-                { event: '*', schema: 'public', table: 'group_messages' },
-                () => {
-                    try {
-                        invalidateActivityDebounced();
-                    } catch (err) {
-                        console.error('app realtime: group_messages activity-feed payload error:', err);
+                        console.error('app realtime: activity_events payload error:', err);
                     }
                 },
             )

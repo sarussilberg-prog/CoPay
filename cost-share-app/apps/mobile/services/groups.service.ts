@@ -186,7 +186,7 @@ async function fetchGroupsInternal(): Promise<GroupWithMembers[]> {
         const { data, error: groupsErr } = await supabase
             .from('groups')
             .select(
-                '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url, is_active))',
+                '*, group_members!inner(user_id, is_active, profiles!group_members_user_id_fkey(id, name, avatar_url, is_active))',
             )
             .in('id', groupIds)
             .eq('is_active', true)
@@ -304,6 +304,7 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
         const rows = Array.from(memberIds).map(userId => ({
             group_id: groupRow.id,
             user_id: userId,
+            added_by: userId === createdBy ? null : createdBy,
         }));
         const { error: membersErr } = await supabase.from('group_members').insert(rows);
         if (membersErr) throw membersErr;
@@ -442,7 +443,7 @@ async function syncGroupMembershipState(groupId: string): Promise<void> {
     const { data, error } = await supabase
         .from('groups')
         .select(
-            '*, group_members!inner(user_id, is_active, profiles(id, name, avatar_url, is_active))',
+            '*, group_members!inner(user_id, is_active, profiles!group_members_user_id_fkey(id, name, avatar_url, is_active))',
         )
         .eq('id', groupId)
         .eq('is_active', true)
@@ -465,6 +466,7 @@ async function syncGroupMembershipState(groupId: string): Promise<void> {
 }
 
 export async function addGroupMember(groupId: string, userId: string): Promise<GroupMember | null> {
+    const addedBy = await getCurrentUserId();
     const { data, error } = await supabase
         .from('group_members')
         .upsert(
@@ -474,6 +476,7 @@ export async function addGroupMember(groupId: string, userId: string): Promise<G
                 is_active: true,
                 left_at: null,
                 joined_at: new Date().toISOString(),
+                added_by: addedBy ?? null,
             },
             { onConflict: 'group_id,user_id' },
         )

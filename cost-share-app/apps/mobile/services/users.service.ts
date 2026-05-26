@@ -11,18 +11,32 @@ import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../hooks/queries/keys';
 import { useAppStore } from '../store';
 
-/** Load profiles.default_currency (and other fields) after auth — session alone only has ILS placeholder. */
-export async function hydrateCurrentUserProfile(userId: string): Promise<boolean> {
-    const user = await getUserById(userId);
-    if (!user) return false;
+export type ProfileHydrationResult = 'active' | 'deactivated' | 'unknown';
 
+/**
+ * Load profiles.default_currency (and other fields) after auth.
+ * - 'active'     : profile loaded into the store.
+ * - 'deactivated': server reported is_active=false; local session has been cleared.
+ * - 'unknown'    : fetch errored (e.g. offline) or row not yet present. Caller must NOT
+ *                  treat as deactivated — leave the session intact and try again later.
+ */
+export async function hydrateCurrentUserProfile(userId: string): Promise<ProfileHydrationResult> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (error || !data) return 'unknown';
+
+    const user = profileFromRow(data);
     if (user.isActive === false) {
         await clearLocalAuthSession();
-        return false;
+        return 'deactivated';
     }
 
     useAppStore.getState().setCurrentUser(user);
-    return true;
+    return 'active';
 }
 
 export async function fetchUsers(): Promise<User[]> {
@@ -62,16 +76,6 @@ export async function fetchGroupUsers(groupId: string): Promise<User[]> {
         return [];
     }
     return (data ?? []).map(profileFromRow);
-}
-
-export async function getUserById(id: string): Promise<User | null> {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-    if (error || !data) return null;
-    return profileFromRow(data);
 }
 
 const EMPTY_SUMMARY: BalanceSummaryResponse = { summary: [], byGroup: [] };

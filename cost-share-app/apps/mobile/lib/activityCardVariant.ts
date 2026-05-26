@@ -3,10 +3,7 @@
  * Each variant uses a white card with a subtle tinted border (like settlement).
  */
 
-import type {
-    ActivityType,
-    FriendRequestActivityStatus,
-} from '@cost-share/shared';
+import type { ActivityEventKind } from '@cost-share/shared';
 import type { AppIconName } from '../components/AppIcon';
 import { colors } from '../theme';
 
@@ -75,7 +72,7 @@ const FRIEND_REQUEST_ACCEPTED: ActivityCardVariant = {
     iconColor: colors.success,
     iconBgColor: '#ecfdf5',
     backgroundColor: colors.white,
-    borderColor: '#bbf7d0',
+    borderColor: '#fde68a',
     amountTone: 'muted',
     showAmount: false,
     showGroupLine: false,
@@ -87,7 +84,7 @@ const FRIEND_REQUEST_REJECTED: ActivityCardVariant = {
     iconColor: colors.gray500,
     iconBgColor: colors.gray100,
     backgroundColor: colors.white,
-    borderColor: '#d1d5db',
+    borderColor: '#fde68a',
     amountTone: 'muted',
     showAmount: false,
     showGroupLine: false,
@@ -99,7 +96,7 @@ const GROUP_INVITE: ActivityCardVariant = {
     iconColor: colors.primaryDark,
     iconBgColor: colors.primaryExtraLight,
     backgroundColor: colors.white,
-    borderColor: '#93c5fd',
+    borderColor: '#fde68a',
     amountTone: 'muted',
     showAmount: false,
     showGroupLine: false,
@@ -130,26 +127,28 @@ const MEMBER_LEFT: ActivityCardVariant = {
     titleLines: 2,
 };
 
-const VARIANTS: Record<ActivityType, ActivityCardVariant> = {
-    expense: EXPENSE,
-    settlement: SETTLEMENT,
-    message: MESSAGE,
-    friend_request: FRIEND_REQUEST,
-    group_invite: GROUP_INVITE,
-    member_joined: MEMBER_JOINED,
-    member_left: MEMBER_LEFT,
-};
-
 export function getActivityCardVariant(
-    type: ActivityType,
-    friendRequestStatus?: FriendRequestActivityStatus,
+    kind: ActivityEventKind,
+    friendRequestStatus?: 'pending' | 'accepted' | 'rejected' | 'cancelled',
 ): ActivityCardVariant {
-    if (type === 'friend_request') {
-        if (friendRequestStatus === 'accepted') return FRIEND_REQUEST_ACCEPTED;
-        if (friendRequestStatus === 'rejected') return FRIEND_REQUEST_REJECTED;
-        return FRIEND_REQUEST;
+    switch (kind) {
+        case 'expense_added':
+            return EXPENSE;
+        case 'settlement_added':
+            return SETTLEMENT;
+        case 'message_posted':
+            return MESSAGE;
+        case 'friend_request_received':
+            if (friendRequestStatus === 'accepted') return FRIEND_REQUEST_ACCEPTED;
+            if (friendRequestStatus === 'rejected') return FRIEND_REQUEST_REJECTED;
+            return FRIEND_REQUEST;
+        case 'group_added':
+            return GROUP_INVITE;
+        case 'group_member_joined':
+            return MEMBER_JOINED;
+        case 'group_removed':
+            return MEMBER_LEFT;
     }
-    return VARIANTS[type] ?? EXPENSE;
 }
 
 export function activityCardAmountClass(tone: ActivityCardVariant['amountTone']): string {

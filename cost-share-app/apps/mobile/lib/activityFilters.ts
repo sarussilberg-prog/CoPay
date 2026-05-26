@@ -1,11 +1,29 @@
 /**
- * Client-side filter + sort for the cross-group activity feed (REQ-ACT-01).
+ * Client-side filter + sort for the cross-group activity feed.
+ *
+ * The filter UI chip values stay 'expense' | 'settlement' | 'message' so the
+ * sheet doesn't change. We map them here to the new activity_events kinds.
+ * Membership and friend-request events are always shown (never filtered out
+ * by the type chip).
  */
 
-import { GroupType, RecentActivity } from '@cost-share/shared';
+import { ActivityEvent, ActivityEventKind, GroupType } from '@cost-share/shared';
 
 export type ActivityTypeFilter = 'expense' | 'settlement' | 'message';
 export type ActivitySortOption = 'dateDesc' | 'dateAsc' | 'amountDesc' | 'amountAsc';
+
+const TYPE_FILTER_TO_KINDS: Record<ActivityTypeFilter, readonly ActivityEventKind[]> = {
+    expense: ['expense_added'],
+    settlement: ['settlement_added'],
+    message: ['message_posted'],
+};
+
+const ALWAYS_VISIBLE_KINDS: readonly ActivityEventKind[] = [
+    'friend_request_received',
+    'group_added',
+    'group_member_joined',
+    'group_removed',
+];
 
 export interface ActivityFilters {
     types: ActivityTypeFilter[];
@@ -50,80 +68,78 @@ function parseDateEndExclusive(isoDate: string): number | null {
     return Number.isNaN(ms) ? null : ms + 24 * 3600 * 1000;
 }
 
+function amountOf(event: ActivityEvent): number {
+    const v = (event.metadata as Record<string, unknown> | undefined)?.amount;
+    return typeof v === 'number' ? v : Number(v ?? 0);
+}
+
+function currencyOf(event: ActivityEvent): string {
+    const v = (event.metadata as Record<string, unknown> | undefined)?.currency;
+    return typeof v === 'string' ? v : '';
+}
+
 export function filterAndSortActivities(
-    items: RecentActivity[],
+    items: ActivityEvent[],
     filters: ActivityFilters,
     currentUserId?: string | null,
     groupTypeById?: Record<string, GroupType>,
-): RecentActivity[] {
-    const query = filters;
+): ActivityEvent[] {
     let list = [...items];
 
-    if (query.types.length > 0) {
-        const allowed = query.types as readonly string[];
-        list = list.filter((item) => allowed.includes(item.activityType));
+    if (filters.types.length > 0) {
+        const allowedKinds = new Set<ActivityEventKind>([
+            ...filters.types.flatMap(t => TYPE_FILTER_TO_KINDS[t]),
+            ...ALWAYS_VISIBLE_KINDS,
+        ]);
+        list = list.filter(item => allowedKinds.has(item.kind));
     }
 
-    if (query.currencies.length > 0) {
-        list = list.filter(
-            (item) =>
-                item.activityType !== 'message' &&
-                item.activityType !== 'friend_request' &&
-                query.currencies.includes(item.currency),
-        );
-    }
-
-    if (query.groupIds.length > 0) {
-        list = list.filter(
-            (item) =>
-                item.groupId.length > 0 &&
-                query.groupIds.includes(item.groupId),
-        );
-    }
-
-    if (query.groupTypes.length > 0 && groupTypeById) {
-        list = list.filter((item) => {
-            const groupType = groupTypeById[item.groupId];
-            return groupType && query.groupTypes.includes(groupType);
+    if (filters.currencies.length > 0) {
+        list = list.filter(item => {
+            // Only expense/settlement carry currency; everything else passes through.
+            if (item.kind !== 'expense_added' && item.kind !== 'settlement_added') return true;
+            return filters.currencies.includes(currencyOf(item));
         });
     }
 
-    if (query.onlyMine && currentUserId) {
-        list = list.filter((item) => item.userId === currentUserId);
+    if (filters.groupIds.length > 0) {
+        list = list.filter(item => item.groupId !== null && filters.groupIds.includes(item.groupId));
     }
 
-    const fromMs = query.dateFrom ? parseDateStart(query.dateFrom) : null;
-    const toMs = query.dateTo ? parseDateEndExclusive(query.dateTo) : null;
+    if (filters.groupTypes.length > 0 && groupTypeById) {
+        list = list.filter(item => {
+            if (item.groupId === null) return false;
+            const groupType = groupTypeById[item.groupId];
+            return groupType && filters.groupTypes.includes(groupType);
+        });
+    }
+
+    if (filters.onlyMine && currentUserId) {
+        list = list.filter(item => item.actorUserId === currentUserId);
+    }
+
+    const fromMs = filters.dateFrom ? parseDateStart(filters.dateFrom) : null;
+    const toMs = filters.dateTo ? parseDateEndExclusive(filters.dateTo) : null;
     if (fromMs !== null || toMs !== null) {
-        list = list.filter((item) => {
-            const t = new Date(item.activityDate).getTime();
+        list = list.filter(item => {
+            const t = item.createdAt.getTime();
             if (fromMs !== null && t < fromMs) return false;
             if (toMs !== null && t >= toMs) return false;
             return true;
         });
     }
 
-    // Sort by createdAt (when the row was inserted), not activityDate.
-    // activityDate maps to expense_date / settlement_date, which the user
-    // can backdate when creating an expense — using it for sort would let
-    // a freshly logged expense get buried under older rows.
     list.sort((a, b) => {
-        switch (query.sortBy) {
+        switch (filters.sortBy) {
             case 'dateAsc':
-                return (
-                    new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime()
-                );
+                return a.createdAt.getTime() - b.createdAt.getTime();
             case 'amountDesc':
-                return b.amount - a.amount;
+                return amountOf(b) - amountOf(a);
             case 'amountAsc':
-                return a.amount - b.amount;
+                return amountOf(a) - amountOf(b);
             case 'dateDesc':
             default:
-                return (
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-                );
+                return b.createdAt.getTime() - a.createdAt.getTime();
         }
     });
 
@@ -131,15 +147,23 @@ export function filterAndSortActivities(
 }
 
 export function matchesActivitySearch(
-    item: RecentActivity,
+    item: ActivityEvent,
     searchQuery: string,
+    groupNameById?: Record<string, string>,
 ): boolean {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
-    return (
-        item.description.toLowerCase().includes(q) ||
-        item.userName.toLowerCase().includes(q) ||
-        item.currency.toLowerCase().includes(q) ||
-        String(item.amount).includes(q)
-    );
+    const md = item.metadata ?? {};
+    const groupName = item.groupId ? groupNameById?.[item.groupId] : undefined;
+    const haystack = [
+        md.description as string | undefined,
+        md.body as string | undefined,
+        currencyOf(item),
+        String(amountOf(item)),
+        groupName,
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+    return haystack.includes(q);
 }

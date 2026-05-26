@@ -1,12 +1,11 @@
 /**
- * ActivityItemCard — group-feed-style card with per-type visual variants.
- * Type is conveyed by the leading icon only (no badge/tag).
+ * ActivityItemCard — group-feed-style card with per-kind visual variants.
  */
 
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import type { TFunction } from 'i18next';
-import { RecentActivity } from '@cost-share/shared';
+import type { ActivityEvent } from '@cost-share/shared';
 import { Text } from './AppText';
 import { FeedRowThumbnail } from './FeedRowThumbnail';
 import { formatCurrencyAmount } from '../lib/currencyDisplay';
@@ -16,42 +15,55 @@ import {
 } from '../lib/activityCardVariant';
 import { useRtlLayout, rtlRowStyle } from '../hooks/useRtlLayout';
 
+interface ResolveTitleArgs {
+    actorName: string;
+    groupName: string;
+    newMemberName?: string;
+}
+
 export function resolveActivityTitle(
-    activity: RecentActivity,
-    groupName: string | undefined,
+    event: ActivityEvent,
+    args: ResolveTitleArgs,
     t: TFunction,
 ): string {
-    const name = activity.userName;
-    const group = groupName ?? '';
-
-    switch (activity.activityType) {
-        case 'friend_request':
-            if (activity.friendRequestStatus === 'accepted') {
-                return t('activity.notifications.friendRequestAccepted', { name });
+    const { actorName, groupName, newMemberName } = args;
+    const meta = event.metadata ?? {};
+    switch (event.kind) {
+        case 'expense_added':
+            return (meta.description as string | undefined) ?? '';
+        case 'settlement_added':
+            // Description is built by ActivityItem (it needs perspective + i18n)
+            return (meta.description as string | undefined) ?? '';
+        case 'message_posted':
+            return (meta.body as string | undefined) ?? '';
+        case 'friend_request_received': {
+            const status = (meta.status as string | undefined) ?? 'pending';
+            if (status === 'accepted') {
+                return t('activity.notifications.friendRequestAccepted', { name: actorName });
             }
-            if (activity.friendRequestStatus === 'rejected') {
-                return t('activity.notifications.friendRequestRejected', { name });
+            if (status === 'rejected') {
+                return t('activity.notifications.friendRequestRejected', { name: actorName });
             }
-            return t('activity.notifications.friendRequest', { name });
-        case 'group_invite':
-            return t('activity.notifications.groupInvite', { name, group });
-        case 'member_joined':
-            return t('activity.notifications.memberJoined', { name, group });
-        case 'member_left':
-            return t('activity.notifications.memberLeft', { name, group });
-        case 'expense':
-            return activity.description;
-        case 'settlement':
-            return activity.description;
-        case 'message':
-            return activity.description;
-        default:
-            return activity.description;
+            return t('activity.notifications.friendRequest', { name: actorName });
+        }
+        case 'group_added':
+            return t('activity.notifications.groupInvite', { name: actorName, group: groupName });
+        case 'group_member_joined':
+            return t('activity.notifications.memberJoined', {
+                name: newMemberName ?? actorName,
+                group: groupName,
+            });
+        case 'group_removed':
+            return t('activity.notifications.memberLeft', {
+                name: actorName || t('common.you'),
+                group: groupName,
+            });
     }
 }
 
 interface ActivityItemCardProps {
-    activity: RecentActivity;
+    event: ActivityEvent;
+    friendRequestStatus?: 'pending' | 'accepted' | 'rejected' | 'cancelled';
     title: string;
     meta: string;
     groupName?: string;
@@ -60,7 +72,8 @@ interface ActivityItemCardProps {
 }
 
 export function ActivityItemCard({
-    activity,
+    event,
+    friendRequestStatus,
     title,
     meta,
     groupName,
@@ -68,15 +81,14 @@ export function ActivityItemCard({
     testID,
 }: ActivityItemCardProps) {
     const isRtl = useRtlLayout();
-    const variant = getActivityCardVariant(
-        activity.activityType,
-        activity.friendRequestStatus,
-    );
-    const showAmount =
-        variant.showAmount && activity.amount > 0 && Boolean(activity.currency);
-    const amountText = showAmount
-        ? formatCurrencyAmount(activity.amount, activity.currency)
-        : null;
+    const variant = getActivityCardVariant(event.kind, friendRequestStatus);
+    const md = event.metadata ?? {};
+    const amount = typeof md.amount === 'number' || typeof md.amount === 'string'
+        ? Number(md.amount)
+        : 0;
+    const currency = typeof md.currency === 'string' ? md.currency : '';
+    const showAmount = variant.showAmount && amount > 0 && Boolean(currency);
+    const amountText = showAmount ? formatCurrencyAmount(amount, currency) : null;
 
     const rowStyle = {
         gap: 12,

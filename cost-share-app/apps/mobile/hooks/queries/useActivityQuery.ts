@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
     fetchRecentActivity,
@@ -11,24 +10,13 @@ import { queryKeys } from './keys';
 
 const ACTIVITY_STALE_MS = 60_000;
 
-function buildActivityQueryOptions(
-    groupIds: string[],
-    userId?: string,
-    groups: Array<{ id: string; name: string }> = [],
-) {
-    const groupNamesById = Object.fromEntries(
-        groups.map((group) => [group.id, group.name]),
-    );
-
+function buildActivityQueryOptions() {
     return {
-        queryKey: queryKeys.activityFeed(groupIds),
+        queryKey: queryKeys.activityFeed(),
         queryFn: ({ pageParam }: { pageParam?: string }) =>
             fetchRecentActivity({
                 before: pageParam,
                 limit: pageParam ? ACTIVITY_PAGE_SIZE : ACTIVITY_INITIAL_PAGE_SIZE,
-                userId,
-                groupIds: groupIds.length > 0 ? groupIds : undefined,
-                groupNamesById: groupIds.length > 0 ? groupNamesById : undefined,
             }),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage: Awaited<ReturnType<typeof fetchRecentActivity>>) =>
@@ -38,24 +26,17 @@ function buildActivityQueryOptions(
 }
 
 export function useActivityQuery() {
-    const currentUser = useAppStore((state) => state.currentUser);
-    const groups = useAppStore((state) => state.groups);
-    const groupIds = useMemo(() => groups.map((group) => group.id), [groups]);
-
+    const currentUserId = useAppStore(state => state.currentUser?.id);
     return useInfiniteQuery({
-        ...buildActivityQueryOptions(groupIds, currentUser?.id, groups),
-        enabled: Boolean(currentUser?.id),
+        ...buildActivityQueryOptions(),
+        enabled: Boolean(currentUserId),
     });
 }
 
 export function prefetchActivityFeed(): Promise<void> {
-    const { currentUser, groups } = useAppStore.getState();
-    if (!currentUser?.id) {
-        return Promise.resolve();
-    }
-
-    const groupIds = groups.map((group) => group.id);
-    const options = buildActivityQueryOptions(groupIds, currentUser.id, groups);
+    const currentUserId = useAppStore.getState().currentUser?.id;
+    if (!currentUserId) return Promise.resolve();
+    const options = buildActivityQueryOptions();
     const existing = queryClient.getQueryState(options.queryKey);
     if (
         existing?.dataUpdatedAt &&
@@ -63,6 +44,5 @@ export function prefetchActivityFeed(): Promise<void> {
     ) {
         return Promise.resolve();
     }
-
     return queryClient.prefetchInfiniteQuery(options);
 }

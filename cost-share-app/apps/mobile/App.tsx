@@ -16,7 +16,7 @@ import {
   setupSupabaseAuthAutoRefresh,
 } from './lib/authSessionLifecycle';
 import { supabase } from './lib/supabase';
-import { assertProfileActiveWithTimeout, isAuthSessionAllowed } from './lib/auth';
+import { assertProfileActiveWithTimeout } from './lib/auth';
 import { signalDeactivatedAccount } from './lib/signalDeactivatedAccount';
 import { hydrateCurrentUserProfile } from './services/users.service';
 import { queryClient } from './lib/queryClient';
@@ -72,14 +72,17 @@ export default function App() {
       return;
     }
 
-    const allowed = await isAuthSessionAllowed();
-    if (!allowed) {
+    // Only reject on a definitive 'deactivated' from the server. 'unknown' (offline / timeout)
+    // must NOT trigger the deletion notice — the local session was valid; let the user in and
+    // re-verify on the next foreground via guardSession.
+    const status = await assertProfileActiveWithTimeout();
+    if (status === 'deactivated') {
       await rejectDeactivatedSession();
       return;
     }
 
-    const hydrated = await hydrateCurrentUserProfile(nextSession.user.id);
-    if (!hydrated) {
+    const hydration = await hydrateCurrentUserProfile(nextSession.user.id);
+    if (hydration === 'deactivated') {
       await rejectDeactivatedSession();
       return;
     }

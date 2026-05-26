@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute, type ParamListBase, type RouteProp } from '@react-navigation/native';
@@ -19,6 +19,7 @@ import { colors } from '../theme';
 import { useInviteRedemption } from '../hooks/useInviteRedemption';
 import { prefetchGroupsList } from '../hooks/queries/prefetchGroupsList';
 import { prefetchDashboard } from '../hooks/queries/prefetchDashboard';
+import { useActivityUnreadCount } from '../hooks/queries/useActivityUnreadCount';
 
 function HeaderBackButton({ onPress }: { onPress: () => void }) {
     const isRtl = useRtlLayout();
@@ -251,6 +252,7 @@ function ProfileStack() {
 export function AppNavigator() {
     const { t } = useTranslation();
     useInviteRedemption();
+    const { data: unreadCount = 0 } = useActivityUnreadCount();
 
     useEffect(() => {
         prefetchGroupsList();
@@ -280,7 +282,42 @@ export function AppNavigator() {
                 listeners={tabPopToTopOnPress('ActivityFeed')}
                 options={{
                     tabBarLabel: t('tabs.activity'),
-                    tabBarIcon: tabBarIcon('time', 'time-outline'),
+                    tabBarIcon: ({ color, size, focused }) => (
+                        <View>
+                            <AppIcon
+                                name={focused ? 'time' : 'time-outline'}
+                                size={size}
+                                color={color}
+                            />
+                            {unreadCount > 0 && (
+                                <View
+                                    style={{
+                                        position: 'absolute',
+                                        top: -6,
+                                        right: -10,
+                                        minWidth: 16,
+                                        height: 16,
+                                        paddingHorizontal: 4,
+                                        borderRadius: 8,
+                                        backgroundColor: colors.primaryExtraLight,
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: colors.primaryDark,
+                                            fontSize: 10,
+                                            fontWeight: '600',
+                                            lineHeight: 12,
+                                        }}
+                                    >
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    ),
                 }}
             />
             <Tab.Screen
