@@ -16,7 +16,7 @@ describe('navigationPersistence', () => {
         if (Platform.OS === 'web') return;
 
         const state = {
-            stale: false,
+            stale: false as const,
             type: 'tab',
             key: 'root',
             index: 2,
@@ -34,7 +34,7 @@ describe('navigationPersistence', () => {
         if (Platform.OS !== 'web') return;
 
         const state = {
-            stale: false,
+            stale: false as const,
             type: 'tab',
             key: 'root',
             index: 0,

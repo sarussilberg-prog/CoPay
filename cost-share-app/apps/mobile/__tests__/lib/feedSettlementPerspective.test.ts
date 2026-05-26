@@ -13,7 +13,8 @@ const settlement: Settlement = {
     amount: 50,
     currency: 'ILS',
     createdBy: 'alice',
-    isDeleted: false,
+    settlementDate: new Date(),
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
 };

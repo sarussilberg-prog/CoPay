@@ -69,6 +69,8 @@ CREATE TABLE expenses (
     receipt_url TEXT,
     paid_by UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     created_by UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
+    split_mode TEXT NOT NULL DEFAULT 'equal'
+        CHECK (split_mode IN ('equal', 'percent', 'amount')),
     is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

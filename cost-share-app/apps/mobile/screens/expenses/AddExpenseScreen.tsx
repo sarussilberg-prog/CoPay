@@ -10,28 +10,30 @@ import React, {
     useEffect,
     useLayoutEffect,
     useMemo,
+    useRef,
     useState,
 } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Animated,
     Image,
-    Keyboard,
+    ScrollView,
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    TouchableWithoutFeedback,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Text } from '../../components/AppText';
+import { Button } from '../../components/Button';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 import { CurrencyPill } from '../../components/expenseV2/CurrencyPill';
 import { QuietIconPill } from '../../components/expenseV2/QuietIconPill';
@@ -63,7 +65,6 @@ import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { useGroupMembersQuery } from '../../hooks/queries/useGroupMembersQuery';
 import {
     createExpense,
-    deleteExpense,
     getExpenseWithSplits,
     updateExpense,
 } from '../../services/expenses.service';
@@ -80,8 +81,11 @@ import {
     UnequalSplitMode,
     areSplitsEqual,
     buildUnequalSplits,
+    buildUnequalValuesFromStored,
     computeUnequalTotal,
     inferUnequalModeFromSplits,
+    storedSplitModeToUi,
+    uiToStoredSplitMode,
 } from '../../lib/expenseSplitForm';
 import { colors } from '../../theme';
 
@@ -103,6 +107,37 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function formatShortDate(date: Date): string {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Stable string representation of the form's edit-relevant state, used to detect
+ * whether anything has changed since the expense was loaded in edit mode.
+ */
+function snapshotKey(s: {
+    description: string;
+    amount: string;
+    currency: string;
+    paidBy: string | undefined;
+    dateMs: number;
+    splitMode: UiSplitMode;
+    selectedMemberIds: string[];
+    unequalValues: Record<string, string>;
+}): string {
+    const ids = [...s.selectedMemberIds].sort();
+    const uneq: Record<string, string> = {};
+    Object.keys(s.unequalValues).sort().forEach(k => {
+        uneq[k] = s.unequalValues[k];
+    });
+    return JSON.stringify({
+        d: s.description,
+        a: s.amount,
+        c: s.currency,
+        p: s.paidBy ?? '',
+        t: s.dateMs,
+        m: s.splitMode,
+        ids,
+        u: uneq,
+    });
 }
 
 export function AddExpenseScreen() {
@@ -134,7 +169,6 @@ export function AddExpenseScreen() {
     const [unequalValues, setUnequalValues] = useState<Record<string, string>>({});
     const [membersInitialized, setMembersInitialized] = useState(false);
     const [expenseLoading, setExpenseLoading] = useState(isEditMode);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [localReceiptUri, setLocalReceiptUri] = useState<string | null>(null);
     const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
     const [receiptRemoved, setReceiptRemoved] = useState(false);
@@ -142,6 +176,9 @@ export function AddExpenseScreen() {
     const [editorVisible, setEditorVisible] = useState(false);
     const [currencyPickerVisible, setCurrencyPickerVisible] = useState(false);
     const [datePickerVisible, setDatePickerVisible] = useState(false);
+    const amountShake = useRef(new Animated.Value(0)).current;
+    const descriptionShake = useRef(new Animated.Value(0)).current;
+    const editSnapshotRef = useRef<string>('');
 
     const { data: membersData = [], isLoading: membersLoading } = useGroupMembersQuery(groupId);
     const { data: allUsers = [] } = useGroupUsersQuery(groupId);
@@ -200,19 +237,58 @@ export function AddExpenseScreen() {
                 setReceiptUrl(expense.receiptUrl ?? null);
                 setLocalReceiptUri(null);
                 setReceiptRemoved(false);
+                const initialDate =
+                    expense.expenseDate instanceof Date ? expense.expenseDate : new Date();
                 if (expense.expenseDate instanceof Date) setDate(expense.expenseDate);
+
+                let initialSplitMode: UiSplitMode = 'equal';
+                let initialUnequalValues: Record<string, string> = {};
+                let initialMemberIds: string[] = [];
                 if (splits.length > 0) {
-                    setSelectedMemberIds(splits.map(s => s.userId));
+                    initialMemberIds = splits.map(s => s.userId);
+                    setSelectedMemberIds(initialMemberIds);
                     setMembersInitialized(true);
-                    const splitAmounts = splits.map(s => s.amount);
-                    if (areSplitsEqual(splitAmounts)) {
-                        setSplitMode('equal');
+                    if (expense.splitMode) {
+                        initialSplitMode = storedSplitModeToUi(expense.splitMode);
+                        if (initialSplitMode !== 'equal') {
+                            initialUnequalValues = buildUnequalValuesFromStored(
+                                uiToUnequalMode(initialSplitMode),
+                                splits,
+                                expense.amount,
+                            );
+                        }
                     } else {
-                        const inferred = inferUnequalModeFromSplits(splits, expense.amount);
-                        setSplitMode(unequalToUiMode(inferred.mode));
-                        setUnequalValues(inferred.values);
+                        // Transitional fallback for rows persisted before the
+                        // 2026-05-26 split_mode migration. Remove once both DBs
+                        // have migrated.
+                        console.warn(
+                            '[AddExpenseScreen] expense.splitMode missing — inferring from splits',
+                        );
+                        const splitAmounts = splits.map(s => s.amount);
+                        if (areSplitsEqual(splitAmounts)) {
+                            initialSplitMode = 'equal';
+                        } else {
+                            const inferred = inferUnequalModeFromSplits(splits, expense.amount);
+                            initialSplitMode = unequalToUiMode(inferred.mode);
+                            initialUnequalValues = inferred.values;
+                        }
+                    }
+                    setSplitMode(initialSplitMode);
+                    if (initialSplitMode !== 'equal') {
+                        setUnequalValues(initialUnequalValues);
                     }
                 }
+
+                editSnapshotRef.current = snapshotKey({
+                    description: expense.description,
+                    amount: String(expense.amount),
+                    currency: expense.currency,
+                    paidBy: expense.paidBy,
+                    dateMs: initialDate.getTime(),
+                    splitMode: initialSplitMode,
+                    selectedMemberIds: initialMemberIds,
+                    unequalValues: initialUnequalValues,
+                });
             }
             setExpenseLoading(false);
         };
@@ -241,14 +317,47 @@ export function AddExpenseScreen() {
         );
     }, [splitMode, selectedMemberIds, unequalValues, parsedAmount]);
 
+    const hasDescription = description.trim().length > 0;
+    const hasValidAmount =
+        amount.length > 0 && Number.isFinite(parsedAmount) && parsedAmount > 0;
     const canSave = useMemo(() => {
-        const hasDescription = description.trim().length > 0;
-        const hasValidAmount =
-            amount.length > 0 && Number.isFinite(parsedAmount) && parsedAmount > 0;
         const hasMembers = selectedMemberIds.length > 0;
         const unequalReady = splitMode === 'equal' || unequalCheck.isValid;
         return hasDescription && hasValidAmount && hasMembers && unequalReady;
-    }, [description, amount, parsedAmount, selectedMemberIds.length, splitMode, unequalCheck.isValid]);
+    }, [hasDescription, hasValidAmount, selectedMemberIds.length, splitMode, unequalCheck.isValid]);
+
+    const editChanged = useMemo(() => {
+        if (!isEditMode) return true;
+        if (editSnapshotRef.current === '') return false;
+        const current = snapshotKey({
+            description,
+            amount,
+            currency,
+            paidBy,
+            dateMs: date.getTime(),
+            splitMode,
+            selectedMemberIds,
+            unequalValues,
+        });
+        if (current !== editSnapshotRef.current) return true;
+        if (localReceiptUri !== null) return true;
+        if (receiptRemoved) return true;
+        return false;
+    }, [
+        isEditMode,
+        description,
+        amount,
+        currency,
+        paidBy,
+        date,
+        splitMode,
+        selectedMemberIds,
+        unequalValues,
+        localReceiptUri,
+        receiptRemoved,
+    ]);
+
+    const canSubmit = canSave && editChanged;
 
     const buildSplits = useCallback((): ExpenseSplitInput[] | null => {
         if (selectedMemberIds.length === 0) return null;
@@ -348,6 +457,7 @@ export function AddExpenseScreen() {
             : receiptRemoved
                 ? { receiptUrl: '' }
                 : {};
+        const storedSplitMode = uiToStoredSplitMode(splitMode);
         const result = isEditMode
             ? expenseId
                 ? await updateExpense(expenseId, {
@@ -358,6 +468,7 @@ export function AddExpenseScreen() {
                       paidBy: payerId,
                       expenseDate: date,
                       splits,
+                      splitMode: storedSplitMode,
                       ...receiptUpdate,
                   })
                 : null
@@ -370,6 +481,7 @@ export function AddExpenseScreen() {
                   paidBy: payerId,
                   expenseDate: date,
                   splits,
+                  splitMode: storedSplitMode,
                   ...(uploadedReceiptUrl ? { receiptUrl: uploadedReceiptUrl } : {}),
               });
         stopLoading();
@@ -391,20 +503,44 @@ export function AddExpenseScreen() {
         currency,
         category,
         date,
+        splitMode,
         navigation,
         startLoading,
         stopLoading,
         t,
     ]);
 
-    const handleDelete = useCallback(async () => {
-        if (!expenseId) return;
-        setShowDeleteDialog(false);
-        startLoading();
-        const success = await deleteExpense(expenseId);
-        stopLoading();
-        if (success) navigation.goBack();
-    }, [expenseId, navigation, startLoading, stopLoading]);
+    const runShake = useCallback((anim: Animated.Value) => {
+        anim.setValue(0);
+        Animated.sequence([
+            Animated.timing(anim, { toValue: -8, duration: 50, useNativeDriver: true }),
+            Animated.timing(anim, { toValue: 8, duration: 50, useNativeDriver: true }),
+            Animated.timing(anim, { toValue: -6, duration: 50, useNativeDriver: true }),
+            Animated.timing(anim, { toValue: 6, duration: 50, useNativeDriver: true }),
+            Animated.timing(anim, { toValue: 0, duration: 50, useNativeDriver: true }),
+        ]).start();
+    }, []);
+
+    const handleSavePress = useCallback(() => {
+        if (isLoading) return;
+        if (!canSave) {
+            if (!hasValidAmount) runShake(amountShake);
+            if (!hasDescription) runShake(descriptionShake);
+            return;
+        }
+        if (!editChanged) return;
+        void handleSubmit();
+    }, [
+        isLoading,
+        canSave,
+        editChanged,
+        hasValidAmount,
+        hasDescription,
+        runShake,
+        amountShake,
+        descriptionShake,
+        handleSubmit,
+    ]);
 
     if (isEditMode && expenseLoading) {
         return (
@@ -450,8 +586,7 @@ export function AddExpenseScreen() {
 
     return (
         <SafeAreaView edges={['top']} style={styles.root}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <View style={styles.dismissArea}>
+            <View style={styles.dismissArea}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
@@ -464,48 +599,62 @@ export function AddExpenseScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{headerTitle}</Text>
                 <TouchableOpacity
-                    onPress={handleSubmit}
+                    onPress={handleSavePress}
                     activeOpacity={0.7}
-                    disabled={!canSave || isLoading}
                     style={styles.headerSide}
                     testID="add-expense-submit"
-                    accessibilityState={{ disabled: !canSave || isLoading }}
+                    accessibilityState={{ disabled: !canSubmit || isLoading }}
                 >
-                    <Text style={[styles.saveText, !canSave || isLoading ? styles.saveTextDisabled : null]}>
+                    <Text style={[styles.saveText, !canSubmit || isLoading ? styles.saveTextDisabled : null]}>
                         {t('common.save')}
                     </Text>
                 </TouchableOpacity>
             </View>
 
             {/* Hero */}
-            <View style={styles.hero}>
+            <ScrollView
+                style={styles.hero}
+                contentContainerStyle={styles.heroContent}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.heroTop}>
                     <CurrencyPill
                         currency={currency}
                         onPress={() => setCurrencyPickerVisible(true)}
                     />
                     <View style={{ height: 24 }} />
-                    <TextInput
-                        value={amount}
-                        onChangeText={text => setAmount(sanitizeAmountInput(text))}
-                        keyboardType="decimal-pad"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        placeholderTextColor={colors.gray300}
-                        style={styles.amountInput}
-                        testID="amount-display"
-                    />
-                    <TextInput
-                        value={description}
-                        onChangeText={setDescription}
-                        placeholder={t('expenses.v2.descriptionPlaceholder')}
-                        placeholderTextColor={colors.gray300}
-                        style={styles.descriptionInput}
-                        textAlign="center"
-                        testID="description-input"
-                        returnKeyType="done"
-                    />
-                    <View style={styles.descriptionUnderline} />
+                    <Animated.View style={{ transform: [{ translateX: amountShake }] }}>
+                        <TextInput
+                            value={amount}
+                            onChangeText={text => setAmount(sanitizeAmountInput(text))}
+                            keyboardType="decimal-pad"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            placeholderTextColor={colors.gray300}
+                            style={styles.amountInput}
+                            testID="amount-display"
+                        />
+                    </Animated.View>
+                    <Animated.View
+                        style={{
+                            alignItems: 'center',
+                            transform: [{ translateX: descriptionShake }],
+                        }}
+                    >
+                        <TextInput
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder={t('expenses.v2.descriptionPlaceholder')}
+                            placeholderTextColor={colors.gray300}
+                            style={styles.descriptionInput}
+                            textAlign="center"
+                            testID="description-input"
+                            returnKeyType="done"
+                        />
+                        <View style={styles.descriptionUnderline} />
+                    </Animated.View>
                 </View>
 
                 <View style={{ marginTop: 22 }}>
@@ -518,6 +667,36 @@ export function AddExpenseScreen() {
                                 onPress={() => setEditorVisible(true)}
                                 payerEyebrow={t('expenses.v2.paidByEyebrow')}
                             />
+                            {splitMode !== 'equal' &&
+                            selectedMemberIds.length > 0 &&
+                            hasValidAmount &&
+                            !unequalCheck.isValid ? (
+                                <Text style={styles.splitErrorText} testID="split-mismatch-error">
+                                    {splitMode === 'percent'
+                                        ? t(
+                                              unequalCheck.difference > 0
+                                                  ? 'expenses.v2.errors.percentUnder'
+                                                  : 'expenses.v2.errors.percentOver',
+                                              {
+                                                  value: String(
+                                                      parseFloat(
+                                                          Math.abs(unequalCheck.difference).toFixed(2),
+                                                      ),
+                                                  ),
+                                              },
+                                          )
+                                        : t(
+                                              unequalCheck.difference > 0
+                                                  ? 'expenses.v2.errors.amountUnder'
+                                                  : 'expenses.v2.errors.amountOver',
+                                              {
+                                                  currency,
+                                                  value: Math.abs(unequalCheck.difference).toFixed(2),
+                                                  total: parsedAmount.toFixed(2),
+                                              },
+                                          )}
+                                </Text>
+                            ) : null}
                             <SplitBreakdownAccordion
                                 members={splitMembersForButton}
                                 currency={currency}
@@ -533,18 +712,25 @@ export function AddExpenseScreen() {
                     ) : null}
                 </View>
 
-                <View style={{ flex: 1 }} />
+            </ScrollView>
 
-                {isEditMode && (
-                    <TouchableOpacity
-                        onPress={() => setShowDeleteDialog(true)}
-                        activeOpacity={0.7}
-                        style={styles.deleteRow}
-                        testID="add-expense-delete"
-                    >
-                        <Text style={styles.deleteText}>{t('common.delete')}</Text>
-                    </TouchableOpacity>
-                )}
+            <View style={styles.footer}>
+                <LinearGradient
+                    pointerEvents="none"
+                    colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']}
+                    locations={[0, 0.55]}
+                    style={StyleSheet.absoluteFill}
+                />
+                <View style={[styles.bottomSaveRow, !canSubmit && { opacity: 0.55 }]}>
+                    <Button
+                        title={t('common.save')}
+                        onPress={handleSavePress}
+                        variant="secondary"
+                        loading={isLoading}
+                        fullWidth={false}
+                        testID="add-expense-submit-bottom"
+                    />
+                </View>
 
                 <View style={styles.metaRow}>
                     <QuietIconPill
@@ -569,8 +755,7 @@ export function AddExpenseScreen() {
                     ) : null}
                 </View>
             </View>
-                </View>
-            </TouchableWithoutFeedback>
+            </View>
 
             {/* Editor sheet */}
             <EditPayerSplitSheet
@@ -601,20 +786,6 @@ export function AddExpenseScreen() {
                     setDatePickerVisible(false);
                 }}
             />
-
-            {/* Delete confirmation */}
-            {isEditMode && (
-                <ConfirmDialog
-                    visible={showDeleteDialog}
-                    title={t('expenses.deleteExpense')}
-                    message={t('expenses.deleteExpenseConfirm')}
-                    confirmText={t('common.delete')}
-                    cancelText={t('common.cancel')}
-                    onConfirm={handleDelete}
-                    onCancel={() => setShowDeleteDialog(false)}
-                    destructive
-                />
-            )}
 
             {isLoading ? (
                 <View style={styles.loadingOverlay} pointerEvents="auto" testID="save-loading-overlay">
@@ -697,8 +868,21 @@ const styles = StyleSheet.create({
     },
     hero: {
         flex: 1,
+    },
+    heroContent: {
+        flexGrow: 1,
         paddingHorizontal: 16,
         paddingTop: 20,
+        paddingBottom: 140,
+    },
+    footer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        backgroundColor: 'transparent',
     },
     heroTop: {
         alignItems: 'center',
@@ -733,6 +917,17 @@ const styles = StyleSheet.create({
         borderRadius: 9999,
         backgroundColor: colors.primaryLight,
     },
+    bottomSaveRow: {
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    splitErrorText: {
+        marginTop: 8,
+        textAlign: 'center',
+        fontSize: 13,
+        fontWeight: '500',
+        color: colors.error,
+    },
     metaRow: {
         flexDirection: 'row',
         justifyContent: 'center',
@@ -740,16 +935,6 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingTop: 16,
         marginBottom: 8,
-    },
-    deleteRow: {
-        alignSelf: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-    },
-    deleteText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: colors.error,
     },
     loadingOverlay: {
         ...StyleSheet.absoluteFillObject,

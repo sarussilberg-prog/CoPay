@@ -137,6 +137,7 @@ export async function createExpense(dto: CreateExpenseDto): Promise<Expense | nu
                 receipt_url: dto.receiptUrl,
                 paid_by: dto.paidBy,
                 created_by: createdBy,
+                split_mode: dto.splitMode ?? 'equal',
             })
             .select()
             .single();
@@ -221,6 +222,7 @@ export async function updateExpense(id: string, dto: UpdateExpenseDto): Promise<
         }
         if (dto.receiptUrl !== undefined) patch.receipt_url = dto.receiptUrl;
         if (dto.paidBy !== undefined) patch.paid_by = dto.paidBy;
+        if (dto.splitMode !== undefined) patch.split_mode = dto.splitMode;
 
         if (Object.keys(patch).length === 0 && !dto.splits) {
             return existing;

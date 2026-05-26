@@ -29,8 +29,10 @@ export const ActivityItem = React.memo(function ActivityItem({
     const language = useAppLanguage();
     const pressable = Boolean(onPress);
 
+    // Use createdAt (timestamptz) — activityDate maps to expense_date/settlement_date
+    // which are DATE columns (no time), so they always render as midnight UTC → 03:00 IST.
     const timestamp = formatFeedDateTime(
-        new Date(activity.activityDate),
+        new Date(activity.createdAt),
         language,
     );
 

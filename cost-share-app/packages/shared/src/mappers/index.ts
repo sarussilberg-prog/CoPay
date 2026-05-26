@@ -8,6 +8,7 @@ import {
     GroupMessage,
     Expense,
     ExpenseSplit,
+    ExpenseSplitMode,
     Settlement,
 } from '../types';
 
@@ -86,6 +87,9 @@ export const groupWithMembersFromRow = (
     };
 };
 
+const isExpenseSplitMode = (v: unknown): v is ExpenseSplitMode =>
+    v === 'equal' || v === 'percent' || v === 'amount';
+
 export const expenseFromRow = (r: Row): Expense => ({
     id: r.id as string,
     groupId: r.group_id as string,
@@ -97,6 +101,10 @@ export const expenseFromRow = (r: Row): Expense => ({
     receiptUrl: (r.receipt_url as string) ?? undefined,
     paidBy: r.paid_by as string,
     createdBy: r.created_by as string,
+    // Optional during rollout: rows from a DB that hasn't run the
+    // 2026-05-26 migration won't have split_mode. Edit-mode UI falls back
+    // to inference when this is undefined.
+    splitMode: isExpenseSplitMode(r.split_mode) ? r.split_mode : undefined,
     isDeleted: r.is_deleted as boolean,
     createdAt: toDate(r.created_at),
     updatedAt: toDate(r.updated_at),

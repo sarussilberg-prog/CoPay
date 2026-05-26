@@ -69,12 +69,12 @@ export function ActivityFeedScreen() {
     const {
         data,
         isLoading,
-        isRefetching,
         isFetchingNextPage,
         isError,
         fetchNextPage,
         hasNextPage,
         refetch,
+        isStale,
     } = useActivityQuery();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +85,10 @@ export function ActivityFeedScreen() {
         Record<string, GroupMemberLite>
     >({});
     const [pendingDelete, setPendingDelete] = useState(false);
+    // Show the pull-to-refresh spinner ONLY for explicit user pulls.
+    // Background refetches (realtime invalidation, focus-when-stale) update
+    // the list silently — they must not flip the spinner on.
+    const [userRefreshing, setUserRefreshing] = useState(false);
     const canLoadMoreRef = useRef(false);
 
     const activities = useMemo(
@@ -94,13 +98,23 @@ export function ActivityFeedScreen() {
 
     const handleRefresh = useCallback(async () => {
         canLoadMoreRef.current = false;
-        await refetch();
+        setUserRefreshing(true);
+        try {
+            await refetch();
+        } finally {
+            setUserRefreshing(false);
+        }
     }, [refetch]);
 
+    // Only refetch on focus when cached data is stale (older than the
+    // query's staleTime). Without this gate, every tab focus forced a
+    // visible refresh-spinner reload of unchanged data.
     useFocusEffect(
         useCallback(() => {
-            void refetch();
-        }, [refetch]),
+            if (isStale) {
+                void refetch();
+            }
+        }, [refetch, isStale]),
     );
 
     const handleLoadMore = useCallback(() => {
@@ -404,7 +418,7 @@ export function ActivityFeedScreen() {
                 removeClippedSubviews
                 refreshControl={
                     <RefreshControl
-                        refreshing={isRefetching}
+                        refreshing={userRefreshing}
                         onRefresh={handleRefresh}
                         tintColor={colors.primary}
                     />

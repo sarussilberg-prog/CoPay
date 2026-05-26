@@ -60,7 +60,8 @@ export function filterAndSortActivities(
     let list = [...items];
 
     if (query.types.length > 0) {
-        list = list.filter((item) => query.types.includes(item.activityType));
+        const allowed = query.types as readonly string[];
+        list = list.filter((item) => allowed.includes(item.activityType));
     }
 
     if (query.currencies.length > 0) {
@@ -102,12 +103,16 @@ export function filterAndSortActivities(
         });
     }
 
+    // Sort by createdAt (when the row was inserted), not activityDate.
+    // activityDate maps to expense_date / settlement_date, which the user
+    // can backdate when creating an expense — using it for sort would let
+    // a freshly logged expense get buried under older rows.
     list.sort((a, b) => {
         switch (query.sortBy) {
             case 'dateAsc':
                 return (
-                    new Date(a.activityDate).getTime() -
-                    new Date(b.activityDate).getTime()
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime()
                 );
             case 'amountDesc':
                 return b.amount - a.amount;
@@ -116,8 +121,8 @@ export function filterAndSortActivities(
             case 'dateDesc':
             default:
                 return (
-                    new Date(b.activityDate).getTime() -
-                    new Date(a.activityDate).getTime()
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
                 );
         }
     });

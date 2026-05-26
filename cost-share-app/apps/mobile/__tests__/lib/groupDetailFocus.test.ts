@@ -4,17 +4,21 @@ import type { FeedItem } from '@cost-share/shared';
 const feed: FeedItem[] = [
     {
         kind: 'message',
+        sortAt: new Date(),
         message: {
             id: 'm1',
             groupId: 'g1',
             userId: 'u1',
             body: 'hi',
+            editedAt: null,
+            isDeleted: false,
             createdAt: new Date(),
             updatedAt: new Date(),
         },
     },
     {
         kind: 'expense',
+        sortAt: new Date(),
         expense: {
             id: 'e1',
             groupId: 'g1',
@@ -25,11 +29,12 @@ const feed: FeedItem[] = [
             expenseDate: new Date(),
             paidBy: 'u1',
             createdBy: 'u1',
+            isDeleted: false,
             createdAt: new Date(),
             updatedAt: new Date(),
             splits: [],
             myDelta: 0,
-            myDeltaState: 'even',
+            myDeltaState: 'settled',
         },
     },
 ];

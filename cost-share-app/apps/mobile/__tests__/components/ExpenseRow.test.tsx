@@ -17,8 +17,20 @@ const baseExpense: ExpenseWithDelta = {
     createdAt: new Date('2026-05-12'),
     updatedAt: new Date('2026-05-12'),
     splits: [
-        { id: 's1', expenseId: 'e1', userId: 'me', amount: 10 },
-        { id: 's2', expenseId: 'e1', userId: 'bob', amount: 20 },
+        {
+            id: 's1',
+            expenseId: 'e1',
+            userId: 'me',
+            amount: 10,
+            createdAt: new Date('2026-05-12'),
+        },
+        {
+            id: 's2',
+            expenseId: 'e1',
+            userId: 'bob',
+            amount: 20,
+            createdAt: new Date('2026-05-12'),
+        },
     ],
     myDelta: 20,
     myDeltaState: 'lent',

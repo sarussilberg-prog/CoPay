@@ -19,9 +19,27 @@ const base: ExpenseWithSplits = {
     createdAt: new Date(),
     updatedAt: new Date(),
     splits: [
-        { id: 's1', expenseId: 'e1', userId: 'alice', amount: 30 },
-        { id: 's2', expenseId: 'e1', userId: 'me', amount: 30 },
-        { id: 's3', expenseId: 'e1', userId: 'bob', amount: 30 },
+        {
+            id: 's1',
+            expenseId: 'e1',
+            userId: 'alice',
+            amount: 30,
+            createdAt: new Date(),
+        },
+        {
+            id: 's2',
+            expenseId: 'e1',
+            userId: 'me',
+            amount: 30,
+            createdAt: new Date(),
+        },
+        {
+            id: 's3',
+            expenseId: 'e1',
+            userId: 'bob',
+            amount: 30,
+            createdAt: new Date(),
+        },
     ],
 };
 
@@ -48,7 +66,15 @@ describe('feedExpensePerspective', () => {
     it('detects paid-for-you only when the user is the sole splitter', () => {
         const solo = {
             ...base,
-            splits: [{ id: 's1', expenseId: 'e1', userId: 'me', amount: 90 }],
+            splits: [
+                {
+                    id: 's1',
+                    expenseId: 'e1',
+                    userId: 'me',
+                    amount: 90,
+                    createdAt: new Date(),
+                },
+            ],
         };
         const params = resolveExpenseFeedPerspective(solo, 'me');
         expect(params.perspective).toBe('paidForYou');

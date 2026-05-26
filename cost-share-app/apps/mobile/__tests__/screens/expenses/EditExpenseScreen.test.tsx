@@ -88,6 +88,7 @@ const expense = {
     expenseDate: new Date('2026-05-01'),
     paidBy: 'u1',
     createdBy: 'u1',
+    splitMode: 'equal' as const,
     isDeleted: false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -125,11 +126,6 @@ describe('AddExpenseScreen — edit mode (v2)', () => {
         expect(await findByDisplayValue('5')).toBeTruthy();
     });
 
-    it('shows the Delete row in edit mode', async () => {
-        const { findByTestId } = renderWithQuery(<AddExpenseScreen />);
-        expect(await findByTestId('add-expense-delete')).toBeTruthy();
-    });
-
     it('calls updateExpense with new values on Save', async () => {
         mockUpdate.mockResolvedValueOnce({ ...expense, description: 'Tea' });
         const { findByDisplayValue, findByTestId } = renderWithQuery(<AddExpenseScreen />);
@@ -144,9 +140,50 @@ describe('AddExpenseScreen — edit mode (v2)', () => {
         );
     });
 
+    it('opens the editor in percent mode for an expense persisted as percent — even when amounts happen to be equal', async () => {
+        // Regression for split-mode persistence (2026-05-26):
+        // $50/$50 of $100 is indistinguishable between 'equal', 'percent 50/50',
+        // and 'amount 50/50' purely from the stored amounts. Trust the stored mode.
+        mockGet.mockResolvedValue({
+            expense: { ...expense, amount: 100, splitMode: 'percent' },
+            splits: [
+                { id: 's1', expenseId: 'e1', userId: 'u1', amount: 50, createdAt: new Date() },
+                { id: 's2', expenseId: 'e1', userId: 'u2', amount: 50, createdAt: new Date() },
+            ],
+        });
+
+        const { findByTestId } = renderWithQuery(<AddExpenseScreen />);
+        // Open the editor and confirm the percent segment is selected and inputs are %.
+        fireEvent.press(await findByTestId('combined-payer-split'));
+        const percentInput = await findByTestId('split-input-u1');
+        expect(percentInput.props.value).toBe('50');
+        expect(percentInput.props.placeholder).toBe('0');  // percent placeholder
+    });
+
+    it('falls back to inference when expense.splitMode is undefined (transitional rows)', async () => {
+        // Until the migration runs on both DBs, some rows lack split_mode.
+        // The editor should keep working via the legacy inference path.
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        mockGet.mockResolvedValue({
+            expense: { ...expense, amount: 100, splitMode: undefined },
+            splits: [
+                { id: 's1', expenseId: 'e1', userId: 'u1', amount: 60, createdAt: new Date() },
+                { id: 's2', expenseId: 'e1', userId: 'u2', amount: 40, createdAt: new Date() },
+            ],
+        });
+
+        const { findByTestId } = renderWithQuery(<AddExpenseScreen />);
+        fireEvent.press(await findByTestId('combined-payer-split'));
+        // 60/100 is a clean percent so legacy inference picks 'percent' mode.
+        const input = await findByTestId('split-input-u1');
+        expect(input.props.placeholder).toBe('0');
+        expect(warnSpy).toHaveBeenCalled();
+        warnSpy.mockRestore();
+    });
+
     it('switching from unequal to equal sends equal splits without amounts', async () => {
         mockGet.mockResolvedValue({
-            expense: { ...expense, amount: 100 },
+            expense: { ...expense, amount: 100, splitMode: 'amount' as const },
             splits: [
                 { id: 's1', expenseId: 'e1', userId: 'u1', amount: 60, createdAt: new Date() },
                 { id: 's2', expenseId: 'e1', userId: 'u2', amount: 40, createdAt: new Date() },

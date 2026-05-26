@@ -2,9 +2,28 @@
  * Pure helpers for custom expense split inputs (amounts / percentages).
  */
 
-import { ExpenseSplitInput } from '@cost-share/shared';
+import { ExpenseSplitInput, ExpenseSplitMode } from '@cost-share/shared';
 
 export type UnequalSplitMode = 'percent' | 'amount';
+
+/**
+ * UI split mode kept local to the editor (the editor uses 'exact' as the
+ * label for amount-mode). Mirrors the type in EditPayerSplitSheet but
+ * declared here to avoid a UI → lib import direction.
+ */
+export type UiSplitMode = 'equal' | 'percent' | 'exact';
+
+export function uiToStoredSplitMode(mode: UiSplitMode): ExpenseSplitMode {
+    if (mode === 'equal') return 'equal';
+    if (mode === 'percent') return 'percent';
+    return 'amount';
+}
+
+export function storedSplitModeToUi(mode: ExpenseSplitMode): UiSplitMode {
+    if (mode === 'equal') return 'equal';
+    if (mode === 'percent') return 'percent';
+    return 'exact';
+}
 
 export const SPLIT_TOLERANCE = 0.01;
 
@@ -103,4 +122,30 @@ export function inferUnequalModeFromSplits(
 
 export function emptySplitValues(memberIds: string[]): Record<string, string> {
     return Object.fromEntries(memberIds.map(id => [id, '']));
+}
+
+/**
+ * Reconstruct the editor's `unequalValues` map from stored splits for a known
+ * non-equal mode. Used by edit-mode prefill once `splitMode` is persisted on
+ * the expense row — replaces the lossy `inferUnequalModeFromSplits` guess.
+ *
+ * Percent values are rounded to two decimals to match how the editor renders
+ * them; amount values are formatted as plain `toFixed(2)` strings.
+ */
+export function buildUnequalValuesFromStored(
+    mode: UnequalSplitMode,
+    splits: { userId: string; amount: number }[],
+    totalAmount: number,
+): Record<string, string> {
+    const values: Record<string, string> = {};
+    splits.forEach(s => {
+        if (mode === 'percent') {
+            const pct =
+                totalAmount > 0 ? Number(((s.amount / totalAmount) * 100).toFixed(2)) : 0;
+            values[s.userId] = String(pct);
+        } else {
+            values[s.userId] = s.amount.toFixed(2);
+        }
+    });
+    return values;
 }

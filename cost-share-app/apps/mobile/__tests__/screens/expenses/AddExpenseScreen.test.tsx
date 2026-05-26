@@ -172,6 +172,35 @@ describe('AddExpenseScreen — v2', () => {
                 amount: 10,
                 paidBy: 'u1',
                 expenseDate: expect.any(Date),
+                splitMode: 'equal',
+            }),
+        );
+    });
+
+    it('passes splitMode=percent when the user creates a percent-mode expense', async () => {
+        mockCreateExpense.mockResolvedValueOnce({ id: 'e1' } as any);
+        const { findByTestId } = renderWithQuery(<AddExpenseScreen />);
+
+        fireEvent.changeText(await findByTestId('description-input'), 'Dinner');
+        fireEvent.changeText(await findByTestId('amount-display'), '100');
+
+        // Switch to percent mode and enter a 60/40 split.
+        fireEvent.press(await findByTestId('combined-payer-split'));
+        fireEvent.press(await findByTestId('split-mode-percent'));
+        fireEvent.changeText(await findByTestId('split-input-u1'), '60');
+        fireEvent.changeText(await findByTestId('split-input-u2'), '40');
+        fireEvent.press(await findByTestId('edit-payer-split-done'));
+
+        fireEvent.press(await findByTestId('add-expense-submit'));
+
+        await waitFor(() => expect(mockCreateExpense).toHaveBeenCalled());
+        expect(mockCreateExpense).toHaveBeenCalledWith(
+            expect.objectContaining({
+                splitMode: 'percent',
+                splits: [
+                    { userId: 'u1', amount: 60 },
+                    { userId: 'u2', amount: 40 },
+                ],
             }),
         );
     });

@@ -80,10 +80,25 @@ export interface Expense {
     receiptUrl?: string;
     paidBy: string;  // Profile ID - who paid
     createdBy: string;  // Profile ID - who recorded
+    /**
+     * Mode the creator chose when configuring the split. Stored verbatim
+     * so opening the editor for an existing expense restores the original
+     * intent (instead of guessing from per-member amounts). Optional during
+     * rollout — older DB rows pre-migration may not have this column.
+     */
+    splitMode?: ExpenseSplitMode;
     isDeleted: boolean;  // Soft delete flag
     createdAt: Date;
     updatedAt: Date;
 }
+
+/**
+ * How an expense's total is split among participants.
+ *   'equal'   — every participant owes total / n
+ *   'percent' — each participant owes a percentage of total
+ *   'amount'  — each participant owes an explicit currency amount
+ */
+export type ExpenseSplitMode = 'equal' | 'percent' | 'amount';
 
 /**
  * ExpenseSplit entity - How an expense is split among participants
@@ -336,6 +351,8 @@ export interface CreateExpenseDto {
     expenseDate?: Date;  // Defaults to today
     paidBy: string;  // Profile ID
     splits: ExpenseSplitInput[];  // How to split the expense
+    /** Split mode the creator picked. Service layer defaults to 'equal' when omitted. */
+    splitMode?: ExpenseSplitMode;
     receiptUrl?: string;
 }
 
@@ -359,6 +376,7 @@ export interface UpdateExpenseDto {
     receiptUrl?: string;
     paidBy?: string;
     splits?: ExpenseSplitInput[];
+    splitMode?: ExpenseSplitMode;
 }
 
 /**
