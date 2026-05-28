@@ -65,7 +65,7 @@ export function GroupsListScreen() {
     const groups = useAppStore(s => s.groups);
     const groupBalances = useAppStore(s => s.groupBalances);
 
-    const balanceDisplays = useGroupBalancesDisplay(groupBalances);
+    const balanceDisplays = useGroupBalancesDisplay(groupBalances, groups);
     const balanceNetsByGroup = useMemo(() => {
         const out: Record<string, { net: number }> = {};
         balanceDisplays.forEach((display, groupId) => {

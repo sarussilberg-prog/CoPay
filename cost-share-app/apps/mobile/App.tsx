@@ -128,6 +128,7 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
     const init = async () => {
       try {
@@ -151,6 +152,25 @@ export default function App() {
         }
 
         setupSupabaseAuthAutoRefresh();
+
+        // Register after hydrateAuthSession so we are the only boot-time listener and
+        // do not clear the store on a premature null before AsyncStorage is read.
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+          if (!nextSession) {
+            setSession(null);
+            return;
+          }
+
+          if (event === 'SIGNED_IN') {
+            setTimeout(() => {
+              void acceptSessionIfAllowed(nextSession);
+            }, 0);
+            return;
+          }
+
+          setSession(nextSession);
+        });
+        authSubscription = subscription;
       } catch (e) {
         if (isInvalidRefreshTokenError(e)) {
           await clearStaleAuthSession();
@@ -166,25 +186,9 @@ export default function App() {
 
     void init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (!nextSession) {
-        setSession(null);
-        return;
-      }
-
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        setTimeout(() => {
-          void acceptSessionIfAllowed(nextSession);
-        }, 0);
-        return;
-      }
-
-      setSession(nextSession);
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      authSubscription?.unsubscribe();
     };
   }, [acceptSessionIfAllowed, processOAuthCallbackUrl, setSession]);
 

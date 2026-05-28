@@ -617,7 +617,17 @@
         "to": "אל",
         "swap": "החלף",
         "method": "אמצעי תשלום",
-        "recordPaymentWithAmount": "רשום תשלום · {{currencyAndAmount}}"
+        "methodType": "סוג אמצעי תשלום",
+        "paymentApps": "אפליקציות תשלום",
+        "paymentAppsSubtitle": "פותח את האפליקציה בטלפון שלך",
+        "paymentAppLabels": {
+            "bit": "ביט",
+            "paybox": "PayBox"
+        },
+        "recordPaymentWithAmount": "רשום תשלום · {{currencyAndAmount}}",
+        "openPaymentApp": "פתח {{app}}",
+        "paymentAppErrorTitle": "לא ניתן לפתוח תשלום",
+        "paymentAppOpenFailed": "פתיחת אפליקציית התשלום נכשלה. ודא שהאפליקציה מותקנת."
     },
     "feed": {
         "settlement": "{{from}} שילם/ה ל-{{to}} {{amount}}",

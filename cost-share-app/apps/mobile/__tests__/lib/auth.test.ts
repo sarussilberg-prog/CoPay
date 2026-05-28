@@ -47,11 +47,20 @@ describe('assertProfileActiveWithTimeout', () => {
         jest.useRealTimers();
     });
 
-    it('returns deactivated when is_caller_active RPC is false', async () => {
+    it('returns deactivated when is_caller_active RPC is false and profile is inactive', async () => {
         mockRpc.mockResolvedValue({ data: false, error: null });
+        mockMaybeSingle.mockResolvedValue({ data: { is_active: false }, error: null });
         await expect(assertProfileActiveWithTimeout(100)).resolves.toBe('deactivated');
         expect(mockClearStaleAuthSession).toHaveBeenCalled();
         expect(mockSetSession).toHaveBeenCalledWith(null);
+    });
+
+    it('returns active when is_caller_active RPC is false but profile row is active', async () => {
+        mockRpc.mockResolvedValue({ data: false, error: null });
+        mockMaybeSingle.mockResolvedValue({ data: { is_active: true }, error: null });
+        await expect(assertProfileActiveWithTimeout(100)).resolves.toBe('active');
+        expect(mockClearStaleAuthSession).not.toHaveBeenCalled();
+        expect(mockSetSession).not.toHaveBeenCalled();
     });
 
     it('returns deactivated when profile is inactive', async () => {
@@ -103,6 +112,7 @@ describe('isAuthSessionAllowed', () => {
 
     it('returns false only when the server explicitly says the account is deactivated', async () => {
         mockRpc.mockResolvedValue({ data: false, error: null });
+        mockMaybeSingle.mockResolvedValue({ data: { is_active: false }, error: null });
         await expect(isAuthSessionAllowed()).resolves.toBe(false);
     });
 

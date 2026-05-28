@@ -600,8 +600,18 @@
         "from": "From",
         "to": "To",
         "swap": "Swap",
-        "method": "Method",
-        "recordPaymentWithAmount": "Record payment · {{currencyAndAmount}}"
+        "method": "Payment method",
+        "methodType": "Payment method type",
+        "paymentApps": "Payment apps",
+        "paymentAppsSubtitle": "Opens the app on your phone",
+        "paymentAppLabels": {
+            "bit": "Bit",
+            "paybox": "PayBox"
+        },
+        "recordPaymentWithAmount": "Record payment · {{currencyAndAmount}}",
+        "openPaymentApp": "Open {{app}}",
+        "paymentAppErrorTitle": "Can't open payment",
+        "paymentAppOpenFailed": "Couldn't open the payment app. Make sure it is installed."
     },
     "feed": {
         "settlement": "{{from}} paid {{to}} {{amount}}",

@@ -79,3 +79,29 @@ export function collectGroupFxCurrencies(
     }
     return [...set].sort((a, b) => a.localeCompare(b));
 }
+
+/**
+ * For the groups list: each group's `defaultCurrency` is the display base;
+ * map base → balance currencies that need FX conversion into that base.
+ */
+export function collectGroupListFxBases(
+    balances: GroupBalance[],
+    defaultCurrencyByGroupId: Record<string, string | undefined>,
+): Map<string, string[]> {
+    const byBase = new Map<string, Set<string>>();
+    for (const b of balances) {
+        const base = defaultCurrencyByGroupId[b.groupId];
+        if (!base || b.currency === base || Math.abs(b.net) < 0.01) continue;
+        let set = byBase.get(base);
+        if (!set) {
+            set = new Set();
+            byBase.set(base, set);
+        }
+        set.add(b.currency);
+    }
+    const out = new Map<string, string[]>();
+    byBase.forEach((set, base) => {
+        out.set(base, [...set].sort((a, c) => a.localeCompare(c)));
+    });
+    return out;
+}

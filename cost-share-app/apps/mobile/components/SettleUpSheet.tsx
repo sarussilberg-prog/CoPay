@@ -10,7 +10,7 @@
  *   └────────────────────────────────────────┘
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Pressable, TextInput } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import type { GroupMemberLite, PairwiseDebt, PaymentMethod } from '@cost-share/shared';
@@ -20,8 +20,10 @@ import { AppIcon } from './AppIcon';
 import type { AppIconName } from './AppIcon';
 import { BottomSheetShell } from './BottomSheetShell';
 import { DatePickerPopup } from './expenseV2/DatePickerPopup';
-import { useRtlLayout } from '../hooks/useRtlLayout';
+import { rtlRowStyle, useRtlLayout } from '../hooks/useRtlLayout';
 import { getAvatarUrlForMember } from '../lib/userDisplay';
+import { openPaymentApp, type IsraeliPaymentApp } from '../lib/israeliPaymentLinks';
+import { PaymentAppLogo } from './settleUp/PaymentAppLogo';
 
 export interface SettleUpFormValues {
     fromUserId: string;
@@ -52,18 +54,31 @@ interface SettleUpSheetProps {
     onClose: () => void;
 }
 
-type MethodKey = Extract<PaymentMethod, 'cash' | 'bank_transfer' | 'paypal' | 'other'>;
+type MethodKey = Extract<PaymentMethod, 'cash' | 'credit_card' | 'paypal'>;
 
 const METHOD_TILES: ReadonlyArray<{ key: MethodKey; icon: AppIconName }> = [
     { key: 'cash', icon: 'cash-outline' },
-    { key: 'bank_transfer', icon: 'card-outline' },
+    { key: 'credit_card', icon: 'card-outline' },
     { key: 'paypal', icon: 'logo-paypal' },
-    { key: 'other', icon: 'ellipsis-horizontal' },
 ];
 
+const PAYMENT_APPS: ReadonlyArray<IsraeliPaymentApp> = ['bit', 'paybox'];
+
+const DEFAULT_METHOD: MethodKey = 'credit_card';
+
+function normalizeMethodKey(method: PaymentMethod | undefined): MethodKey {
+    if (method === 'cash' || method === 'credit_card' || method === 'paypal') {
+        return method;
+    }
+    return DEFAULT_METHOD;
+}
+
 const formatAmountText = (n: number) => (Number.isFinite(n) ? n.toFixed(2) : '');
-const formatShortDate = (d: Date) =>
-    d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const formatShortDate = (d: Date, locale: string) =>
+    d.toLocaleDateString(locale === 'he' ? 'he-IL' : locale, { month: 'short', day: 'numeric' });
+
+/** Space for the fixed bottom dock (date chip + record button). */
+const BOTTOM_DOCK_PADDING = 132;
 
 export function SettleUpSheet({
     visible,
@@ -77,7 +92,7 @@ export function SettleUpSheet({
     onSubmit,
     onClose,
 }: SettleUpSheetProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const isRtl = useRtlLayout();
 
     const [fromUserId, setFromUserId] = useState(initial.fromUserId);
@@ -85,7 +100,7 @@ export function SettleUpSheet({
     const [currency] = useState(initial.currency);
     const [amountText, setAmountText] = useState(formatAmountText(initial.amount));
     const [paymentMethod, setPaymentMethod] = useState<MethodKey>(
-        (initial.paymentMethod as MethodKey | undefined) ?? 'bank_transfer'
+        normalizeMethodKey(initial.paymentMethod),
     );
     const [settlementDate, setSettlementDate] = useState<Date>(
         initial.settlementDate ?? new Date()
@@ -97,7 +112,7 @@ export function SettleUpSheet({
         setFromUserId(initial.fromUserId);
         setToUserId(initial.toUserId);
         setAmountText(formatAmountText(initial.amount));
-        setPaymentMethod((initial.paymentMethod as MethodKey | undefined) ?? 'bank_transfer');
+        setPaymentMethod(normalizeMethodKey(initial.paymentMethod));
         setSettlementDate(initial.settlementDate ?? new Date());
     }, [
         visible,
@@ -165,33 +180,34 @@ export function SettleUpSheet({
             saveDisabled={recordDisabled}
         >
             <View className="flex-1">
-                <SettleUpHero
-                    fromMember={fromMember}
-                    toMember={toMember}
-                    currency={currency}
-                    amountText={amountText}
-                    onAmountChange={setAmountText}
-                    onSwap={handleSwap}
-                    groupName={groupName}
-                    isRtl={isRtl}
-                />
+                <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ paddingBottom: BOTTOM_DOCK_PADDING }}
+                    keyboardShouldPersistTaps="handled"
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={false}
+                >
+                    <SettleUpHero
+                        fromMember={fromMember}
+                        toMember={toMember}
+                        currency={currency}
+                        amountText={amountText}
+                        onAmountChange={setAmountText}
+                        onSwap={handleSwap}
+                        groupName={groupName}
+                        isRtl={isRtl}
+                    />
 
-                <View className="px-4 pt-5">
-                    <Text
-                        className="text-[9px] font-bold text-gray-400 uppercase mb-2"
-                        style={{ letterSpacing: 0.06 * 9 }}
-                    >
-                        {t('settleUp.method')}
-                    </Text>
-                    <MethodTiles
+                    <PaymentMethodSection
                         selected={paymentMethod}
                         onSelect={setPaymentMethod}
-                        t={t}
+                        isRtl={isRtl}
                     />
-                </View>
+                </ScrollView>
 
                 <SettleUpBottomDock
                     settlementDate={settlementDate}
+                    locale={i18n.language}
                     onOpenDatePicker={() => setDatePickerOpen(true)}
                     onRecord={handleSubmit}
                     recordDisabled={recordDisabled}
@@ -253,7 +269,7 @@ function SettleUpHero({
                         style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
                     >
                         <AppIcon name="checkmark-circle" size={12} color="#FFFFFF" />
-                        <Text className="text-white text-[11px] font-semibold ml-1">
+                        <Text className="text-white text-[11px] font-semibold ms-1">
                             {t('settleUp.newPayment')}
                         </Text>
                     </View>
@@ -286,7 +302,7 @@ function SettleUpHero({
                             }}
                         >
                             <Text
-                                className="text-[11px] font-bold mr-1.5"
+                                className="text-[11px] font-bold me-1.5"
                                 style={{
                                     color: 'rgba(255,255,255,0.78)',
                                     letterSpacing: 0.04 * 11,
@@ -306,7 +322,7 @@ function SettleUpHero({
                                     fontWeight: '700',
                                     fontVariant: ['tabular-nums'],
                                     letterSpacing: -0.02 * 26,
-                                    marginLeft: 6,
+                                    marginStart: 6,
                                     minWidth: 80,
                                     padding: 0,
                                     textAlign: 'center',
@@ -337,7 +353,7 @@ function SettleUpHero({
                             accessibilityLabel={t('settleUp.swap')}
                         >
                             <AppIcon name="swap-horizontal-outline" size={11} color="#FFFFFF" />
-                            <Text className="text-white text-[10px] font-bold ml-1">
+                            <Text className="text-white text-[10px] font-bold ms-1">
                                 {t('settleUp.swap')}
                             </Text>
                         </Pressable>
@@ -391,49 +407,182 @@ function FlowAvatar({ member, label }: { member: GroupMemberLite | undefined; la
     );
 }
 
-/* ----- Method tiles -------------------------------------------------------- */
+/* ----- Payment method + app launchers -------------------------------------- */
+
+interface PaymentMethodSectionProps {
+    selected: MethodKey;
+    onSelect: (m: MethodKey) => void;
+    isRtl: boolean;
+}
+
+function PaymentMethodSection({ selected, onSelect, isRtl }: PaymentMethodSectionProps) {
+    const { t } = useTranslation();
+    const showAppLaunchers = Platform.OS === 'ios' || Platform.OS === 'android';
+
+    return (
+        <View className="px-4 pt-5 self-stretch">
+            {showAppLaunchers ? (
+                <>
+                    <SectionLabel
+                        isRtl={isRtl}
+                        title={t('settleUp.paymentApps')}
+                        subtitle={t('settleUp.paymentAppsSubtitle')}
+                    />
+                    <PaymentAppTiles t={t} isRtl={isRtl} />
+                    <View
+                        className="my-4 self-stretch"
+                        style={{
+                            height: 1,
+                            backgroundColor: '#E5E7EB',
+                        }}
+                    />
+                </>
+            ) : null}
+
+            <SectionLabel isRtl={isRtl} title={t('settleUp.methodType')} />
+            <MethodTiles selected={selected} onSelect={onSelect} t={t} isRtl={isRtl} />
+        </View>
+    );
+}
+
+function SectionLabel({
+    title,
+    subtitle,
+    isRtl: _isRtl,
+}: {
+    title: string;
+    subtitle?: string;
+    isRtl: boolean;
+}) {
+    return (
+        <View className="mb-2.5 self-stretch">
+            <Text className="text-[11px] font-bold text-gray-600">{title}</Text>
+            {subtitle ? (
+                <Text className="text-[11px] text-gray-400 mt-0.5">{subtitle}</Text>
+            ) : null}
+        </View>
+    );
+}
 
 interface MethodTilesProps {
     selected: MethodKey;
     onSelect: (m: MethodKey) => void;
     t: (key: string) => string;
+    isRtl: boolean;
 }
 
-function MethodTiles({ selected, onSelect, t }: MethodTilesProps) {
+function MethodTiles({ selected, onSelect, t, isRtl }: MethodTilesProps) {
     return (
-        <View className="flex-row" style={{ gap: 10 }}>
-            {METHOD_TILES.map(({ key, icon }) => {
-                const isSelected = key === selected;
-                return (
-                    <Pressable
-                        key={key}
-                        onPress={() => onSelect(key)}
-                        testID={`method-tile-${key}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={t(`settlements.methods.${key}`)}
-                        style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 14,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderWidth: 1,
-                        }}
-                        className={
-                            isSelected
-                                ? 'bg-primary-extra-light border-primary-light'
-                                : 'bg-white border-border-card'
-                        }
-                    >
-                        <AppIcon
-                            name={icon}
-                            size={22}
-                            color={isSelected ? '#3B82F6' : '#374151'}
-                        />
-                    </Pressable>
-                );
-            })}
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+            <View style={[rtlRowStyle(isRtl), { gap: 10 }]}>
+                {METHOD_TILES.map(({ key, icon }) => {
+                    const isSelected = key === selected;
+                    const label = t(`balances.methods.${key}`);
+                    return (
+                        <Pressable
+                            key={key}
+                            onPress={() => onSelect(key)}
+                            testID={`method-tile-${key}`}
+                            accessibilityRole="button"
+                            accessibilityLabel={label}
+                            style={{ alignItems: 'center', width: 64 }}
+                        >
+                            <View
+                                style={{
+                                    width: 56,
+                                    height: 56,
+                                    borderRadius: 14,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderWidth: isSelected ? 2 : 1,
+                                    borderColor: isSelected ? '#3B82F6' : '#E5E7EB',
+                                    backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
+                                }}
+                            >
+                                <AppIcon
+                                    name={icon}
+                                    size={22}
+                                    color={isSelected ? '#3B82F6' : '#374151'}
+                                />
+                            </View>
+                            <Text
+                                className="text-[10px] font-semibold text-gray-600 mt-1"
+                                style={{ textAlign: 'center' }}
+                                numberOfLines={1}
+                            >
+                                {label}
+                            </Text>
+                        </Pressable>
+                    );
+                })}
+            </View>
+        </ScrollView>
+    );
+}
+
+function PaymentAppTiles({ t, isRtl }: { t: (key: string) => string; isRtl: boolean }) {
+    const handleOpenApp = useCallback(
+        async (app: IsraeliPaymentApp) => {
+            try {
+                await openPaymentApp(app);
+            } catch {
+                Alert.alert(t('settleUp.paymentAppErrorTitle'), t('settleUp.paymentAppOpenFailed'));
+            }
+        },
+        [t],
+    );
+
+    return (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
+            <View style={[rtlRowStyle(isRtl), { gap: 12 }]}>
+                {PAYMENT_APPS.map((key) => {
+                    const appLabel = t(`settleUp.paymentAppLabels.${key}`);
+                    const isPaybox = key === 'paybox';
+                    return (
+                        <Pressable
+                            key={key}
+                            onPress={() => void handleOpenApp(key)}
+                            testID={`payment-app-tile-${key}`}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('settleUp.openPaymentApp', { app: appLabel })}
+                            style={{ alignItems: 'center', width: 72 }}
+                        >
+                            <View
+                                style={{
+                                    width: 72,
+                                    height: 72,
+                                    borderRadius: 16,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderWidth: isPaybox ? 0 : 1,
+                                    borderColor: '#E5E7EB',
+                                    backgroundColor: isPaybox ? '#5BC8F5' : '#FFFFFF',
+                                    overflow: 'hidden',
+                                    shadowColor: '#000',
+                                    shadowOpacity: 0.06,
+                                    shadowRadius: 8,
+                                    shadowOffset: { width: 0, height: 2 },
+                                }}
+                            >
+                                {isPaybox ? (
+                                    <PaymentAppLogo app={key} size={72} />
+                                ) : (
+                                    <PaymentAppLogo app={key} size={56} />
+                                )}
+                            </View>
+                            {!isPaybox ? (
+                                <Text
+                                    className="text-[10px] font-semibold text-gray-600 mt-1"
+                                    numberOfLines={1}
+                                >
+                                    {appLabel}
+                                </Text>
+                            ) : null}
+                        </Pressable>
+                    );
+                })}
+            </View>
+        </ScrollView>
     );
 }
 
@@ -441,6 +590,7 @@ function MethodTiles({ selected, onSelect, t }: MethodTilesProps) {
 
 interface SettleUpBottomDockProps {
     settlementDate: Date;
+    locale: string;
     onOpenDatePicker: () => void;
     onRecord: () => void;
     recordDisabled: boolean;
@@ -449,6 +599,7 @@ interface SettleUpBottomDockProps {
 
 function SettleUpBottomDock({
     settlementDate,
+    locale,
     onOpenDatePicker,
     onRecord,
     recordDisabled,
@@ -456,8 +607,14 @@ function SettleUpBottomDock({
 }: SettleUpBottomDockProps) {
     return (
         <View
-            className="absolute left-0 right-0 bottom-0 bg-white/95 border-t border-border-soft"
-            style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 22 }}
+            className="absolute bottom-0 bg-white/95 border-t border-border-soft"
+            style={{
+                left: 0,
+                right: 0,
+                paddingHorizontal: 16,
+                paddingTop: 10,
+                paddingBottom: 22,
+            }}
         >
             <View className="items-center mb-2">
                 <Pressable
@@ -470,12 +627,12 @@ function SettleUpBottomDock({
                         shadowOffset: { width: 0, height: 1 },
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={formatShortDate(settlementDate)}
+                    accessibilityLabel={formatShortDate(settlementDate, locale)}
                     testID="settle-date-chip"
                 >
                     <AppIcon name="calendar-outline" size={13} color="#4B5563" />
-                    <Text className="text-[12px] font-semibold text-gray-500 mx-1.5">
-                        {formatShortDate(settlementDate)}
+                    <Text className="text-[12px] font-semibold text-gray-500" style={{ marginHorizontal: 6 }}>
+                        {formatShortDate(settlementDate, locale)}
                     </Text>
                     <AppIcon name="chevron-down" size={11} color="#6B7280" />
                 </Pressable>
@@ -511,8 +668,8 @@ function SettleUpBottomDock({
                 <Text
                     className={
                         recordDisabled
-                            ? 'text-[16px] font-bold text-gray-400 ml-2'
-                            : 'text-[16px] font-bold text-white ml-2'
+                            ? 'text-[16px] font-bold text-gray-400 ms-2'
+                            : 'text-[16px] font-bold text-white ms-2'
                     }
                 >
                     {label}

@@ -95,6 +95,7 @@ import {
     useUpdateSettlementMutation,
 } from '../../hooks/queries/useSettlementQueries';
 import { useGroupSimplifiedDebtsByCurrencyQuery } from '../../hooks/queries/useGroupBalancesQueries';
+import { useGroupBalanceDisplay } from '../../hooks/useGroupBalancesDisplay';
 import { AppIcon } from '../../components/AppIcon';
 import { FeedItemDetailSheet } from '../../components/FeedItemDetailSheet';
 import { colors } from '../../theme';
@@ -203,14 +204,18 @@ export function GroupDetailScreen() {
     );
 
     const groupBalance = useAppStore(s => s.groupBalances[groupId]);
+    const balanceDisplay = useGroupBalanceDisplay(
+        groupBalance,
+        displayGroup?.defaultCurrency,
+    );
     const balance = useMemo(() => {
-        const net = groupBalance?.net ?? 0;
+        const net = balanceDisplay?.net ?? 0;
         return {
             net,
-            currency: groupBalance?.currency ?? displayGroup?.defaultCurrency ?? 'USD',
+            currency: balanceDisplay?.currency ?? displayGroup?.defaultCurrency ?? 'USD',
             isSettled: Math.abs(net) < 0.01,
         };
-    }, [groupBalance, displayGroup?.defaultCurrency]);
+    }, [balanceDisplay, displayGroup?.defaultCurrency]);
 
     const noteHasContent = Boolean(displayGroup?.note?.trim());
     const settlementCount = simplifiedEntries.reduce(
@@ -872,6 +877,7 @@ export function GroupDetailScreen() {
                     submitting={updateSettlementMutation.isPending}
                     onSubmit={handleSettlementEditSubmit}
                     onClose={() => setEditingSettlement(null)}
+                    groupName={displayGroup?.name}
                 />
             )}
 

@@ -24,7 +24,12 @@
       "icon": "./assets/icon.png",
       "infoPlist": {
         "CFBundleDisplayName": "Kupa",
-        "CFBundleName": "Kupa"
+        "CFBundleName": "Kupa",
+        "LSApplicationQueriesSchemes": [
+          "bit",
+          "paybox",
+          "PayBox"
+        ]
       }
     },
     "android": {

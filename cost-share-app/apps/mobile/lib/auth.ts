@@ -41,13 +41,10 @@ export async function assertProfileActive(): Promise<ProfileStatus> {
 
     const { data: callerActive, error: rpcError } = await supabase.rpc('is_caller_active');
 
-    if (!rpcError) {
-        if (callerActive === false) {
-            await revokeLocalSession();
-            return 'deactivated';
-        }
-        if (callerActive === true) return 'active';
-    } else {
+    // is_caller_active() returns false for anon callers as well as deactivated users.
+    // When it is false, confirm via the profile row instead of revoking immediately.
+    if (!rpcError && callerActive === true) return 'active';
+    if (rpcError) {
         console.error('assertProfileActive: is_caller_active RPC failed', rpcError);
     }
 

@@ -370,6 +370,9 @@ export async function updateGroup(id: string, dto: UpdateGroupDto): Promise<Grou
         isAutoArchived: existing?.isAutoArchived ?? false,
     };
     useAppStore.getState().updateGroup(group);
+    if (dto.defaultCurrency !== undefined) {
+        void fetchBalanceSummary();
+    }
     Toast.show({ type: 'success', text1: i18n.t('common.success'), text2: 'Group updated' });
     return group;
 }

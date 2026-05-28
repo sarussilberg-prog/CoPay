@@ -17,6 +17,7 @@ export {
 
 export {
     collectGroupFxCurrencies,
+    collectGroupListFxBases,
     resolveGroupBalanceDisplay,
     type GroupBalanceDisplay,
 } from './groupBalanceDisplay';

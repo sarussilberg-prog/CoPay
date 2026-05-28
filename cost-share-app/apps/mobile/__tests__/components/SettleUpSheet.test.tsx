@@ -7,6 +7,9 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: any) =
 jest.mock('../../components/expenseV2/DatePickerPopup', () => ({
     DatePickerPopup: () => null,
 }));
+jest.mock('../../lib/israeliPaymentLinks', () => ({
+    openPaymentApp: jest.fn(async () => undefined),
+}));
 
 const members: GroupMemberLite[] = [
     { userId: 'u1', displayName: 'You', avatarUrl: undefined, isActive: true },
@@ -66,12 +69,24 @@ describe('SettleUpSheet (redesign)', () => {
         );
     });
 
-    it('defaults paymentMethod to bank_transfer per design', async () => {
+    it('defaults paymentMethod to credit_card per design', async () => {
         const onSubmit = jest.fn();
         const { getByTestId } = renderSheet({ onSubmit });
         fireEvent.press(getByTestId('settle-record-button'));
         expect(onSubmit).toHaveBeenCalledWith(
-            expect.objectContaining({ paymentMethod: 'bank_transfer' })
+            expect.objectContaining({ paymentMethod: 'credit_card' })
+        );
+    });
+
+    it('maps legacy bank_transfer initial value to credit_card', async () => {
+        const onSubmit = jest.fn();
+        const { getByTestId } = renderSheet({
+            onSubmit,
+            initial: { ...baseInitial, paymentMethod: 'bank_transfer' },
+        });
+        fireEvent.press(getByTestId('settle-record-button'));
+        expect(onSubmit).toHaveBeenCalledWith(
+            expect.objectContaining({ paymentMethod: 'credit_card' })
         );
     });
 
