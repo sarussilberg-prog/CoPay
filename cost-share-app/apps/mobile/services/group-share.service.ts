@@ -1,5 +1,5 @@
 /**
- * Group report export as a styled HTML file (tables, RTL, no native modules).
+ * Group report export as a CSV file (UTF-8 BOM, RFC 4180, Excel-compatible).
  */
 
 import { Platform } from 'react-native';
@@ -7,7 +7,7 @@ import { File, Paths } from 'expo-file-system';
 import { Group, FeedItem, GroupMemberLite, PairwiseDebt } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
-import { buildGroupExportHtml } from '../lib/groupExport';
+import { buildGroupExportCsv } from '../lib/groupExportCsv';
 import { downloadTextAsFile } from '../lib/webFileDownload';
 
 export interface GroupExportPayload {
@@ -26,18 +26,18 @@ export function buildGroupExportFilename(group: Group, exportedAt = new Date()):
             .replace(/\s+/g, ' ')
             .trim()
             .slice(0, 60) || 'group';
-    return `${base}-${todayIsoFrom(exportedAt)}.html`;
+    return `${base}-${todayIsoFrom(exportedAt)}.csv`;
 }
 
 function todayIsoFrom(date: Date): string {
     return date.toISOString().slice(0, 10);
 }
 
-async function writeHtmlReport(group: Group, html: string): Promise<string> {
+async function writeCsvReport(group: Group, csv: string): Promise<string> {
     const filename = buildGroupExportFilename(group);
     const file = new File(Paths.cache, filename);
     file.create({ overwrite: true });
-    file.write(html);
+    file.write(csv);
     return file.uri;
 }
 
@@ -47,7 +47,7 @@ export async function exportGroupCsv(
 ): Promise<boolean> {
     try {
         const language = i18n.language === 'he' ? 'he' : 'en';
-        const html = buildGroupExportHtml({
+        const csv = buildGroupExportCsv({
             group,
             feed: payload.feed,
             debts: payload.debts,
@@ -58,15 +58,15 @@ export async function exportGroupCsv(
         });
 
         if (Platform.OS === 'web') {
-            downloadTextAsFile(buildGroupExportFilename(group), html, 'text/html;charset=utf-8');
+            downloadTextAsFile(buildGroupExportFilename(group), csv, 'text/csv;charset=utf-8');
             Toast.show({
                 type: 'success',
-                text1: i18n.t('groups.share.exportTitleHtml'),
+                text1: i18n.t('groups.share.exportTitle'),
             });
             return true;
         }
 
-        const uri = await writeHtmlReport(group, html);
+        const uri = await writeCsvReport(group, csv);
 
         const Sharing = await import('expo-sharing');
         const available = await Sharing.isAvailableAsync();
@@ -78,9 +78,9 @@ export async function exportGroupCsv(
             return false;
         }
         await Sharing.shareAsync(uri, {
-            mimeType: 'text/html',
-            dialogTitle: i18n.t('groups.share.exportTitleHtml'),
-            UTI: 'public.html',
+            mimeType: 'text/csv',
+            dialogTitle: i18n.t('groups.share.exportTitle'),
+            UTI: 'public.comma-separated-values-text',
         });
         return true;
     } catch (error) {

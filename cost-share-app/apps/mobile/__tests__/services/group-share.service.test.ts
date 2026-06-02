@@ -16,7 +16,7 @@ const baseGroup: Group = {
 describe('buildGroupExportFilename', () => {
     it('includes the group name and export date', () => {
         const filename = buildGroupExportFilename(baseGroup, new Date('2026-05-20T12:00:00Z'));
-        expect(filename).toBe('Trip to Paris-2026-05-20.html');
+        expect(filename).toBe('Trip to Paris-2026-05-20.csv');
     });
 
     it('preserves Hebrew group names', () => {
@@ -24,7 +24,7 @@ describe('buildGroupExportFilename', () => {
             { ...baseGroup, name: 'טיול ליוון' },
             new Date('2026-05-20T12:00:00Z'),
         );
-        expect(filename).toBe('טיול ליוון-2026-05-20.html');
+        expect(filename).toBe('טיול ליוון-2026-05-20.csv');
     });
 
     it('replaces filesystem-unsafe characters', () => {
@@ -32,6 +32,6 @@ describe('buildGroupExportFilename', () => {
             { ...baseGroup, name: 'Trip: Paris/2026' },
             new Date('2026-05-20T12:00:00Z'),
         );
-        expect(filename).toBe('Trip_ Paris_2026-2026-05-20.html');
+        expect(filename).toBe('Trip_ Paris_2026-2026-05-20.csv');
     });
 });
