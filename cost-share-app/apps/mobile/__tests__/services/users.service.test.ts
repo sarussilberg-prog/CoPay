@@ -1,4 +1,5 @@
 const mockMaybeSingle = jest.fn();
+const mockRpc = jest.fn();
 const mockClearLocalAuthSession = jest.fn().mockResolvedValue(undefined);
 const mockSetCurrentUser = jest.fn();
 
@@ -9,6 +10,7 @@ jest.mock('../../lib/supabase', () => ({
             eq: jest.fn().mockReturnThis(),
             maybeSingle: mockMaybeSingle,
         })),
+        rpc: (...a: any[]) => mockRpc(...a),
     },
 }));
 
@@ -39,6 +41,8 @@ import { hydrateCurrentUserProfile } from '../../services/users.service';
 describe('hydrateCurrentUserProfile', () => {
     beforeEach(() => {
         mockMaybeSingle.mockReset();
+        mockRpc.mockReset();
+        mockRpc.mockResolvedValue({ data: false, error: null });  // default: non-admin
         mockClearLocalAuthSession.mockClear();
         mockSetCurrentUser.mockClear();
     });
