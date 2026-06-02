@@ -5,7 +5,8 @@
 
 import { Text } from './AppText';
 import React, { useCallback } from 'react';
-import { View, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, TouchableOpacity, Image } from 'react-native';
+import { platformAlert } from '../lib/platformAlert';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { AppIcon } from './AppIcon';
@@ -28,7 +29,7 @@ export function ReceiptImagePicker({
     const pickFromLibrary = useCallback(async () => {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert(
+            platformAlert(
                 t('expenses.receiptPermissionTitle'),
                 t('expenses.receiptLibraryPermissionMessage'),
             );
@@ -49,7 +50,7 @@ export function ReceiptImagePicker({
     const takePhoto = useCallback(async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert(
+            platformAlert(
                 t('expenses.receiptPermissionTitle'),
                 t('expenses.receiptCameraPermissionMessage'),
             );
@@ -68,7 +69,7 @@ export function ReceiptImagePicker({
     }, [onChange, t]);
 
     const openPicker = useCallback(() => {
-        Alert.alert(
+        platformAlert(
             t('expenses.receipt'),
             undefined,
             [

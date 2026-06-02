@@ -24,7 +24,8 @@
         "you": "את/ה",
         "deletedUser": "משתמש שנמחק",
         "unknownUser": "משתמש לא ידוע",
-        "openMail": "פתח מייל"
+        "openMail": "פתח מייל",
+        "linkCopied": "הקישור הועתק ללוח"
     },
     "tabs": {
         "groups": "קופות",
@@ -36,8 +37,96 @@
         "appName": "kupa",
         "signInWithGoogle": "המשך עם Google",
         "subtitle": "חלוקת הוצאות עם חברים",
+        "tagline": "הקופה עם החבר'ה",
+        "description": "קבוצות, הוצאות וסגירת חשבונות — בלי אקסל ובלי חישובים בוואטסאפ.",
+        "feature": {
+            "groups": "קבוצות",
+            "expenses": "הוצאות",
+            "balances": "יתרות"
+        },
         "signInError": "הכניסה נכשלה. אנא נסה שוב.",
         "signingIn": "מתחבר..."
+    },
+    "onboarding": {
+        "skip": "דלג",
+        "next": "הבא",
+        "welcome": {
+            "brand": "פשוט",
+            "tagline": "הקופה עם החבר'ה.\nבלי אקסל, בלי חישובים בוואטסאפ.",
+            "start": "יאללה, נתחיל",
+            "existingAccount": "כבר יש לי חשבון",
+            "card1Title": "דלק לים",
+            "card1Subtitle": "3 מתוך 5 בחלוקה · ₪180",
+            "card2Title": "אברהם חייב לך",
+            "card2Subtitle": "+ ₪770",
+            "card3Title": "הזמנת חברים",
+            "card3Subtitle": "וואטסאפ · לינק · אנשי קשר"
+        },
+        "feature1": {
+            "eyebrow": "חלוקה לפי מי באמת",
+            "title": "בוחרים מי משלם — לא חייבים על כול הקופה",
+            "body": "בכל הוצאה מסמנים מי בחלוקה: דלק רק לשלושה, ארוחה בלי מי שלא הגיע. מי שלא מסומן — לא משלם ולא רואה חוב עליה."
+        },
+        "feature2": {
+            "eyebrow": "מזמינים חברים",
+            "title": "שולחים לינק — והם בפנים",
+            "body": "אנשי קשר, וואטסאפ או לינק לקופה. בלי להסביר איך האפליקציה עובדת — לוחצים ומצטרפים."
+        },
+        "feature3": {
+            "eyebrow": "יתרות בלי משחקים",
+            "title": "רואים מי חייב למי — בלי לחשב בראש",
+            "body": "היתרה מתעדכנת לבד. נגמר ה׳רגע אחשב ואז אגיד לך׳ — הכל גלוי לכולם בקופה.",
+            "balanceLabel": "לטובתך",
+            "balanceAmount": "+ ₪138"
+        },
+        "feature4": {
+            "eyebrow": "סגירת חשבון",
+            "title": "תשלום אחד — וסיימנו",
+            "body": "במקום שלוש העברות בביט, מחשבים את המינימום: מי משלם למי וכמה. לחיצה — וכולם מאוזנים."
+        },
+        "mockup": {
+            "groupName": "טיול לים",
+            "expense1Title": "סופר לשבת",
+            "expense1Sub": "נוה שילם · ₪320 · כל הקופה",
+            "partialSplitCallout": "מסמנים מי בחלוקה — לא חייבים את כולם",
+            "partialSplitBadge": "{{count}} מתוך {{total}} בחלוקה",
+            "expense2Title": "דלק",
+            "expense2Sub": "שילמת · ₪180",
+            "expense3Title": "Airbnb",
+            "expense3Sub": "דנה שילמה · ₪900 · 4 בחלוקה",
+            "invite1Title": "דנה",
+            "invite1Sub": "בקופה",
+            "invite2Title": "נוה",
+            "invite2Sub": "הוזמן · ממתין",
+            "invite3Title": "הזמנה חדשה",
+            "invite3Sub": "וואטסאפ · לינק · אנשי קשר",
+            "debt1Title": "אברהם",
+            "debt1Sub": "חייב לך · ₪770",
+            "debt2Title": "נוה",
+            "debt2Sub": "חייבים לו · ₪120",
+            "balanceDefaultLabel": "היתרה שלך"
+        },
+        "create": {
+            "header": "קופה חדשה",
+            "namePlaceholder": "שם הקופה",
+            "nameInputPlaceholder": "טיול לים · ארוחת שישי · דירה משותפת...",
+            "backgroundLabel": "תמונת רקע",
+            "heroSea": "ים",
+            "heroMountains": "הרים",
+            "heroForest": "יער",
+            "heroFlowers": "פרחים",
+            "heroWaves": "גלים",
+            "uploadHint": "העלאת תמונה",
+            "membersLabel": "חברי הקופה",
+            "adminHint": "מנהל/ת הקופה",
+            "addMembers": "הוסיפו חברים",
+            "inviteHint": "שולחים בוואטסאפ, לינק או מאנשי קשר — וכל החבר'ה בקופה",
+            "submit": "צרו את הקופה",
+            "skipTitle": "לדלג על יצירת קופה?",
+            "skipMessage": "אפשר לפתוח קופה אחר כך ממסך הקופות.",
+            "skipConfirm": "דלג לעכשיו",
+            "findFriendsAfterCreate": "מיד אחרי פתיחת הקופה — מחפשים חברים ושולחים הזמנה"
+        }
     },
     "groups": {
         "title": "קופות",
@@ -47,6 +136,20 @@
         "noGroupsMessage": "פתח את הקופה הראשונה שלך כדי להתחיל לשתף הוצאות",
         "groupName": "שם הקופה",
         "enterGroupName": "הזן שם קופה",
+        "createForm": {
+            "coverNamePlaceholder": "שם הקופה",
+            "namePlaceholder": "טיול לים · ארוחת ערב · דירה משותפת...",
+            "sectionIdentity": "פרטי הקופה",
+            "sectionSettings": "הגדרות",
+            "membersHint": "את/ה כבר בקופה. הוסיפו חברים עכשיו או הזמינו אחר כך בוואטסאפ.",
+            "guidance": {
+                "title": "בואו נפתח את הקופה הראשונה",
+                "subtitle": "אותו טופס כמו בכל פעם — רק עם כמה טיפים קצרים:",
+                "tip1": "תנו שם שכולם מזהים (למשל «טיול לים» או «דירה 2025»).",
+                "tip2": "סוג הקופה קובע את הצבעים — אפשר לשנות אחר כך.",
+                "tip3": "תמונת כריכה וחברים אופציונליים — תמיד אפשר להוסיף מאוחר יותר."
+            }
+        },
         "description": "תיאור",
         "enterDescription": "הזן תיאור (אופציונלי)",
         "groupType": "סוג קופה",

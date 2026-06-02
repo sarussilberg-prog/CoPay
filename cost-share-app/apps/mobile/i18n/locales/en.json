@@ -24,7 +24,8 @@
         "you": "You",
         "deletedUser": "Deleted user",
         "unknownUser": "Unknown user",
-        "openMail": "Open mail"
+        "openMail": "Open mail",
+        "linkCopied": "Link copied to clipboard"
     },
     "tabs": {
         "groups": "Groups",
@@ -36,8 +37,96 @@
         "appName": "kupa",
         "signInWithGoogle": "Continue with Google",
         "subtitle": "Split expenses with friends",
+        "tagline": "Your shared kitty with friends",
+        "description": "Groups, expenses, and settle-up — no spreadsheets, no WhatsApp math.",
+        "feature": {
+            "groups": "Groups",
+            "expenses": "Expenses",
+            "balances": "Balances"
+        },
         "signInError": "Sign in failed. Please try again.",
         "signingIn": "Signing in..."
+    },
+    "onboarding": {
+        "skip": "Skip",
+        "next": "Next",
+        "welcome": {
+            "brand": "Pashut",
+            "tagline": "The kitty with your crew.\nNo spreadsheets, no WhatsApp math.",
+            "start": "Let's go",
+            "existingAccount": "I already have an account",
+            "card1Title": "Gas for the trip",
+            "card1Subtitle": "3 of 5 in the split · ₪180",
+            "card2Title": "Avraham owes you",
+            "card2Subtitle": "+ ₪770",
+            "card3Title": "Invite friends",
+            "card3Subtitle": "WhatsApp · link · contacts"
+        },
+        "feature1": {
+            "eyebrow": "Split with who matters",
+            "title": "Pick who pays — not the whole group",
+            "body": "On every expense, choose who's in the split: gas for three, dinner without the friend who bailed. Anyone not selected doesn't pay and isn't charged for it."
+        },
+        "feature2": {
+            "eyebrow": "Invite your crew",
+            "title": "Send a link — they're in",
+            "body": "Contacts, WhatsApp, or a group link. No need to explain the app — they tap and join the group."
+        },
+        "feature3": {
+            "eyebrow": "No guesswork",
+            "title": "See who owes whom — no mental math",
+            "body": "Balances update on their own. No more \"wait, let me calculate and get back to you\" — everyone in the group sees the same numbers.",
+            "balanceLabel": "In your favor",
+            "balanceAmount": "+ ₪138"
+        },
+        "feature4": {
+            "eyebrow": "Settle up",
+            "title": "One payment — done",
+            "body": "Instead of a chain of transfers, we find the minimum: who pays whom, and how much. One tap — and you're square."
+        },
+        "mockup": {
+            "groupName": "Beach trip",
+            "expense1Title": "Shabbat groceries",
+            "expense1Sub": "Noah paid · ₪320 · whole group",
+            "partialSplitCallout": "Choose who's in the split — not everyone",
+            "partialSplitBadge": "{{count}} of {{total}} in split",
+            "expense2Title": "Gas",
+            "expense2Sub": "You paid · ₪180",
+            "expense3Title": "Airbnb",
+            "expense3Sub": "Dana paid · ₪900 · split with 4",
+            "invite1Title": "Dana",
+            "invite1Sub": "In the group",
+            "invite2Title": "Noah",
+            "invite2Sub": "Invited · pending",
+            "invite3Title": "New invite",
+            "invite3Sub": "WhatsApp · link · contacts",
+            "debt1Title": "Avraham",
+            "debt1Sub": "Owes you · ₪770",
+            "debt2Title": "Noah",
+            "debt2Sub": "You owe · ₪120",
+            "balanceDefaultLabel": "Your balance"
+        },
+        "create": {
+            "header": "New group",
+            "namePlaceholder": "Group name",
+            "nameInputPlaceholder": "Beach trip · Dinner · Shared flat...",
+            "backgroundLabel": "Cover image",
+            "heroSea": "Sea",
+            "heroMountains": "Mountains",
+            "heroForest": "Forest",
+            "heroFlowers": "Flowers",
+            "heroWaves": "Waves",
+            "uploadHint": "Upload photo",
+            "membersLabel": "Group members",
+            "adminHint": "Group admin",
+            "addMembers": "Add members",
+            "inviteHint": "WhatsApp, link, or contacts — get everyone into the group",
+            "submit": "Create group",
+            "skipTitle": "Skip creating a group?",
+            "skipMessage": "You can create a group later from the Groups tab.",
+            "skipConfirm": "Skip for now",
+            "findFriendsAfterCreate": "Right after you create the group — find friends and send invites"
+        }
     },
     "groups": {
         "title": "Groups",
@@ -47,6 +136,20 @@
         "noGroupsMessage": "Create your first group to start sharing expenses",
         "groupName": "Group Name",
         "enterGroupName": "Enter group name",
+        "createForm": {
+            "coverNamePlaceholder": "Group name",
+            "namePlaceholder": "Beach trip · Dinner · Shared flat...",
+            "sectionIdentity": "Group details",
+            "sectionSettings": "Settings",
+            "membersHint": "You're already in the group. Add friends now or invite later via WhatsApp.",
+            "guidance": {
+                "title": "Let's create your first group",
+                "subtitle": "Same form you'll use every time — with a few quick tips:",
+                "tip1": "Pick a name everyone recognizes (e.g. \"Beach trip\" or \"Flat 2025\").",
+                "tip2": "Group type sets the cover colors — you can change it later.",
+                "tip3": "Cover photo and members are optional — you can add them anytime."
+            }
+        },
         "description": "Description",
         "enterDescription": "Enter description (optional)",
         "groupType": "Group Type",

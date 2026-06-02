@@ -9,7 +9,6 @@ import {
     View,
     TouchableOpacity,
     ActionSheetIOS,
-    Alert,
     Platform,
     StyleSheet,
 } from 'react-native';
@@ -19,6 +18,7 @@ import { Text } from './AppText';
 import { MemberAvatar } from './MemberAvatar';
 import { HighlightedText } from './HighlightedText';
 import { AppIcon } from './AppIcon';
+import { platformAlert } from '../lib/platformAlert';
 import { FeedChatRow } from './FeedChatRow';
 import { FeedActorName } from './FeedActorName';
 import { formatFeedDateTime } from '../lib/formatFeedDateTime';
@@ -68,7 +68,7 @@ function MessageRowBase({
                 },
             );
         } else {
-            Alert.alert(senderName, message.body, [
+            platformAlert(senderName, message.body, [
                 { text: t('groups.message.edit'), onPress: () => onEdit(message) },
                 {
                     text: t('groups.message.delete'),

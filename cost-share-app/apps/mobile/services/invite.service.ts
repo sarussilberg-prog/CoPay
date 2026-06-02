@@ -4,8 +4,8 @@
  * writes via SECURITY DEFINER RPCs.
  */
 
-import { Share } from 'react-native';
 import i18n from '../i18n';
+import { shareTextMessage } from '../lib/platformShare';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 
@@ -29,8 +29,7 @@ export function buildGroupInviteMessage(
 }
 
 async function openShare(message: string): Promise<void> {
-    // expo-sharing only shares files, not text. Use the RN built-in Share API for text.
-    await Share.share({ message });
+    await shareTextMessage(message);
 }
 
 export async function shareFriendInvite(): Promise<void> {

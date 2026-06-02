@@ -94,7 +94,7 @@ describe('CreateGroupScreen', () => {
         mockCreateGroup.mockResolvedValueOnce({ id: 'g1' } as any);
         const { findAllByText, getByPlaceholderText } = render(<CreateGroupScreen />);
         fireEvent.changeText(
-            getByPlaceholderText('groups.enterGroupName'),
+            getByPlaceholderText('groups.createForm.namePlaceholder'),
             'My Group'
         );
         const buttons = await findAllByText('groups.createGroup');

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { Platform, TouchableOpacity, View, Alert } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
+import { platformAlert } from '../../lib/platformAlert';
 import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
@@ -28,7 +29,7 @@ export function ContactSupportRow() {
         try {
             await openSupportContact();
         } catch {
-            Alert.alert(t('settings.contactUs'), email, [
+            platformAlert(t('settings.contactUs'), email, [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
                     text: t('settings.copyEmail'),

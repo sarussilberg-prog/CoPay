@@ -35,18 +35,24 @@ interface AddMembersSheetProps {
     // When provided, the sheet operates in selection-only mode (no groupId required):
     // selected users are returned to the caller instead of being persisted via addGroupMember.
     onConfirmSelection?: (users: User[]) => void;
+    /** Override "find friends" — required when rendered outside NavigationContainer. */
+    onFindFriends?: () => void;
 }
 
-export function AddMembersSheet({
+type AddMembersSheetViewProps = AddMembersSheetProps & {
+    onFindFriends: () => void;
+};
+
+function AddMembersSheetView({
     visible,
     groupId,
     currentMemberIds,
     onClose,
     onAdded,
     onConfirmSelection,
-}: AddMembersSheetProps) {
+    onFindFriends,
+}: AddMembersSheetViewProps) {
     const { t } = useTranslation();
-    const navigation = useNavigation<any>();
     const { data: friends, isLoading, refetch } = useFriendsQuery();
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -103,9 +109,8 @@ export function AddMembersSheet({
     }, [selectedIds, submitting, groupId, onAdded, onClose, onConfirmSelection, friends]);
 
     const handleFindFriends = useCallback(() => {
-        onClose();
-        navigation.navigate('Profile', { screen: 'FindFriends' });
-    }, [navigation, onClose]);
+        onFindFriends();
+    }, [onFindFriends]);
 
     const addDisabled = selectedIds.length === 0 || submitting;
 
@@ -267,4 +272,23 @@ export function AddMembersSheet({
             </Pressable>
         </Modal>
     );
+}
+
+function AddMembersSheetWithNavigation(
+    props: Omit<AddMembersSheetProps, 'onFindFriends'>,
+) {
+    const navigation = useNavigation<any>();
+    const onFindFriends = useCallback(() => {
+        props.onClose();
+        navigation.navigate('Profile', { screen: 'FindFriends' });
+    }, [navigation, props.onClose]);
+
+    return <AddMembersSheetView {...props} onFindFriends={onFindFriends} />;
+}
+
+export function AddMembersSheet(props: AddMembersSheetProps) {
+    if (props.onFindFriends) {
+        return <AddMembersSheetView {...props} onFindFriends={props.onFindFriends} />;
+    }
+    return <AddMembersSheetWithNavigation {...props} />;
 }

@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
 import { handleAuthRedirectUrl, isAuthCallbackUrl } from './services/auth.service';
-import { AppNavigator } from './navigation/AppNavigator';
+import { AuthenticatedAppGate } from './components/AuthenticatedAppGate';
 import { LoginScreen } from './screens/auth/LoginScreen';
+import { OnboardingPreAuthFlow } from './screens/onboarding/OnboardingPreAuthFlow';
+import { hasCompletedPreLoginOnboarding } from './lib/onboardingStorage';
 import { initializeLanguage } from './i18n';
 import {
   clearStaleAuthSession,
@@ -24,6 +25,7 @@ import { useAppStore } from './store';
 import { useAppRealtime } from './hooks/useAppRealtime';
 import { colors } from './theme';
 import { RtlLayoutProvider } from './hooks/useRtlLayout';
+import { WebAlertHost } from './components/WebAlertHost';
 import type { Session } from '@supabase/supabase-js';
 import './i18n';
 import './global.css';
@@ -46,6 +48,7 @@ function WebFrame({ children }: { children: React.ReactNode }) {
           boxShadow: '0 0 24px rgba(0,0,0,0.25)',
         }}
       >
+        <WebAlertHost />
         {children}
       </View>
     </View>
@@ -54,6 +57,7 @@ function WebFrame({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
+  const [preOnboardingDone, setPreOnboardingDone] = useState<boolean | null>(null);
   const { session, setSession } = useAppStore();
   const currentUserId = useAppStore((s) => s.currentUser?.id ?? null);
   useAppRealtime(currentUserId);
@@ -133,6 +137,8 @@ export default function App() {
     const init = async () => {
       try {
         await initializeLanguage();
+        const preDone = await hasCompletedPreLoginOnboarding();
+        if (mounted) setPreOnboardingDone(preDone);
 
         if (Platform.OS === 'web' && typeof globalThis.location !== 'undefined') {
           const callbackUrl = globalThis.location.href;
@@ -216,11 +222,21 @@ export default function App() {
   }
 
   if (!session) {
+    const showPreOnboarding = preOnboardingDone === false;
+
     return (
       <SafeAreaProvider>
         <RtlLayoutProvider>
           <WebFrame>
-            <LoginScreen />
+            {preOnboardingDone === null ? (
+              <View className="flex-1 justify-center items-center bg-white">
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
+            ) : showPreOnboarding ? (
+              <OnboardingPreAuthFlow onFinished={() => setPreOnboardingDone(true)} />
+            ) : (
+              <LoginScreen />
+            )}
           </WebFrame>
           <Toast />
         </RtlLayoutProvider>
@@ -233,9 +249,7 @@ export default function App() {
       <SafeAreaProvider>
         <RtlLayoutProvider>
           <WebFrame>
-            <NavigationContainer>
-              <AppNavigator />
-            </NavigationContainer>
+            <AuthenticatedAppGate />
           </WebFrame>
           <Toast />
         </RtlLayoutProvider>

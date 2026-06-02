@@ -6,11 +6,21 @@
 
 import { Text } from '../../components/AppText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, Alert, Modal } from 'react-native';
+import {
+    View,
+    TouchableOpacity,
+    Modal,
+    StyleSheet,
+    ActivityIndicator,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { platformAlert } from '../../lib/platformAlert';
 import { AppIcon } from '../../components/AppIcon';
 import { AppLogo } from '../../components/AppLogo';
 import { AppBrandTitle } from '../../components/AppBrandTitle';
 import { DeletedAccountNoticeDialog } from '../../components/DeletedAccountNoticeDialog';
+import { LoginFeatureChips } from '../../components/auth/LoginFeatureChips';
+import { LoginGoogleButton } from '../../components/auth/LoginGoogleButton';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +35,11 @@ import {
     consumeDeactivationNoticePending,
 } from '../../lib/deactivationNoticeStorage';
 import { getSupportEmail, openSupportContact } from '../../lib/openMailto';
+import { rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 
 export function LoginScreen() {
     const { t } = useTranslation();
+    const isRtl = useRtlLayout();
     const language = useAppStore((state) => state.language);
     const setLanguage = useAppStore((state) => state.setLanguage);
     const pendingDeactivationNotice = useAppStore((state) => state.pendingDeactivationNotice);
@@ -43,7 +55,6 @@ export function LoginScreen() {
         setDeletedNoticeVisible(true);
     }, []);
 
-    // Survives web OAuth full-page reload via localStorage; also handles in-memory flag from App.tsx.
     useEffect(() => {
         let cancelled = false;
 
@@ -74,7 +85,7 @@ export function LoginScreen() {
                 await changeLanguage(lang);
                 setLanguage(lang);
             } catch {
-                Alert.alert(t('common.error'), t('profile.languageChangeError'));
+                platformAlert(t('common.error'), t('profile.languageChangeError'));
             }
         },
         [setLanguage, t],
@@ -106,36 +117,72 @@ export function LoginScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <View className="flex-row justify-end px-4 pt-2">
-                <TouchableOpacity
-                    onPress={() => setLanguagePickerVisible(true)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    testID="login-language-button"
-                    accessibilityLabel={t('settings.language')}
-                    accessibilityRole="button"
-                    className="p-2"
-                >
-                    <AppIcon name="language-outline" size={26} color={colors.primary} />
-                </TouchableOpacity>
-            </View>
+        <View style={styles.root} testID="login-screen">
+            <LinearGradient
+                colors={['#FFFFFF', '#F0F7FF', '#E0EDFF']}
+                locations={[0, 0.45, 1]}
+                style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.blobTop} pointerEvents="none" />
+            <View style={styles.blobBottom} pointerEvents="none" />
 
-            <View className="flex-1 justify-center items-center px-8">
-                <AppLogo size={128} style={{ marginBottom: 24 }} />
+            <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+                <View className="flex-row justify-end px-5 pt-1">
+                    <TouchableOpacity
+                        onPress={() => setLanguagePickerVisible(true)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        testID="login-language-button"
+                        accessibilityLabel={t('settings.language')}
+                        accessibilityRole="button"
+                        style={styles.langBtn}
+                    >
+                        <AppIcon name="language-outline" size={22} color={colors.primaryDark} />
+                    </TouchableOpacity>
+                </View>
 
-                <AppBrandTitle className="mb-2" />
+                <View className="flex-1 justify-center px-7">
+                    <View style={styles.hero}>
+                        <View style={styles.logoRing}>
+                            <AppLogo size={96} />
+                        </View>
+                        <AppBrandTitle className="mt-5 mb-1" />
+                        <Text
+                            className={rtlTextClassName(
+                                isRtl,
+                                'text-xl font-bold text-primary-dark text-center',
+                            )}
+                        >
+                            {t('auth.tagline')}
+                        </Text>
+                        <Text
+                            className={rtlTextClassName(
+                                isRtl,
+                                'text-[15px] leading-relaxed text-gray-500 text-center mt-3 px-1',
+                            )}
+                        >
+                            {t('auth.description')}
+                        </Text>
+                        <LoginFeatureChips />
+                    </View>
+                </View>
 
-                <Text className="text-base text-gray-500 text-center mb-12">
-                    {t('auth.subtitle')}
-                </Text>
-
-                <Button
-                    title={t('auth.signInWithGoogle')}
-                    onPress={handleSignIn}
-                    loading={isLoading}
-                    disabled={isLoading}
-                />
-            </View>
+                <View className="px-7 pb-2">
+                    <LoginGoogleButton
+                        title={t('auth.signInWithGoogle')}
+                        onPress={handleSignIn}
+                        loading={isLoading}
+                        disabled={isLoading}
+                    />
+                    {isLoading ? (
+                        <View style={styles.signingHint}>
+                            <ActivityIndicator size="small" color={colors.primary} />
+                            <Text className="text-sm text-gray-400 mt-2 text-center">
+                                {t('auth.signingIn')}
+                            </Text>
+                        </View>
+                    ) : null}
+                </View>
+            </SafeAreaView>
 
             <DeletedAccountNoticeDialog
                 visible={deletedNoticeVisible}
@@ -146,7 +193,7 @@ export function LoginScreen() {
                 onClose={() => setDeletedNoticeVisible(false)}
                 onContact={() => {
                     void openSupportContact().catch(() => {
-                        Alert.alert(t('common.error'), supportEmail);
+                        platformAlert(t('common.error'), supportEmail);
                     });
                 }}
             />
@@ -185,6 +232,60 @@ export function LoginScreen() {
                     </View>
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    root: {
+        flex: 1,
+        backgroundColor: colors.white,
+    },
+    safe: {
+        flex: 1,
+    },
+    langBtn: {
+        padding: 10,
+        borderRadius: 999,
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderWidth: 1,
+        borderColor: 'rgba(96,165,250,0.2)',
+    },
+    hero: {
+        alignItems: 'center',
+    },
+    logoRing: {
+        padding: 18,
+        borderRadius: 999,
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderWidth: 1,
+        borderColor: 'rgba(147,197,253,0.45)',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.1,
+        shadowRadius: 24,
+        elevation: 6,
+    },
+    blobTop: {
+        position: 'absolute',
+        top: -80,
+        end: -60,
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: 'rgba(147,197,253,0.35)',
+    },
+    blobBottom: {
+        position: 'absolute',
+        bottom: 120,
+        start: -90,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        backgroundColor: 'rgba(96,165,250,0.18)',
+    },
+    signingHint: {
+        alignItems: 'center',
+        marginTop: 12,
+    },
+});

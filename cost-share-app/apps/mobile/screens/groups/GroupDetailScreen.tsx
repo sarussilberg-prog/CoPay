@@ -10,7 +10,6 @@ import {
     FlatList,
     RefreshControl,
     TouchableOpacity,
-    Alert,
     Modal,
     Pressable,
     TextInput,
@@ -27,6 +26,7 @@ import {
     GroupMessage,
     Settlement,
 } from '@cost-share/shared';
+import { platformAlert } from '../../lib/platformAlert';
 import { useAppStore } from '../../store';
 import { useLoading } from '../../hooks/useLoading';
 import {
@@ -418,7 +418,7 @@ export function GroupDetailScreen() {
     const handleArchiveToggle = useCallback(async () => {
         setMenuOpen(false);
         if (!isArchivedByMe && hasOpenBalance) {
-            Alert.alert(t('groups.archive.disabledReason'), undefined, [
+            platformAlert(t('groups.archive.disabledReason'), undefined, [
                 { text: t('common.ok'), style: 'default' },
             ]);
             return;
@@ -437,12 +437,12 @@ export function GroupDetailScreen() {
     const handleLeaveGroup = useCallback(() => {
         setMenuOpen(false);
         if (hasOpenBalance) {
-            Alert.alert(t('groups.archive.disabledReason'), undefined, [
+            platformAlert(t('groups.archive.disabledReason'), undefined, [
                 { text: t('common.ok'), style: 'default' },
             ]);
             return;
         }
-        Alert.alert(t('groups.leaveGroup'), t('groups.leaveGroupConfirm'), [
+        platformAlert(t('groups.leaveGroup'), t('groups.leaveGroupConfirm'), [
             { text: t('common.cancel'), style: 'cancel' },
             {
                 text: t('groups.leaveGroup'),
@@ -459,7 +459,7 @@ export function GroupDetailScreen() {
     }, [groupId, currentUserId, navigation, t, hasOpenBalance]);
     const handleDeleteGroup = useCallback(() => {
         setMenuOpen(false);
-        Alert.alert(t('groups.deleteGroup'), t('groups.deleteGroupConfirm'), [
+        platformAlert(t('groups.deleteGroup'), t('groups.deleteGroupConfirm'), [
             { text: t('common.cancel'), style: 'cancel' },
             {
                 text: t('common.delete'),
@@ -571,7 +571,7 @@ export function GroupDetailScreen() {
             item.kind === 'expense'
                 ? t('expenses.deleteExpenseConfirm')
                 : t('settleUp.confirmDelete');
-        Alert.alert(confirmTitle, undefined, [
+        platformAlert(confirmTitle, undefined, [
             { text: t('common.cancel'), style: 'cancel' },
             {
                 text: t('common.delete'),
@@ -614,7 +614,7 @@ export function GroupDetailScreen() {
 
     const handleMessageDelete = useCallback(
         (m: GroupMessage) => {
-            Alert.alert(t('groups.message.deleteConfirm'), undefined, [
+            platformAlert(t('groups.message.deleteConfirm'), undefined, [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
                     text: t('groups.message.delete'),

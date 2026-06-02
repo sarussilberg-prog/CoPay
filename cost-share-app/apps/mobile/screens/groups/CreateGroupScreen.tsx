@@ -1,14 +1,10 @@
 /**
- * CreateGroupScreen
- * Unified form used for both creating a new group and editing an existing one.
- * When the route provides a `groupId`, the screen runs in edit mode (loads data,
- * persists member add/remove in-place); otherwise it runs in create mode (members
- * are selected up-front and saved together with the new group).
- * Uses NativeWind styling only, full i18n support
+ * CreateGroupScreen — create or edit a group using the shared form layout.
  */
 
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Modal, Pressable, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { TouchableOpacity, Modal, Pressable } from 'react-native';
+import { platformAlert } from '../../lib/platformAlert';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -25,18 +21,13 @@ import { fetchGroupPairwiseDebts } from '../../services/settlements.service';
 import { fetchGroupUsers } from '../../services/users.service';
 import { uploadGroupImage } from '../../services/storage.service';
 import { getCurrentUserId } from '../../lib/auth';
-import { GroupImagePicker } from '../../components/GroupImagePicker';
-import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
-import { CurrencyPicker } from '../../components/CurrencyPicker';
-import { GroupTypeSelector } from '../../components/GroupTypeSelector';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
-import { MemberAvatar } from '../../components/MemberAvatar';
 import { AddMembersSheet } from '../../components/AddMembersSheet';
-import { AppIcon } from '../../components/AppIcon';
 import { Text } from '../../components/AppText';
 import { colors } from '../../theme';
-import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
+import { CreateGroupFormShell } from '../../components/groups/CreateGroupFormShell';
+import { CreateGroupFormFields } from '../../components/groups/CreateGroupFormFields';
 
 export function CreateGroupScreen() {
     const { t } = useTranslation();
@@ -56,7 +47,7 @@ export function CreateGroupScreen() {
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);
     const [imageRemoved, setImageRemoved] = useState(false);
     const [members, setMembers] = useState<User[]>(
-        !isEdit && initialMembers ? initialMembers.filter(m => m.isActive !== false) : [],
+        !isEdit && initialMembers ? initialMembers.filter((m) => m.isActive !== false) : [],
     );
     const [addMembersOpen, setAddMembersOpen] = useState(false);
     const [removeTarget, setRemoveTarget] = useState<User | null>(null);
@@ -76,7 +67,7 @@ export function CreateGroupScreen() {
         ]);
         setMembers(users);
         const unsettled = new Set<string>();
-        debts.forEach(d => {
+        debts.forEach((d) => {
             unsettled.add(d.fromUserId);
             unsettled.add(d.toUserId);
         });
@@ -99,21 +90,17 @@ export function CreateGroupScreen() {
         void loadGroup();
     }, [isEdit, groupId, loadMembers]);
 
-    useLayoutEffect(() => {
-        if (isEdit) navigation.setOptions({ title: name });
-    }, [navigation, name, isEdit]);
-
     const openRemoveDialog = useCallback(
         (m: User) => {
             if (!groupId) {
-                setMembers(prev => prev.filter(x => x.id !== m.id));
+                setMembers((prev) => prev.filter((x) => x.id !== m.id));
                 return;
             }
             if (unsettledMemberIds.has(m.id)) {
                 setRemoveTarget(m);
                 return;
             }
-            Alert.alert(t('groups.removeMemberConfirm'), undefined, [
+            platformAlert(t('groups.removeMemberConfirm'), undefined, [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
                     text: t('groups.removeMember'),
@@ -131,12 +118,14 @@ export function CreateGroupScreen() {
     );
 
     const handleMembersSelected = useCallback((users: User[]) => {
-        setMembers(prev => {
-            const existing = new Set(prev.map(m => m.id));
+        setMembers((prev) => {
+            const existing = new Set(prev.map((m) => m.id));
             const next = [...prev];
-            users.filter(u => u.isActive !== false).forEach(u => {
-                if (!existing.has(u.id)) next.push(u);
-            });
+            users
+                .filter((u) => u.isActive !== false)
+                .forEach((u) => {
+                    if (!existing.has(u.id)) next.push(u);
+                });
             return next;
         });
     }, []);
@@ -157,9 +146,8 @@ export function CreateGroupScreen() {
                 name: name.trim(),
                 groupType,
                 defaultCurrency: currency,
-                memberIds: members.map(m => m.id),
+                memberIds: members.map((m) => m.id),
             });
-
             if (!result) return;
 
             if (localImageUri) {
@@ -174,7 +162,6 @@ export function CreateGroupScreen() {
                     await updateGroup(result.id, { imageUrl: uploadedUrl });
                 }
             }
-
             navigation.replace('GroupDetail', { groupId: result.id });
         } finally {
             stopLoading();
@@ -212,10 +199,7 @@ export function CreateGroupScreen() {
                 groupType,
                 defaultCurrency: currency,
             });
-
-            if (result) {
-                navigation.goBack();
-            }
+            if (result) navigation.goBack();
         } finally {
             stopLoading();
         }
@@ -223,163 +207,80 @@ export function CreateGroupScreen() {
 
     const handleSubmit = () => {
         if (!validateForm()) return;
-        if (isEdit) {
-            void handleUpdate();
-        } else {
-            void handleCreate();
-        }
+        if (isEdit) void handleUpdate();
+        else void handleCreate();
     };
 
     const handleImageChange = (uri: string | null) => {
         setLocalImageUri(uri);
-        if (uri === null) {
-            setImageRemoved(true);
-        } else {
-            setImageRemoved(false);
-        }
+        setImageRemoved(uri === null);
     };
 
     if (initialLoading) {
         return <LoadingIndicator />;
     }
 
-    // In create mode the current user is implicit (not in `members` until
-    // createGroup adds them), so we prepend them in the avatar row.
     const displayMembers: User[] = isEdit
         ? members
         : currentUser
-            ? [currentUser, ...members]
-            : members;
+          ? [currentUser, ...members]
+          : members;
 
-    // IDs already represented in the picker, used to filter the sheet's options.
     const memberIdsForSheet = isEdit
-        ? members.map(m => m.id)
-        : [
-              ...(currentUser ? [currentUser.id] : []),
-              ...members.map(m => m.id),
-          ];
+        ? members.map((m) => m.id)
+        : [...(currentUser ? [currentUser.id] : []), ...members.map((m) => m.id)];
+
+    const screenTitle = isEdit ? t('groups.editGroup') : t('groups.createGroup');
+    const submitLabel = isEdit ? t('common.save') : t('groups.createGroup');
 
     return (
-        <ScrollView className="flex-1 bg-slate-50">
-            <View className="p-4">
-                <GroupImagePicker
-                    imageUrl={isEdit && !imageRemoved ? imageUrl : undefined}
-                    localUri={localImageUri}
-                    groupType={groupType}
-                    onChange={handleImageChange}
-                />
-
-                {/* Group Name */}
-                <Input
-                    label={t('groups.groupName')}
-                    placeholder={t('groups.enterGroupName')}
-                    value={name}
-                    onChangeText={(text) => {
+        <>
+            <CreateGroupFormShell
+                testID="create-group-screen"
+                title={screenTitle}
+                headerStart={
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        testID="create-group-cancel"
+                    >
+                        <Text style={{ fontSize: 15, fontWeight: '500', color: colors.gray600 }}>
+                            {t('common.cancel')}
+                        </Text>
+                    </TouchableOpacity>
+                }
+                footer={
+                    <Button
+                        title={submitLabel}
+                        onPress={handleSubmit}
+                        loading={isLoading}
+                        disabled={isLoading}
+                        testID="create-group-submit"
+                    />
+                }
+            >
+                <CreateGroupFormFields
+                    isEdit={isEdit}
+                    name={name}
+                    nameError={nameError}
+                    onNameChange={(text) => {
                         setName(text);
                         if (nameError) setNameError('');
                     }}
-                    error={nameError}
+                    groupType={groupType}
+                    onGroupTypeChange={setGroupType}
+                    currency={currency}
+                    onCurrencyChange={setCurrency}
+                    imageUrl={isEdit && !imageRemoved ? imageUrl : undefined}
+                    localImageUri={localImageUri}
+                    onImageChange={handleImageChange}
+                    displayMembers={displayMembers}
+                    currentUserId={currentUserId}
+                    currentUser={currentUser}
+                    onAddMembers={() => setAddMembersOpen(true)}
+                    onRemoveMember={openRemoveDialog}
                 />
-
-                <GroupTypeSelector value={groupType} onChange={setGroupType} />
-
-                {/* Currency */}
-                <CurrencyPicker
-                    value={currency}
-                    onChange={setCurrency}
-                    label={t('groups.currency')}
-                />
-
-                {/* Members */}
-                <View className="mb-4">
-                    <Text className="text-sm font-medium text-gray-700 mb-2">
-                        {t('groups.members.title')}
-                    </Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingVertical: 4, gap: 12 }}
-                    >
-                        {displayMembers.map(m => {
-                            const isSelf = m.id === currentUserId || m.id === currentUser?.id;
-                            return (
-                                <View
-                                    key={m.id}
-                                    className="items-center"
-                                    style={{ width: 56 }}
-                                    testID={`group-form-member-${m.id}`}
-                                >
-                                    <View>
-                                        <MemberAvatar name={getDisplayName(m, t)} avatarUrl={getAvatarUrl(m) ?? undefined} size="md" />
-                                        {!isSelf && (
-                                            <TouchableOpacity
-                                                onPress={() => openRemoveDialog(m)}
-                                                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                                                accessibilityRole="button"
-                                                accessibilityLabel={t('groups.removeMember')}
-                                                testID={`group-form-member-remove-${m.id}`}
-                                                className="absolute -top-1 -right-1 bg-gray-200 items-center justify-center"
-                                                style={{ width: 20, height: 20, borderRadius: 10 }}
-                                            >
-                                                <AppIcon name="trash-outline" size={12} color={colors.gray600} />
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
-                                    <Text
-                                        numberOfLines={1}
-                                        className="text-xs text-gray-600 mt-1 w-14 text-center"
-                                    >
-                                        {getDisplayName(m, t)}
-                                    </Text>
-                                </View>
-                            );
-                        })}
-                        <TouchableOpacity
-                            onPress={() => setAddMembersOpen(true)}
-                            activeOpacity={0.7}
-                            className="items-center"
-                            style={{ width: 56 }}
-                            testID="group-form-add-member"
-                        >
-                            <View
-                                className="bg-primary-extra-light border border-primary items-center justify-center"
-                                style={{ width: 44, height: 44, borderRadius: 22 }}
-                            >
-                                <AppIcon name="add" size={22} color={colors.primary} />
-                            </View>
-                            <Text className="text-xs text-primary mt-1 w-14 text-center">
-                                {t('groups.members.add')}
-                            </Text>
-                        </TouchableOpacity>
-                    </ScrollView>
-                </View>
-
-                {/* Action Buttons */}
-                {isEdit ? (
-                    <View className="mt-4 gap-2">
-                        <Button
-                            title={t('common.save')}
-                            onPress={handleSubmit}
-                            loading={isLoading}
-                            disabled={isLoading}
-                        />
-                        <Button
-                            title={t('common.cancel')}
-                            onPress={() => navigation.goBack()}
-                            variant="outline"
-                        />
-                    </View>
-                ) : (
-                    <View className="mt-4">
-                        <Button
-                            title={t('groups.createGroup')}
-                            onPress={handleSubmit}
-                            loading={isLoading}
-                            disabled={isLoading}
-                        />
-                    </View>
-                )}
-            </View>
+            </CreateGroupFormShell>
 
             <AddMembersSheet
                 visible={addMembersOpen}
@@ -400,7 +301,7 @@ export function CreateGroupScreen() {
                     className="flex-1 bg-black/50 justify-center items-center p-4"
                     onPress={() => setRemoveTarget(null)}
                 >
-                    <Pressable onPress={() => { }} className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                    <Pressable onPress={() => {}} className="bg-white rounded-2xl p-6 w-full max-w-sm">
                         <Text className="text-xl font-bold text-gray-900 mb-2">
                             {t('groups.cannotRemoveMember')}
                         </Text>
@@ -410,6 +311,6 @@ export function CreateGroupScreen() {
                     </Pressable>
                 </Pressable>
             </Modal>
-        </ScrollView>
+        </>
     );
 }

@@ -128,12 +128,12 @@ function GroupsStack() {
             <Stack.Screen
                 name="CreateGroup"
                 component={CreateGroupScreen}
-                options={{ title: t('groups.createGroup') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="EditGroup"
                 component={CreateGroupScreen}
-                options={{ title: t('groups.editGroup') }}
+                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="GroupMembers"

@@ -10,7 +10,8 @@
  *   └────────────────────────────────────────┘
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { platformAlert } from '../lib/platformAlert';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import type { GroupMemberLite, PairwiseDebt, PaymentMethod } from '@cost-share/shared';
@@ -587,7 +588,7 @@ function PaymentAppTiles({
             try {
                 await openPaymentApp(app);
             } catch {
-                Alert.alert(t('settleUp.paymentAppErrorTitle'), t('settleUp.paymentAppOpenFailed'));
+                platformAlert(t('settleUp.paymentAppErrorTitle'), t('settleUp.paymentAppOpenFailed'));
             }
         },
         [t],

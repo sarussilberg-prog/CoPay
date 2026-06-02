@@ -2,11 +2,13 @@
  * Group report export as a styled HTML file (tables, RTL, no native modules).
  */
 
+import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import { Group, FeedItem, GroupMemberLite, PairwiseDebt } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
 import { buildGroupExportHtml } from '../lib/groupExport';
+import { downloadTextAsFile } from '../lib/webFileDownload';
 
 export interface GroupExportPayload {
     feed: FeedItem[];
@@ -54,6 +56,15 @@ export async function exportGroupCsv(
             language,
             t: i18n.t.bind(i18n),
         });
+
+        if (Platform.OS === 'web') {
+            downloadTextAsFile(buildGroupExportFilename(group), html, 'text/html;charset=utf-8');
+            Toast.show({
+                type: 'success',
+                text1: i18n.t('groups.share.exportTitleHtml'),
+            });
+            return true;
+        }
 
         const uri = await writeHtmlReport(group, html);
 

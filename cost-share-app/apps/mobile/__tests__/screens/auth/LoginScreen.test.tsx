@@ -42,11 +42,14 @@ describe('LoginScreen', () => {
         mockConsumeNotice.mockResolvedValue(false);
     });
 
-    it('renders the app logo, name and subtitle', () => {
+    it('renders the app logo, name, tagline and feature chips', () => {
         const { getByText, getByTestId } = render(<LoginScreen />);
+        expect(getByTestId('login-screen')).toBeTruthy();
         expect(getByTestId('app-logo')).toBeTruthy();
         expect(getByText('Kupa')).toBeTruthy();
-        expect(getByText('auth.subtitle')).toBeTruthy();
+        expect(getByText('auth.tagline')).toBeTruthy();
+        expect(getByText('auth.description')).toBeTruthy();
+        expect(getByTestId('login-feature-chips')).toBeTruthy();
     });
 
     it('opens language picker modal when language icon is pressed', () => {
@@ -65,21 +68,22 @@ describe('LoginScreen', () => {
     });
 
     it('renders the Google sign-in button', () => {
-        const { getByText } = render(<LoginScreen />);
+        const { getByTestId, getByText } = render(<LoginScreen />);
+        expect(getByTestId('login-google-button')).toBeTruthy();
         expect(getByText('auth.signInWithGoogle')).toBeTruthy();
     });
 
     it('calls signInWithGoogle on button press', async () => {
         mockSignIn.mockResolvedValueOnce({ error: null });
-        const { getByText } = render(<LoginScreen />);
-        fireEvent.press(getByText('auth.signInWithGoogle'));
+        const { getByTestId } = render(<LoginScreen />);
+        fireEvent.press(getByTestId('login-google-button'));
         await waitFor(() => expect(mockSignIn).toHaveBeenCalled());
     });
 
     it('shows an error toast when sign-in fails', async () => {
         mockSignIn.mockResolvedValueOnce({ error: { code: 'generic', message: 'boom' } });
-        const { getByText } = render(<LoginScreen />);
-        fireEvent.press(getByText('auth.signInWithGoogle'));
+        const { getByTestId } = render(<LoginScreen />);
+        fireEvent.press(getByTestId('login-google-button'));
         await waitFor(() =>
             expect(Toast.show).toHaveBeenCalledWith(
                 expect.objectContaining({ type: 'error' }),
@@ -92,8 +96,8 @@ describe('LoginScreen', () => {
             error: { code: 'account_deleted', message: 'email_was_deleted' },
         });
 
-        const { getByText, findByText } = render(<LoginScreen />);
-        fireEvent.press(getByText('auth.signInWithGoogle'));
+        const { getByTestId, findByText } = render(<LoginScreen />);
+        fireEvent.press(getByTestId('login-google-button'));
 
         expect(await findByText('deleteAccount.deactivatedTitle')).toBeTruthy();
         expect(Toast.show).not.toHaveBeenCalled();

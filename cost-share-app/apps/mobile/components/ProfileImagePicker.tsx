@@ -5,7 +5,8 @@
 
 import { Text } from './AppText';
 import React, { useCallback } from 'react';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { platformAlert } from '../lib/platformAlert';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { MemberAvatar } from './MemberAvatar';
@@ -31,7 +32,7 @@ export function ProfileImagePicker({
     const pickImage = useCallback(async () => {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert(t('profile.imagePermissionTitle'), t('profile.imagePermissionMessage'));
+            platformAlert(t('profile.imagePermissionTitle'), t('profile.imagePermissionMessage'));
             return;
         }
 

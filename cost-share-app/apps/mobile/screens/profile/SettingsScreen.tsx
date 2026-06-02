@@ -1,6 +1,7 @@
 import { Text } from '../../components/AppText';
 import React, { useCallback, useState } from 'react';
-import { View, ScrollView, Linking, Platform, Alert } from 'react-native';
+import { View, ScrollView, Linking, Platform } from 'react-native';
+import { platformAlert } from '../../lib/platformAlert';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
@@ -52,7 +53,7 @@ export function SettingsScreen() {
             await changeLanguage(lang);
             setLanguage(lang);
         } catch {
-            Alert.alert(t('common.error'), t('profile.languageChangeError'));
+            platformAlert(t('common.error'), t('profile.languageChangeError'));
         }
     }, [setLanguage, t]);
 

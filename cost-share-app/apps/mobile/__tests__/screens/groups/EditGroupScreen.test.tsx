@@ -126,7 +126,7 @@ describe('EditGroupScreen', () => {
         });
 
         const { findByText, findByTestId } = render(<EditGroupScreen />);
-        fireEvent.press(await findByTestId('group-image-picker'));
+        fireEvent.press(await findByTestId('group-form-cover'));
         fireEvent.press(await findByText('common.save'));
 
         await waitFor(() => expect(mockUploadGroupImage).toHaveBeenCalledWith('g1', 'file:///picked.jpg'));
@@ -156,7 +156,7 @@ describe('EditGroupScreen', () => {
         });
 
         const { findByDisplayValue, findByText, findByTestId } = render(<EditGroupScreen />);
-        fireEvent.press(await findByTestId('group-image-picker'));
+        fireEvent.press(await findByTestId('group-form-cover'));
         fireEvent.changeText(await findByDisplayValue('Old Name'), 'New Name');
         fireEvent.press(await findByText('common.save'));
 

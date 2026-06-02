@@ -15,7 +15,6 @@ import React, {
 } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Animated,
     Image,
     ScrollView,
@@ -28,6 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
+import { platformAlert } from '../../lib/platformAlert';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Text } from '../../components/AppText';
@@ -374,7 +374,7 @@ export function AddExpenseScreen() {
         const takePhoto = async () => {
             const perm = await ImagePicker.requestCameraPermissionsAsync();
             if (!perm.granted) {
-                Alert.alert(
+                platformAlert(
                     t('expenses.receiptPermissionTitle'),
                     t('expenses.receiptCameraPermissionMessage'),
                 );
@@ -393,7 +393,7 @@ export function AddExpenseScreen() {
         const pickFromLibrary = async () => {
             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!perm.granted) {
-                Alert.alert(
+                platformAlert(
                     t('expenses.receiptPermissionTitle'),
                     t('expenses.receiptLibraryPermissionMessage'),
                 );
@@ -415,13 +415,13 @@ export function AddExpenseScreen() {
             setReceiptRemoved(true);
         };
         const hasReceipt = Boolean(localReceiptUri || (receiptUrl && !receiptRemoved));
-        const buttons: Parameters<typeof Alert.alert>[2] = [
+        const buttons: Parameters<typeof platformAlert>[2] = [
             { text: t('expenses.takePhoto'), onPress: takePhoto },
             { text: t('expenses.chooseFromLibrary'), onPress: pickFromLibrary },
         ];
         if (hasReceipt) buttons.push({ text: t('expenses.removeReceipt'), onPress: removeReceipt, style: 'destructive' });
         buttons.push({ text: t('common.cancel'), style: 'cancel' });
-        Alert.alert(t('expenses.receipt'), undefined, buttons, { cancelable: true });
+        platformAlert(t('expenses.receipt'), undefined, buttons, { cancelable: true });
     }, [t, localReceiptUri, receiptUrl, receiptRemoved]);
 
     const handleEditorDone = useCallback((draft: EditPayerSplitDraft) => {

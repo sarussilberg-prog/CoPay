@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { Alert } from 'react-native';
+import { platformAlert } from '../lib/platformAlert';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
 import { useAppStore } from '../store';
@@ -59,7 +59,7 @@ export function useInviteLink(groupId?: string): UseInviteLinkResult {
         const cancelKey = 'common.cancel';
 
         return new Promise<void>((resolve) => {
-            Alert.alert(
+            platformAlert(
                 t(titleKey),
                 t(bodyKey),
                 [

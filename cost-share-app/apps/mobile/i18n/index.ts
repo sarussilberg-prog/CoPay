@@ -16,9 +16,17 @@ import { useAppStore } from '../store';
 
 type SupportedLanguage = 'en' | 'he';
 
+/** Falls back to English when the dev client was not rebuilt after adding expo-localization. */
 const resolveDeviceLanguage = (): SupportedLanguage => {
-    const code = Localization.getLocales()[0]?.languageCode;
-    return code === 'he' ? 'he' : 'en';
+    try {
+        const code = Localization.getLocales()[0]?.languageCode;
+        return code === 'he' ? 'he' : 'en';
+    } catch {
+        console.warn(
+            'expo-localization unavailable — rebuild the dev client (npm run mobile:ios). Using en.',
+        );
+        return 'en';
+    }
 };
 
 I18nManager.allowRTL(true);
