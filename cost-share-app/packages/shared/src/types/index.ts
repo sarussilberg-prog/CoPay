@@ -623,6 +623,22 @@ export interface UserDashboard {
     friends: FriendBalance[];
 }
 
+/** Platform-wide admin metrics — supabase.rpc('admin_get_platform_metrics'). */
+export interface AdminPlatformMetrics {
+    version: number;
+    generatedAt: string; // ISO timestamp from DB
+    users: {
+        registered: number;
+        deleted: number;
+    };
+    groups: {
+        active: number;
+        archived: number;
+        deleted: number;
+        manualArchiveMemberships: number;
+    };
+}
+
 // ============================================
 // LEGACY TYPES (for backward compatibility)
 // ============================================
