@@ -740,7 +740,11 @@
         "paymentAppErrorTitle": "Can't open payment",
         "paymentAppOpenFailed": "Couldn't open the payment app. Make sure it is installed.",
         "currencyPickerTitle": "Choose currency",
-        "amountOwed": "{{amount}} owed"
+        "amountOwed": "{{amount}} owed",
+        "recordPaymentCta": "Record a payment",
+        "memberPickerFromTitle": "Choose payer",
+        "memberPickerToTitle": "Choose receiver",
+        "sameParticipantError": "Payer and receiver can't be the same"
     },
     "feed": {
         "settlement": "{{from}} paid {{to}} {{amount}}",

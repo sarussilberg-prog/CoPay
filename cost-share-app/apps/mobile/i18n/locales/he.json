@@ -755,7 +755,11 @@
         "paymentAppErrorTitle": "לא ניתן לפתוח תשלום",
         "paymentAppOpenFailed": "פתיחת אפליקציית התשלום נכשלה. ודא שהאפליקציה מותקנת.",
         "currencyPickerTitle": "בחר מטבע",
-        "amountOwed": "חוב {{amount}}"
+        "amountOwed": "חוב {{amount}}",
+        "recordPaymentCta": "רשום תשלום",
+        "memberPickerFromTitle": "בחר משלם",
+        "memberPickerToTitle": "בחר מקבל",
+        "sameParticipantError": "המשלם והמקבל לא יכולים להיות אותו אדם"
     },
     "feed": {
         "settlement": "{{from}} שילם/ה ל-{{to}} {{amount}}",

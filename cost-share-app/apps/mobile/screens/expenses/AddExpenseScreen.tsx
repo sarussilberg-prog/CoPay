@@ -187,14 +187,20 @@ export function AddExpenseScreen() {
         [membersData],
     );
     const memberUsers = useMemo(
-        () =>
-            resolveGroupMemberUsers(
+        () => {
+            const resolved = resolveGroupMemberUsers(
                 activeMembers,
                 allUsers,
                 storeGroup?.members ?? [],
                 currency,
-            ),
-        [activeMembers, allUsers, storeGroup?.members, currency],
+            );
+            return resolved.filter(u => {
+                if (u.isActive !== false) return true;
+                if (isEditMode && selectedMemberIds.includes(u.id)) return true;
+                return false;
+            });
+        },
+        [activeMembers, allUsers, storeGroup?.members, currency, isEditMode, selectedMemberIds],
     );
 
     useLayoutEffect(() => {
@@ -209,10 +215,11 @@ export function AddExpenseScreen() {
 
     // Create mode: select all active members by default.
     useEffect(() => {
-        if (isEditMode || membersInitialized || activeMembers.length === 0) return;
-        setSelectedMemberIds(activeMembers.map(m => m.userId));
+        if (isEditMode || membersInitialized || activeMembers.length === 0 || allUsers.length === 0) return;
+        const activeUserIds = memberUsers.map(u => u.id);
+        setSelectedMemberIds(activeUserIds);
         setMembersInitialized(true);
-    }, [isEditMode, membersInitialized, activeMembers]);
+    }, [isEditMode, membersInitialized, activeMembers, allUsers, memberUsers]);
 
     // Create mode: default payer to current user.
     useEffect(() => {

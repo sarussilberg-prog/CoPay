@@ -72,6 +72,7 @@ export async function fetchFriends(): Promise<User[]> {
     }
     return (profiles ?? [])
         .map(profileFromRow)
+        .filter(u => u.isActive !== false)
         .sort((a, b) => {
             const aKey = a.isActive === false ? '' : (a.name?.trim() ?? '');
             const bKey = b.isActive === false ? '' : (b.name?.trim() ?? '');
@@ -110,7 +111,9 @@ export async function fetchIncomingRequests(): Promise<FriendRequest[]> {
     }
     const rows = data ?? [];
     const profileMap = await fetchProfilesByIds(rows.map(r => r.from_user_id as string));
-    return rows.map(r => friendRequestFromRow(r, profileMap.get(r.from_user_id as string)));
+    return rows
+        .map(r => friendRequestFromRow(r, profileMap.get(r.from_user_id as string)))
+        .filter(req => req.profile?.isActive !== false);
 }
 
 export async function fetchOutgoingRequests(): Promise<FriendRequest[]> {
@@ -129,7 +132,9 @@ export async function fetchOutgoingRequests(): Promise<FriendRequest[]> {
     }
     const rows = data ?? [];
     const profileMap = await fetchProfilesByIds(rows.map(r => r.to_user_id as string));
-    return rows.map(r => friendRequestFromRow(r, profileMap.get(r.to_user_id as string)));
+    return rows
+        .map(r => friendRequestFromRow(r, profileMap.get(r.to_user_id as string)))
+        .filter(req => req.profile?.isActive !== false);
 }
 
 export async function searchUsers(query: string): Promise<SearchUserResult[]> {
