@@ -67,13 +67,17 @@ BEGIN
         RAISE EXCEPTION 'Case 2a failed: non-admin should get not_authorized';
     END IF;
 
-    -- 2b: admin sees Alice (deleted, not restored) but not Bob (restored)
+    -- 2b: admin sees Alice (deleted, not restored) but not Bob (restored).
+    -- Filter to the synthetic test users so the assertion is robust to pre-existing
+    -- deleted accounts in shared dev databases.
     PERFORM set_config('request.jwt.claims', json_build_object('sub', v_admin::text)::text, TRUE);
-    SELECT COUNT(*) INTO v_rows FROM public.admin_list_deleted_accounts();
+    SELECT COUNT(*) INTO v_rows FROM public.admin_list_deleted_accounts()
+        WHERE user_id IN (v_alice, v_bob);
     IF v_rows <> 1 THEN
-        RAISE EXCEPTION 'Case 2b failed: expected 1 row, got %', v_rows;
+        RAISE EXCEPTION 'Case 2b failed: expected 1 test row, got %', v_rows;
     END IF;
-    SELECT email INTO v_email FROM public.admin_list_deleted_accounts() LIMIT 1;
+    SELECT email INTO v_email FROM public.admin_list_deleted_accounts()
+        WHERE user_id = v_alice;
     IF v_email <> 'ap-alice@test.local' THEN
         RAISE EXCEPTION 'Case 2c failed: expected ap-alice@test.local, got %', v_email;
     END IF;
@@ -101,10 +105,11 @@ BEGIN
         RAISE EXCEPTION 'Case 3b failed: notes missing restored_by_admin marker, got %', v_notes;
     END IF;
 
-    -- 3c: list now returns 0 rows for the admin
-    SELECT COUNT(*) INTO v_rows FROM public.admin_list_deleted_accounts();
+    -- 3c: after restore, Alice no longer appears in the list (test users only)
+    SELECT COUNT(*) INTO v_rows FROM public.admin_list_deleted_accounts()
+        WHERE user_id IN (v_alice, v_bob);
     IF v_rows <> 0 THEN
-        RAISE EXCEPTION 'Case 3c failed: after restore expected 0 rows, got %', v_rows;
+        RAISE EXCEPTION 'Case 3c failed: after restore expected 0 test rows, got %', v_rows;
     END IF;
 
     -- ---- CASE 4: app_admins is locked (no RLS policy) -----------------
