@@ -16,6 +16,7 @@ interface ConfirmDialogProps {
     onConfirm: () => void;
     onCancel: () => void;
     destructive?: boolean;
+    confirmTestID?: string;
 }
 
 export function ConfirmDialog({
@@ -27,6 +28,7 @@ export function ConfirmDialog({
     onConfirm,
     onCancel,
     destructive = false,
+    confirmTestID,
 }: ConfirmDialogProps) {
     return (
         <Modal
@@ -58,6 +60,7 @@ export function ConfirmDialog({
                         {/* Confirm Button */}
                         <TouchableOpacity
                             onPress={onConfirm}
+                            testID={confirmTestID}
                             className={`flex-1 rounded-lg p-4 ${destructive ? 'bg-red-500' : 'bg-blue-500'
                                 }`}
                         >
