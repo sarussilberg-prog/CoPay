@@ -9,11 +9,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PHYSICAL="$(xcrun xctrace list devices 2>/dev/null | grep -v Simulator | grep -E 'iPhone|iPad' || true)"
+# Prefer devicectl (CoreDevice — current tooling); fall back to xctrace.
+# xctrace often shows physical devices as "Offline" on recent macOS/Xcode even when they're paired and available.
+# NR>2 skips the two header rows; exclude clearly unreachable states.
+PHYSICAL="$(xcrun devicectl list devices 2>/dev/null | awk 'NR>2 && /iPhone|iPad/ && !/disconnected/ && !/unavailable/' || true)"
+if [[ -z "$PHYSICAL" ]]; then
+  PHYSICAL="$(xcrun xctrace list devices 2>/dev/null | grep -v Simulator | grep -E 'iPhone|iPad' || true)"
+fi
 if [[ -z "$PHYSICAL" ]]; then
   echo "No physical iPhone/iPad detected."
   echo "Check: USB cable, unlock phone, Trust This Computer, Developer Mode ON."
-  echo "Verify in Xcode: Window → Devices and Simulators"
+  echo "Verify in Xcode: Window → Devices and Simulators, or run: xcrun devicectl list devices"
   exit 1
 fi
 echo "Detected device(s):"
