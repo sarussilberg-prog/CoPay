@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupa · shared UI primitives (Icon, Button, Input, Avatar, Chip, Card, FAB)
+// Kupay · shared UI primitives (Icon, Button, Input, Avatar, Chip, Card, FAB)
 // Visual rules pulled from tailwind.config.js + theme/* + components/* in the
 // navesarussi/kupa repo. All colors flow from CSS vars in colors_and_type.css.
 

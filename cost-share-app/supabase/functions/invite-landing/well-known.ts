@@ -1,12 +1,15 @@
 // Serves the Universal Links / App Links association files under /.well-known/*.
 // Env vars (set on the Supabase project secrets — see Task 24):
-//   KUPA_IOS_TEAM_ID          — 10-char Apple Developer Team ID
-//   KUPA_ANDROID_DEBUG_SHA256 — SHA-256 fingerprint of the Android debug keystore
-//   KUPA_ANDROID_RELEASE_SHA256 — SHA-256 fingerprint of the Android release keystore
+//   KUPAY_IOS_TEAM_ID (or legacy KUPA_IOS_TEAM_ID) — Apple Developer Team ID
+//   KUPAY_ANDROID_DEBUG_SHA256 / KUPAY_ANDROID_RELEASE_SHA256 — Android keystore SHA-256
 
-const TEAM_ID = Deno.env.get('KUPA_IOS_TEAM_ID') ?? '';
-const ANDROID_DEBUG_SHA = Deno.env.get('KUPA_ANDROID_DEBUG_SHA256') ?? '';
-const ANDROID_RELEASE_SHA = Deno.env.get('KUPA_ANDROID_RELEASE_SHA256') ?? '';
+function env(name: string, legacy?: string): string {
+    return Deno.env.get(name) ?? (legacy ? Deno.env.get(legacy) : '') ?? '';
+}
+
+const TEAM_ID = env('KUPAY_IOS_TEAM_ID', 'KUPA_IOS_TEAM_ID');
+const ANDROID_DEBUG_SHA = env('KUPAY_ANDROID_DEBUG_SHA256', 'KUPA_ANDROID_DEBUG_SHA256');
+const ANDROID_RELEASE_SHA = env('KUPAY_ANDROID_RELEASE_SHA256', 'KUPA_ANDROID_RELEASE_SHA256');
 
 const AASA_JSON = JSON.stringify({
     applinks: {

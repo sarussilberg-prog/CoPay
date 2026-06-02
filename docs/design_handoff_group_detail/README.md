@@ -1,8 +1,8 @@
-# Handoff: Kupa · Group Detail Screen
+# Handoff: Kupay · Group Detail Screen
 
 ## Overview
 
-This is the **group detail screen** for the Kupa cost-sharing app — the screen a user sees after tapping a group on the list. It shows the group's cover image, the user's balance in this group, a quick "Settle up" action, a "Note" affordance, and the activity feed (expenses + chat messages). A floating action pair lets the user add an expense or send a message.
+This is the **group detail screen** for the Kupay cost-sharing app — the screen a user sees after tapping a group on the list. It shows the group's cover image, the user's balance in this group, a quick "Settle up" action, a "Note" affordance, and the activity feed (expenses + chat messages). A floating action pair lets the user add an expense or send a message.
 
 The design was iterated through several rounds and the final layout was the user's pick from variant sets (cover-card hero, M1 middle strip, R1 expense rows, F2 note pill in footer).
 
@@ -10,7 +10,7 @@ The design was iterated through several rounds and the final layout was the user
 
 The files in `prototype/` are **design references created in HTML/JSX-via-Babel** — they're a working clickable prototype that demonstrates intended look and behavior. They are NOT production code to copy directly.
 
-Your task is to **recreate this design in the target codebase's existing environment** (the Kupa app uses React Native + Expo + NativeWind — `cost-share-app/apps/mobile/`). Reuse the codebase's existing components, theme tokens, i18n strings, and patterns. Do not introduce new fonts, libraries, or design tokens that aren't already in the project.
+Your task is to **recreate this design in the target codebase's existing environment** (the Kupay app uses React Native + Expo + NativeWind — `cost-share-app/apps/mobile/`). Reuse the codebase's existing components, theme tokens, i18n strings, and patterns. Do not introduce new fonts, libraries, or design tokens that aren't already in the project.
 
 If the target file is `cost-share-app/apps/mobile/screens/groups/GroupDetailScreen.tsx`, this handoff replaces / restyles the current hero + balance banner with a single composite **summary card**.
 

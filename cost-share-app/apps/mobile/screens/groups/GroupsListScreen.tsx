@@ -1,7 +1,7 @@
 /**
  * GroupsListScreen
  * Main groups list with expandable search, filter/sort sheet,
- * per-group balance chips, and a floating bottom Create-a-kupa CTA.
+ * per-group balance chips, and a floating bottom create-group CTA.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

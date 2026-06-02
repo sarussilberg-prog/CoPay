@@ -84,10 +84,10 @@ Required in `https://supabase.com/dashboard/project/jfqxjjjbpxbwwvoygahu/setting
 
 | Secret | Source | Used by |
 |--------|--------|---------|
-| `KUPA_ANDROID_RELEASE_SHA256` | Play Console → Setup → App signing → **App signing key** SHA-256 (uppercase hex with colons) | `invite-landing/.well-known/assetlinks.json` |
-| `KUPA_ANDROID_DEBUG_SHA256` (optional) | EAS credentials → Android keystore SHA-256 (only if you want the in-house dev APK to verify App Links too) | same |
-| `KUPA_IOS_TEAM_ID` | Apple Developer → Membership → Team ID | `invite-landing/.well-known/apple-app-site-association` |
-| `KUPA_SUPPORT_EMAIL` (optional) | defaults to `sarussilberg@gmail.com` | `legal.ts` and `account-deletion` page |
+| `KUPAY_ANDROID_RELEASE_SHA256` | Play Console → Setup → App signing → **App signing key** SHA-256 (uppercase hex with colons) | `invite-landing/.well-known/assetlinks.json` |
+| `KUPAY_ANDROID_DEBUG_SHA256` (optional) | EAS credentials → Android keystore SHA-256 (only if you want the in-house dev APK to verify App Links too) | same |
+| `KUPAY_IOS_TEAM_ID` | Apple Developer → Membership → Team ID | `invite-landing/.well-known/apple-app-site-association` |
+| `KUPAY_SUPPORT_EMAIL` (optional) | defaults to `sarussilberg@gmail.com` | `legal.ts` and `account-deletion` page |
 
 After updating secrets, redeploy:
 ```bash
@@ -133,7 +133,7 @@ Requires `google-play-service-account.json` in place.
 1. Play Console → **Setup → App signing** → copy **SHA-1** and **SHA-256** of the *App signing key*.
 2. Google Cloud Console → **APIs & Services → Credentials** → OAuth 2.0 Android client → add package `com.kupay.mobile` + the **SHA-1**.
 3. Supabase Dashboard → **Authentication → Providers → Google** → Android section → add the same **SHA-1** (and Web Client ID if not already set).
-4. Supabase Dashboard → **Edge Function Secrets** → set `KUPA_ANDROID_RELEASE_SHA256` to the **SHA-256** (uppercase, colon-separated). Then redeploy `invite-landing`.
+4. Supabase Dashboard → **Edge Function Secrets** → set `KUPAY_ANDROID_RELEASE_SHA256` to the **SHA-256** (uppercase, colon-separated). Then redeploy `invite-landing`.
 
 ### 3.4 Native Google Sign-In (Android)
 
@@ -150,7 +150,14 @@ Do **not** use an **Installed** (desktop) OAuth client in the app. Local debug S
 keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
 ```
 
-After changing native deps or `app.json` plugins: `npx expo prebuild --clean` then rebuild (`npm run android:run` or EAS).
+After changing native deps or `app.json` plugins, from **`cost-share-app/apps/mobile`** (not the monorepo root):
+
+```bash
+npx expo prebuild --clean
+npm run android:run
+```
+
+From `cost-share-app/` root you can use: `npm run mobile:android` or `npm run android:run` (delegates to the mobile workspace).
 
 ---
 
@@ -264,7 +271,7 @@ Run on a real Android device after accepting the tester invite + installing from
 9. **App Link** — paste `https://kupa.pro/i/<test-token>` into another app (e.g. WhatsApp), tap → opens Kupay directly (not browser). Requires Play App Signing SHA-256 to be wired in §3.3.
 10. **Background → foreground** — leave app for 5 min, return — session persists.
 
-If step 9 falls back to the browser, App Links verification has not propagated yet — re-check `KUPA_ANDROID_RELEASE_SHA256` matches Play App Signing **App signing key** SHA-256 (uppercase, colon-separated), then:
+If step 9 falls back to the browser, App Links verification has not propagated yet — re-check `KUPAY_ANDROID_RELEASE_SHA256` matches Play App Signing **App signing key** SHA-256 (uppercase, colon-separated), then:
 ```bash
 adb shell pm get-app-links com.kupay.mobile
 # look for: kupa.pro: verified
@@ -277,7 +284,7 @@ adb shell pm get-app-links com.kupay.mobile
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `curl https://kupa.pro/.well-known/assetlinks.json` returns the SPA HTML | Vercel rewrites not deployed, or order wrong (SPA catch-all is before specific rewrite) | Confirm `vercel.json` change is in `main`, redeploy. Specific routes MUST appear above the catch-all. |
-| `assetlinks.json` returns `[]` empty target | `KUPA_ANDROID_RELEASE_SHA256` env var not set on production Supabase | Set secret, redeploy edge function. |
+| `assetlinks.json` returns `[]` empty target | `KUPAY_ANDROID_RELEASE_SHA256` env var not set on production Supabase | Set secret, redeploy edge function. |
 | Google sign-in shows "Developer error" | SHA-1 mismatch in Google Cloud OAuth Android client | Re-copy SHA-1 from Play App Signing (not upload key) into the OAuth client. |
 | `eas submit` fails with "service account does not have permission" | Service account not invited to Play Console as admin/release manager | Play Console → Users and permissions → invite the SA email with Release manager role. |
 | App Link opens browser instead of app | `autoVerify` blocked because `assetlinks.json` does not match the package signature | See step 9 of smoke test. |

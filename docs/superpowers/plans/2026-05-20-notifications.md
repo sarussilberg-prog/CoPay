@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** End-to-end mobile notifications (Expo push + in-app inbox + per-category preferences + mute-group) for Kupa, with full test coverage.
+**Goal:** End-to-end mobile notifications (Expo push + in-app inbox + per-category preferences + mute-group) for Kupay, with full test coverage.
 
 **Architecture:** AFTER INSERT/UPDATE/DELETE triggers on business tables (`expenses`, `expense_splits`, `settlements`, `group_members`) call `SECURITY DEFINER` fanout functions that INSERT into `notifications` (single source of truth). Triggers extract the actor via `auth.uid()` (or `created_by` as fallback). A Database Webhook on `notifications INSERT` fires the `send-push` Edge Function asynchronously. Mobile uses `expo-notifications` for tokens + foreground/background handlers, Supabase Realtime for live inbox, and shared i18n templates so push text matches inbox text exactly.
 
@@ -2479,7 +2479,7 @@ export function showInAppToast(payload: InAppToastPayload) {
   });
 }
 
-const KupaToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ props }) => {
+const KupayToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ props }) => {
   const { isRTL } = useRtlLayout(); // M9
   const locale = (i18n.language as 'en' | 'he') ?? 'en';
   const { title, body } = renderNotification(props.event_type, props.params, locale);
@@ -2496,7 +2496,7 @@ const KupaToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ pr
   );
 };
 
-export const toastConfig = { kupa: KupaToast };
+export const toastConfig = { kupa: KupayToast };
 
 const styles = StyleSheet.create({
   card: { backgroundColor: 'white', marginHorizontal: 12, marginTop: 8, padding: 12, borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 4 },
@@ -3300,7 +3300,7 @@ git commit -m "feat(mobile): stacked toasts for bursty notifications"
 - [ ] **Step 1: Onboarding flow**
 
 ```yaml
-appId: com.kupa.app
+appId: com.kupay.mobile
 ---
 - launchApp
 - runFlow: ../login.yaml

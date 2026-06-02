@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupa · LoginScreen — wordmark, subtitle, Continue with Google button.
+// Kupay · LoginScreen — wordmark, subtitle, Continue with Google button.
 // Mirrors screens/auth/LoginScreen.tsx — minus the language sheet (kept simple).
 
 function LoginScreen({ onSignIn }) {
@@ -17,7 +17,7 @@ function LoginScreen({ onSignIn }) {
         <IconButton name="language-outline" color="var(--primary)" size={26} />
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <img src="../../assets/logo.png" alt="Kupa" style={{ width: 128, height: 128, marginBottom: 24 }} />
+        <img src="../../assets/logo.png" alt="Kupay" style={{ width: 128, height: 128, marginBottom: 24 }} />
         <div className="brand-wordmark" style={{ marginBottom: 8 }}>kupa</div>
         <div style={{ fontSize: 16, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 48 }}>
           Split expenses with friends

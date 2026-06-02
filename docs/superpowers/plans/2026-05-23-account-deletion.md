@@ -1028,7 +1028,7 @@ Append the following describe block to `auth.service.test.ts`, **inside** the ex
                 error: { message: 'AuthApiError: email_was_deleted' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupa.mobile://auth/callback?code=abc');
+            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=abc');
 
             expect(error).not.toBeNull();
             expect(error!.code).toBe('account_deleted');
@@ -1040,7 +1040,7 @@ Append the following describe block to `auth.service.test.ts`, **inside** the ex
                 error: { message: 'invalid_grant' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupa.mobile://auth/callback?code=xyz');
+            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=xyz');
 
             expect(error?.code).toBe('generic');
             expect(error?.message).toContain('invalid_grant');

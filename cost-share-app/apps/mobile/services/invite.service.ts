@@ -4,16 +4,17 @@
  * writes via SECURITY DEFINER RPCs.
  */
 
+import { APP_WEB_ORIGIN } from '@cost-share/shared';
 import i18n from '../i18n';
 import { shareTextMessage } from '../lib/platformShare';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 
-const INVITE_HOST = 'https://kupa.pro';
+const INVITE_ORIGIN = (process.env.EXPO_PUBLIC_WEB_APP_URL ?? APP_WEB_ORIGIN).replace(/\/$/, '');
 
 export function buildInviteUrl(kind: 'friend' | 'group', token: string): string {
     const prefix = kind === 'friend' ? '/i/' : '/g/';
-    return `${INVITE_HOST}${prefix}${token}`;
+    return `${INVITE_ORIGIN}${prefix}${token}`;
 }
 
 export function buildFriendInviteMessage(inviterName: string, url: string): string {

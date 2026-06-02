@@ -1,59 +1,65 @@
 {
-    "name": "cost-share-app",
-    "version": "1.0.0",
-    "private": true,
-    "workspaces": [
-        "apps/*",
-        "packages/*"
-    ],
-    "scripts": {
-        "dev": "turbo run dev",
-        "dev:start": "bash scripts/dev-start.sh",
-        "dev:check": "bash scripts/dev-start.sh --check-only",
-        "dev:web": "bash scripts/dev-start.sh --web-only",
-        "dev:mobile": "bash scripts/dev-start.sh --mobile-only",
-        "dev:mobile:device": "EXPO_METRO_HOST=lan bash scripts/dev-start.sh --mobile-only",
-        "mobile:open:iphone": "npm run open:iphone -w @cost-share/mobile",
-        "mobile:ios": "npm run ios:run -w @cost-share/mobile",
-        "mobile:android": "npm run android:run -w @cost-share/mobile",
-        "mobile:open": "npm run mobile:open -w @cost-share/mobile",
-        "mobile:prebuild": "npm run prebuild -w @cost-share/mobile",
-        "mobile:ios:device": "npm run ios:device -w @cost-share/mobile",
-        "mobile:ios:signing": "npm run ios:signing -w @cost-share/mobile",
-        "mobile:ios:clean": "npm run ios:clean -w @cost-share/mobile",
-        "mobile:eas:secrets": "npm run eas:secrets -w @cost-share/mobile",
-        "mobile:eas:build:ios": "npm run eas:build:ios -w @cost-share/mobile",
-        "mobile:eas:submit:ios": "npm run eas:submit:ios -w @cost-share/mobile",
-        "build": "turbo run build",
-        "lint": "turbo run lint",
-        "clean": "turbo run clean",
-        "mobile": "cd apps/mobile && npm start",
-        "web": "cd apps/web && npm run dev",
-        "seed": "DOTENV_CONFIG_PATH=./supabase/.env ts-node -r dotenv/config scripts/seed.ts",
-        "supabase:fix": "bash scripts/supabase-apply-patches.sh",
-        "supabase:verify": "bash scripts/verify-supabase-schema.sh",
-        "supabase:link:dev": "SUPABASE_ENV=development bash scripts/supabase-link.sh",
-        "supabase:link:prod": "SUPABASE_ENV=production CONFIRM_PRODUCTION=yes bash scripts/supabase-link.sh",
-        "supabase:bootstrap:prod": "bash scripts/supabase-bootstrap-production.sh"
-    },
-    "devDependencies": {
-        "@supabase/supabase-js": "^2.45.0",
-        "@types/ws": "^8.18.1",
-        "dotenv": "^16.4.5",
-        "ts-node": "^10.9.2",
-        "turbo": "^1.13.0",
-        "typescript": "^5.3.3",
-        "ws": "^8.20.1"
-    },
-    "engines": {
-        "node": ">=18.0.0",
-        "npm": ">=9.0.0"
-    },
-    "overrides": {
-        "react": "19.1.0",
-        "react-native-css-interop": {
-            "lightningcss": "1.32.0"
-        }
-    },
-    "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "name": "cost-share-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:start": "bash scripts/dev-start.sh",
+    "dev:check": "bash scripts/dev-start.sh --check-only",
+    "dev:web": "bash scripts/dev-start.sh --web-only",
+    "dev:mobile": "bash scripts/dev-start.sh --mobile-only",
+    "dev:mobile:device": "EXPO_METRO_HOST=lan bash scripts/dev-start.sh --mobile-only",
+    "mobile:open:iphone": "npm run open:iphone -w @cost-share/mobile",
+    "mobile:ios": "npm run ios:run -w @cost-share/mobile",
+    "mobile:android": "npm run android:run -w @cost-share/mobile",
+    "mobile:open": "npm run mobile:open -w @cost-share/mobile",
+    "mobile:prebuild": "npm run prebuild -w @cost-share/mobile",
+    "mobile:ios:device": "npm run ios:device -w @cost-share/mobile",
+    "mobile:ios:signing": "npm run ios:signing -w @cost-share/mobile",
+    "mobile:ios:clean": "npm run ios:clean -w @cost-share/mobile",
+    "mobile:eas:secrets": "npm run eas:secrets -w @cost-share/mobile",
+    "mobile:eas:build:ios": "npm run eas:build:ios -w @cost-share/mobile",
+    "mobile:eas:submit:ios": "npm run eas:submit:ios -w @cost-share/mobile",
+    "android:run": "npm run android:run -w @cost-share/mobile",
+    "ios:run": "npm run ios:run -w @cost-share/mobile",
+    "prebuild": "npm run prebuild -w @cost-share/mobile",
+    "prebuild:clean": "npm run prebuild:clean -w @cost-share/mobile",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "mobile": "cd apps/mobile && npm start",
+    "web": "cd apps/web && npm run dev",
+    "seed": "DOTENV_CONFIG_PATH=./supabase/.env ts-node -r dotenv/config scripts/seed.ts",
+    "supabase:fix": "bash scripts/supabase-apply-patches.sh",
+    "supabase:verify": "bash scripts/verify-supabase-schema.sh",
+    "supabase:link:dev": "SUPABASE_ENV=development bash scripts/supabase-link.sh",
+    "supabase:link:prod": "SUPABASE_ENV=production CONFIRM_PRODUCTION=yes bash scripts/supabase-link.sh",
+    "supabase:bootstrap:prod": "bash scripts/supabase-bootstrap-production.sh",
+    "android": "npm run android:run -w @cost-share/mobile",
+    "ios": "npm run ios:run -w @cost-share/mobile"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "turbo": "^1.13.0",
+    "typescript": "^5.3.3",
+    "ws": "^8.20.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-native-css-interop": {
+      "lightningcss": "1.32.0"
+    }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

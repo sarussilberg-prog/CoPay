@@ -12,7 +12,7 @@ Read [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../../../docs/SSOT/SUPABASE_ENVIRONMEN
 Local dev: copy `.env.example` → `.env`.  
 EAS production: `bash scripts/eas-sync-secrets.sh .env.production`
 
-**Android Google (native):** set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` to a **Web application** OAuth client ID; register Android OAuth client with package `com.kupay.mobile` + debug/release SHA-1. Rebuild dev client after native dep changes (`expo prebuild --clean`). See `docs/PLAY_STORE_ANDROID.md` §3.4.
+**Android Google sign-in:** Requires `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (Web OAuth client). Uses native Google Sign-In inside an 80% bottom sheet — **do not** load Google OAuth in a WebView (Google returns `403 disallowed_useragent`). Fallback without the env var: Chrome Custom Tab via `expo-web-browser`. See `docs/PLAY_STORE_ANDROID.md` §3.4.
 
 ## Expo
 

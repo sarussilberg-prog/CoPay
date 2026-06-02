@@ -9,8 +9,8 @@
 
 | Environment | Git branch | Supabase project name | Project ref | API URL |
 |-------------|------------|----------------------|-------------|---------|
-| **Development** | `dev` (and feature branches → `dev`) | Kupa - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
-| **Production** | `main` | Kupa - production (new) | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
+| **Development** | `dev` (and feature branches → `dev`) | Kupay - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
+| **Production** | `main` | Kupay - production | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
 
 **Rule:** If your current git branch is `main`, you are on **production**. Any other branch used for integration is **development**.
 

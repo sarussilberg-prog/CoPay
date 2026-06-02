@@ -6,7 +6,7 @@ Status: **brainstormed; pending implementation plan**
 
 ## Goal
 
-Build an end-to-end mobile push + in-app notifications system for Kupa, so users:
+Build an end-to-end mobile push + in-app notifications system for Kupay, so users:
 
 1. Receive a high-quality push notification on iOS/Android when something relevant happens in a group they belong to (a friend added an expense, settled up, joined or left the group).
 2. See a persistent inbox inside the app with the full notification history, even for events that arrived while the device was offline or the user was inside the app.

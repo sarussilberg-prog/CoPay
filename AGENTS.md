@@ -1,4 +1,4 @@
-# Kupa — instructions for AI agents
+# Kupay — instructions for AI agents
 
 ## Supabase (read first)
 

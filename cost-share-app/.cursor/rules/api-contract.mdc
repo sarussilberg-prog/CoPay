@@ -1,6 +1,6 @@
 # API Contract — DEPRECATED (no API server)
 
-This rule file is kept as a tombstone. There is no custom HTTP API in Kupa as of 2026-05-19.
+This rule file is kept as a tombstone. There is no custom HTTP API in Kupay as of 2026-05-19.
 
 Mobile/web talk to Supabase directly. The "contract" between client and DB is:
 - Postgres schema + RLS in `cost-share-app/supabase/schema.sql`.

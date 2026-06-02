@@ -27,6 +27,7 @@ import { useAppRealtime } from './hooks/useAppRealtime';
 import { colors } from './theme';
 import { RtlLayoutProvider } from './hooks/useRtlLayout';
 import { WebAlertHost } from './components/WebAlertHost';
+import { GoogleSignInSheetHost } from './components/auth/GoogleSignInSheetHost';
 import type { Session } from '@supabase/supabase-js';
 import './global.css';
 
@@ -197,6 +198,7 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <RtlLayoutProvider>
+          <GoogleSignInSheetHost />
           <WebFrame>
             <View className="flex-1 justify-center items-center bg-white">
               <ActivityIndicator size="large" color={colors.primary} />
@@ -213,6 +215,7 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <RtlLayoutProvider>
+          <GoogleSignInSheetHost />
           <WebFrame>
             {preOnboardingDone === null ? (
               <View className="flex-1 justify-center items-center bg-white">

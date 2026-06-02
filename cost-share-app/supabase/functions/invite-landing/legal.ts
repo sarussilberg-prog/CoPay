@@ -7,7 +7,8 @@ import { marked } from 'https://esm.sh/marked@12.0.2';
 type Locale = 'he' | 'en';
 type Slug = 'privacy' | 'terms';
 
-const SUPPORT_EMAIL = Deno.env.get('KUPA_SUPPORT_EMAIL') ?? 'sarussilberg@gmail.com';
+const SUPPORT_EMAIL =
+    Deno.env.get('KUPAY_SUPPORT_EMAIL') ?? Deno.env.get('KUPA_SUPPORT_EMAIL') ?? 'sarussilberg@gmail.com';
 
 interface LegalRow {
     slug: Slug;

@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupa · AddExpenseScreen — modal-style sheet with description, amount, payer, splits.
+// Kupay · AddExpenseScreen — modal-style sheet with description, amount, payer, splits.
 
 function AddExpenseScreen({ group, members, onCancel, onSave }) {
   const [desc, setDesc] = React.useState('');

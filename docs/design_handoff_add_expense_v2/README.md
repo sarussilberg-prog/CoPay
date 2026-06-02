@@ -1,16 +1,16 @@
-# Handoff: Add / Edit Expense Screen — Kupa Mobile
+# Handoff: Add / Edit Expense Screen — Kupay Mobile
 
 ## Overview
 
-A redesign of the **create / edit expense** screen in the Kupa mobile app (a Splitwise-style cost‑share app). The current screen (`_reference/AddExpenseScreen.original.jsx`) is a vertical stack of form rows — description → amount → category → payer → split. This redesign re‑arranges the same fields around a single goal: **enter amount + description as fast as possible**, with smart defaults that handle the rest.
+A redesign of the **create / edit expense** screen in the Kupay mobile app (a Splitwise-style cost‑share app). The current screen (`_reference/AddExpenseScreen.original.jsx`) is a vertical stack of form rows — description → amount → category → payer → split. This redesign re‑arranges the same fields around a single goal: **enter amount + description as fast as possible**, with smart defaults that handle the rest.
 
 ## About the design files
 
-The files in this bundle are **design references created in HTML** — high‑fidelity prototypes that show intended look, layout, and behavior. They are **not production code to copy directly.** Your task is to **recreate these designs in the Kupa codebase's existing environment** (React Native + NativeWind, based on the original `AddExpenseScreen.jsx` in `_reference/`), using its established patterns, component primitives, and design tokens.
+The files in this bundle are **design references created in HTML** — high‑fidelity prototypes that show intended look, layout, and behavior. They are **not production code to copy directly.** Your task is to **recreate these designs in the Kupay codebase's existing environment** (React Native + NativeWind, based on the original `AddExpenseScreen.jsx` in `_reference/`), using its established patterns, component primitives, and design tokens.
 
 ## Fidelity
 
-**High‑fidelity.** Final colors, type scale, spacing, and radii are all sourced from the Kupa design system (`colors_and_type.css`, included). Pixel‑perfect recreation is the goal.
+**High‑fidelity.** Final colors, type scale, spacing, and radii are all sourced from the Kupay design system (`colors_and_type.css`, included). Pixel‑perfect recreation is the goal.
 
 ## Files
 
@@ -18,7 +18,7 @@ The files in this bundle are **design references created in HTML** — high‑fi
 |---|---|
 | `README.md` | This document. |
 | `add-expense.html` | The prototype. Open in a browser — shows both screens side‑by‑side. |
-| `colors_and_type.css` | Kupa design tokens — colors, spacing, radii, shadows, typography. The source of truth. |
+| `colors_and_type.css` | Kupay design tokens — colors, spacing, radii, shadows, typography. The source of truth. |
 | `components.jsx` | The mobile UI kit primitives used by the prototype (`Icon`, `MemberAvatar`, etc.). Match these names/signatures in your implementation. |
 | `ios-frame.jsx` | iOS device bezel used only to frame the prototype. Not part of the screen. |
 | `_reference/AddExpenseScreen.original.jsx` | The **existing** AddExpenseScreen in the codebase. The new design replaces this. |
@@ -371,7 +371,7 @@ The editor sheet is its own modal state; commits via `Done` write back into the 
 
 ## Icons
 
-All icons are **Ionicons** (the existing icon set in the Kupa codebase, referenced via the `Icon` component in `components.jsx`).
+All icons are **Ionicons** (the existing icon set in the Kupay codebase, referenced via the `Icon` component in `components.jsx`).
 
 | Where | Icon | Size |
 |---|---|---|

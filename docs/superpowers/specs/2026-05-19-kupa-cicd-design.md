@@ -1,10 +1,10 @@
-# Kupa CI/CD Design Spec
+# Kupay CI/CD Design Spec
 
 **Status:** Approved for implementation planning  
 **Date:** 2026-05-19  
-**Repo:** `sarussilberg-prog/Kupa-MVP-0.1`  
+**Repo:** `sarussilberg-prog/Kupay-MVP-0.1`  
 **Monorepo root:** `cost-share-app/`  
-**Git root:** `Kupa-MVP-0.1/` (workflows live at `.github/workflows/`)
+**Git root:** `Kupay-MVP-0.1/` (workflows live at `.github/workflows/`)
 
 ## Summary
 

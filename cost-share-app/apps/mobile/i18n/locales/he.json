@@ -45,6 +45,8 @@
             "balances": "יתרות"
         },
         "signInError": "הכניסה נכשלה. אנא נסה שוב.",
+        "googleSignInSheetTitle": "התחברות עם Google",
+        "googleSignInSheetHint": "בחרו את חשבון Google בחלון שיופיע.",
         "signingIn": "מתחבר..."
     },
     "onboarding": {

@@ -1,4 +1,4 @@
-# Software Requirements Specification (SRS) — Kupa
+# Software Requirements Specification (SRS) — Kupay
 
 **Status:** Living document (v0.1 — derived from current codebase).  
 **Audience:** Humans and AI agents.  
@@ -10,7 +10,7 @@
 
 ## 1. Product summary
 
-Kupa helps groups of people track shared expenses, split costs fairly, see who owes whom, and record settlements (payments between members). Think Splitwise: groups, expenses, splits, balances, settle-up.
+Kupay helps groups of people track shared expenses, split costs fairly, see who owes whom, and record settlements (payments between members). Think Splitwise: groups, expenses, splits, balances, settle-up.
 
 **Primary client:** React Native (Expo) mobile app.  
 **Backend:** Supabase (Postgres + Auth + Storage); mobile/web use `@supabase/supabase-js` with RLS.  

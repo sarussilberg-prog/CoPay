@@ -28,7 +28,7 @@ describe('parseIncomingUrl', () => {
     it('returns unknown for unrelated URL', () => {
         expect(parseIncomingUrl('https://example.com/foo')).toEqual({ kind: 'unknown' });
     });
-    it('returns unknown for malformed kupa URL', () => {
+    it('returns unknown for malformed invite URL', () => {
         expect(parseIncomingUrl('https://kupa.pro/x/abc')).toEqual({ kind: 'unknown' });
     });
     it('handles trailing slash + query string', () => {

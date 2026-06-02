@@ -1,7 +1,7 @@
-// Kupa mobile · fake data (groups, members, expenses, activity)
+// Kupay mobile · fake data (groups, members, expenses, activity)
 // All amounts in 2-decimal money; currency codes are prefixes.
 
-window.KUPA_DATA = {
+window.KUPAY_DATA = {
   currentUser: {
     id: 'u1',
     name: 'You',

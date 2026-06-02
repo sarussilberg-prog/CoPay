@@ -45,7 +45,9 @@
             "balances": "Balances"
         },
         "signInError": "Sign in failed. Please try again.",
-        "signingIn": "Signing in..."
+        "signingIn": "Signing in...",
+        "googleSignInSheetTitle": "Sign in with Google",
+        "googleSignInSheetHint": "Choose your Google account in the window that appears."
     },
     "onboarding": {
         "skip": "Skip",

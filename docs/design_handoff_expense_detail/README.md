@@ -1,4 +1,4 @@
-# Handoff: Kupa · Expense Detail Popup
+# Handoff: Kupay · Expense Detail Popup
 
 ## Overview
 
@@ -137,7 +137,7 @@ const CATEGORY_ICON = {
 - Eyebrow: `"TOTAL"` — 10 px / 600, `colors.slate400`, uppercase, `letter-spacing: 0.06em`
 - Amount: `"USD 84.20"` — **28 px / 700**, `colors.text.primary`, `font-variant-numeric: tabular-nums`, `letter-spacing: -0.01em`, 2 px below eyebrow
 
-**Format**: `"{CURRENCY} {amount.toFixed(2)}"` — currency code prefix, single space, two decimals (Kupa convention).
+**Format**: `"{CURRENCY} {amount.toFixed(2)}"` — currency code prefix, single space, two decimals (Kupay convention).
 
 ## User-involvement strip
 

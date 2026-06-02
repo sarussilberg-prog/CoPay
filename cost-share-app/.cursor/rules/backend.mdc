@@ -2,7 +2,7 @@
 
 This rule file is kept as a tombstone. The NestJS API server (`apps/server/`) was deleted on 2026-05-19.
 
-Kupa now uses **Supabase only**:
+Kupay now uses **Supabase only**:
 - Mobile/web call Supabase directly via `@supabase/supabase-js` with the anon key + user JWT.
 - Authorization is enforced by Postgres Row Level Security in `cost-share-app/supabase/schema.sql`.
 - Mobile feature logic lives in `apps/mobile/services/*.service.ts`.

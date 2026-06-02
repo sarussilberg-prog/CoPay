@@ -1,4 +1,4 @@
-# Handoff: Kupa · Settlement Detail Popup
+# Handoff: Kupay · Settlement Detail Popup
 
 ## Overview
 

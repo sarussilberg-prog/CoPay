@@ -1,4 +1,4 @@
-# Handoff: Kupa · Settle-up popup
+# Handoff: Kupay · Settle-up popup
 
 ## Overview
 

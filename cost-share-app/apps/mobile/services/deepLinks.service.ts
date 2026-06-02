@@ -6,6 +6,7 @@
  * flow through services/auth.service.ts.
  */
 
+import { APP_WEB_HOST } from '@cost-share/shared';
 import { NavigationProp } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { QueryClient } from '@tanstack/react-query';
@@ -35,8 +36,8 @@ export function parseIncomingUrl(rawUrl: string): InviteLink {
         return { kind: 'unknown' };
     }
 
-    // https://kupa.pro/i/<token> | /g/<token>
-    if (parsed.protocol === 'https:' && parsed.hostname === 'kupa.pro') {
+    // https://<APP_WEB_HOST>/i/<token> | /g/<token>
+    if (parsed.protocol === 'https:' && parsed.hostname === APP_WEB_HOST) {
         const m = parsed.pathname.match(/^\/(i|g)\/([^/?#]+)\/?$/);
         if (m && TOKEN_RE.test(m[2])) {
             return m[1] === 'i'

@@ -3,9 +3,12 @@
 
 // App Store URL is read from an env var because Apple assigns the numeric ID at
 // publication time; before publication, the env var falls back to the marketing
-// site itself. Set KUPA_APP_STORE_URL once the app is published.
-const APP_STORE_URL = Deno.env.get('KUPA_APP_STORE_URL') ?? 'https://kupa.pro/';
-const PLAY_STORE_URL = Deno.env.get('KUPA_PLAY_STORE_URL') ?? 'https://play.google.com/store/apps/details?id=com.kupay.mobile';
+// site itself. Set KUPAY_APP_STORE_URL once the app is published (KUPA_* still accepted).
+const APP_STORE_URL =
+    Deno.env.get('KUPAY_APP_STORE_URL') ?? Deno.env.get('KUPA_APP_STORE_URL') ?? 'https://kupa.pro/';
+const PLAY_STORE_URL =
+    Deno.env.get('KUPAY_PLAY_STORE_URL') ?? Deno.env.get('KUPA_PLAY_STORE_URL')
+        ?? 'https://play.google.com/store/apps/details?id=com.kupay.mobile';
 
 function escapeHtml(s: string): string {
     return s.replace(/[&<>"']/g, (c) => ({

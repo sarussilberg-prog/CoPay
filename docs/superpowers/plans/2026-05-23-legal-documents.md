@@ -164,29 +164,29 @@ VALUES (
 **Effective date:** {{EFFECTIVE_DATE}}
 **Version:** 1.0.0
 
-Welcome to Kupa. These Terms of Service ("Terms") are a binding agreement between you and **[Partnership Name]**, a partnership organized under the laws of the State of Israel ("Kupa", "we", "us"). They govern your use of the Kupa mobile application and any related services (collectively, the "Service").
+Welcome to Kupay. These Terms of Service ("Terms") are a binding agreement between you and **[Partnership Name]**, a partnership organized under the laws of the State of Israel ("Kupay", "we", "us"). They govern your use of the Kupay mobile application and any related services (collectively, the "Service").
 
 **Please read these Terms carefully. If you do not agree, do not use the Service.**
 
 ## 1. Acceptance of Terms
 
-By creating an account or using the Service, you confirm that you have read, understood, and agreed to be bound by these Terms and by our Privacy Policy. You must be at least **16 years old** to use Kupa. If you are between 16 and 18, you confirm that you have the consent of a parent or legal guardian to use the Service.
+By creating an account or using the Service, you confirm that you have read, understood, and agreed to be bound by these Terms and by our Privacy Policy. You must be at least **16 years old** to use Kupay. If you are between 16 and 18, you confirm that you have the consent of a parent or legal guardian to use the Service.
 
 ## 2. Description of the Service
 
-Kupa is a tool that helps friends and groups **track shared expenses and calculate balances** between members. Kupa **does not process, hold, transfer, or guarantee any money**. We are not a bank, payment processor, money transmitter, or financial institution. All actual payments between users occur outside of the Service.
+Kupay is a tool that helps friends and groups **track shared expenses and calculate balances** between members. Kupay **does not process, hold, transfer, or guarantee any money**. We are not a bank, payment processor, money transmitter, or financial institution. All actual payments between users occur outside of the Service.
 
-Kupa makes no representation that calculated balances are free of errors. You are solely responsible for verifying any amount before paying or accepting payment from another user.
+Kupay makes no representation that calculated balances are free of errors. You are solely responsible for verifying any amount before paying or accepting payment from another user.
 
 ## 3. Your Account
 
-You sign in to Kupa using Google. By doing so, you authorize Google to share certain profile information (name, email, profile image) with us, as described in our Privacy Policy.
+You sign in to Kupay using Google. By doing so, you authorize Google to share certain profile information (name, email, profile image) with us, as described in our Privacy Policy.
 
 You agree to: (a) provide accurate, current, and complete information; (b) keep your account secure; (c) not share, transfer, or sell your account; and (d) notify us at sarussilberg@gmail.com of any unauthorized use. You are responsible for all activity that occurs under your account.
 
 ## 4. User Content
 
-You may create groups, add expenses, upload receipt images, record settlements, and post other content (collectively, "User Content"). You retain all rights you have in your User Content. By submitting User Content, you grant Kupa a worldwide, non-exclusive, royalty-free license to host, store, reproduce, modify (for technical purposes), and display your User Content **solely for the purpose of operating and providing the Service to you and the other group members you choose to share it with**.
+You may create groups, add expenses, upload receipt images, record settlements, and post other content (collectively, "User Content"). You retain all rights you have in your User Content. By submitting User Content, you grant Kupay a worldwide, non-exclusive, royalty-free license to host, store, reproduce, modify (for technical purposes), and display your User Content **solely for the purpose of operating and providing the Service to you and the other group members you choose to share it with**.
 
 You represent that you have all rights necessary to submit your User Content and that it does not violate any law or third-party right.
 
@@ -217,7 +217,7 @@ The Service integrates with third-party services, including Google (sign-in), Ap
 
 ## 8. Intellectual Property
 
-The Service, including its software, design, trademarks, and branding, is owned by Kupa and its licensors and is protected by intellectual-property laws. Subject to your compliance with these Terms, we grant you a limited, non-exclusive, non-transferable, revocable license to use the Service for your personal, non-commercial use.
+The Service, including its software, design, trademarks, and branding, is owned by Kupay and its licensors and is protected by intellectual-property laws. Subject to your compliance with these Terms, we grant you a limited, non-exclusive, non-transferable, revocable license to use the Service for your personal, non-commercial use.
 
 ## 9. Paid Features (Future)
 
@@ -245,7 +245,7 @@ Nothing in these Terms limits liability that cannot be limited by applicable law
 
 ## 14. Indemnification
 
-You agree to indemnify and hold Kupa harmless from any claim, loss, or expense (including reasonable legal fees) arising from your User Content, your use of the Service, or your violation of these Terms or any law.
+You agree to indemnify and hold Kupay harmless from any claim, loss, or expense (including reasonable legal fees) arising from your User Content, your use of the Service, or your violation of these Terms or any law.
 
 ## 15. Changes to the Terms
 
@@ -259,7 +259,7 @@ These Terms are governed by the laws of the **State of Israel**, without regard 
 
 - **Severability.** If any provision of these Terms is held unenforceable, the remaining provisions will continue in full force.
 - **No waiver.** Our failure to enforce any right is not a waiver of that right.
-- **Entire agreement.** These Terms, together with the Privacy Policy, constitute the entire agreement between you and Kupa regarding the Service.
+- **Entire agreement.** These Terms, together with the Privacy Policy, constitute the entire agreement between you and Kupay regarding the Service.
 - **Assignment.** You may not assign these Terms; we may assign them in connection with a merger, acquisition, or sale of assets.
 
 ## 18. Contact
@@ -322,29 +322,29 @@ VALUES (
 **תאריך כניסה לתוקף:** {{EFFECTIVE_DATE}}
 **גרסה:** 1.0.0
 
-ברוכים הבאים ל-Kupa. תנאי שירות אלה ("התנאים") הם הסכם מחייב בינך לבין **[Partnership Name]**, שותפות הפועלת לפי חוקי מדינת ישראל ("Kupa", "אנחנו", "אנו"), ומסדירים את השימוש שלך באפליקציית המובייל של Kupa ובכל השירותים הקשורים אליה (להלן יחד: "השירות").
+ברוכים הבאים ל-Kupay. תנאי שירות אלה ("התנאים") הם הסכם מחייב בינך לבין **[Partnership Name]**, שותפות הפועלת לפי חוקי מדינת ישראל ("Kupay", "אנחנו", "אנו"), ומסדירים את השימוש שלך באפליקציית המובייל של Kupay ובכל השירותים הקשורים אליה (להלן יחד: "השירות").
 
 **אנא קרא את התנאים בעיון. אם אינך מסכים להם — אל תשתמש בשירות.**
 
 ## 1. קבלת התנאים
 
-יצירת חשבון או שימוש בשירות מהווים אישור שקראת, הבנת והסכמת להיות מחויב בתנאים אלה ובמדיניות הפרטיות שלנו. הגיל המינימלי לשימוש ב-Kupa הוא **16**. אם אתה בין הגילאים 16 ו-18, אתה מאשר שקיבלת את הסכמת הורה או אפוטרופוס לשימוש בשירות.
+יצירת חשבון או שימוש בשירות מהווים אישור שקראת, הבנת והסכמת להיות מחויב בתנאים אלה ובמדיניות הפרטיות שלנו. הגיל המינימלי לשימוש ב-Kupay הוא **16**. אם אתה בין הגילאים 16 ו-18, אתה מאשר שקיבלת את הסכמת הורה או אפוטרופוס לשימוש בשירות.
 
 ## 2. תיאור השירות
 
-Kupa הוא כלי שעוזר לחברים ולקבוצות **לעקוב אחר הוצאות משותפות ולחשב יתרות** בין חברים. **Kupa אינה מעבדת, מחזיקה, מעבירה או מבטיחה כסף.** איננו בנק, ספק שירותי תשלום, מעביר כספים או מוסד פיננסי. כל ההעברות הכספיות בפועל בין משתמשים מתבצעות מחוץ לשירות.
+Kupay הוא כלי שעוזר לחברים ולקבוצות **לעקוב אחר הוצאות משותפות ולחשב יתרות** בין חברים. **Kupay אינה מעבדת, מחזיקה, מעבירה או מבטיחה כסף.** איננו בנק, ספק שירותי תשלום, מעביר כספים או מוסד פיננסי. כל ההעברות הכספיות בפועל בין משתמשים מתבצעות מחוץ לשירות.
 
-Kupa אינה מתחייבת שהיתרות המחושבות נטולות שגיאות. האחריות לאמת כל סכום לפני תשלום או קבלת תשלום ממשתמש אחר היא עליך.
+Kupay אינה מתחייבת שהיתרות המחושבות נטולות שגיאות. האחריות לאמת כל סכום לפני תשלום או קבלת תשלום ממשתמש אחר היא עליך.
 
 ## 3. החשבון שלך
 
-ההתחברות ל-Kupa מתבצעת באמצעות Google. בכך אתה מסמיך את Google לשתף איתנו מידע מסוים מהפרופיל שלך (שם, אימייל, תמונת פרופיל), כמתואר במדיניות הפרטיות שלנו.
+ההתחברות ל-Kupay מתבצעת באמצעות Google. בכך אתה מסמיך את Google לשתף איתנו מידע מסוים מהפרופיל שלך (שם, אימייל, תמונת פרופיל), כמתואר במדיניות הפרטיות שלנו.
 
 אתה מסכים: (א) לספק מידע מדויק, עדכני ושלם; (ב) לשמור על אבטחת החשבון שלך; (ג) לא לשתף, להעביר או למכור את החשבון; ו-(ד) להודיע לנו בכתובת sarussilberg@gmail.com על כל שימוש לא מורשה. אתה אחראי לכל פעילות שמתרחשת תחת חשבונך.
 
 ## 4. תוכן משתמש
 
-אתה רשאי ליצור קבוצות, להוסיף הוצאות, להעלות תמונות קבלות, לתעד התחשבנויות ולפרסם תוכן נוסף (להלן יחד: "תוכן משתמש"). כל הזכויות בתוכן המשתמש שלך נשארות שלך. בשליחת תוכן משתמש אתה מעניק ל-Kupa רישיון עולמי, לא בלעדי וללא תמלוגים לארח, לאחסן, לשכפל, לבצע התאמות טכניות ולהציג את תוכן המשתמש שלך **אך ורק לצורך הפעלת השירות ומתן השירות לך ולחברי הקבוצות שבחרת לשתף איתם**.
+אתה רשאי ליצור קבוצות, להוסיף הוצאות, להעלות תמונות קבלות, לתעד התחשבנויות ולפרסם תוכן נוסף (להלן יחד: "תוכן משתמש"). כל הזכויות בתוכן המשתמש שלך נשארות שלך. בשליחת תוכן משתמש אתה מעניק ל-Kupay רישיון עולמי, לא בלעדי וללא תמלוגים לארח, לאחסן, לשכפל, לבצע התאמות טכניות ולהציג את תוכן המשתמש שלך **אך ורק לצורך הפעלת השירות ומתן השירות לך ולחברי הקבוצות שבחרת לשתף איתם**.
 
 אתה מצהיר שיש לך את כל הזכויות הנדרשות להגשת תוכן המשתמש ושהוא אינו מפר חוק או זכות של צד שלישי.
 
@@ -375,7 +375,7 @@ Kupa אינה מתחייבת שהיתרות המחושבות נטולות שגי
 
 ## 8. קניין רוחני
 
-השירות, לרבות התוכנה, העיצוב, סימני המסחר והמיתוג, הוא בבעלות Kupa והמעניקים שלה ומוגן בחוקי קניין רוחני. בכפוף לעמידתך בתנאים אלה, אנו מעניקים לך רישיון מוגבל, לא בלעדי, לא ניתן להעברה וניתן לביטול לשימוש בשירות לצרכים אישיים ולא-מסחריים.
+השירות, לרבות התוכנה, העיצוב, סימני המסחר והמיתוג, הוא בבעלות Kupay והמעניקים שלה ומוגן בחוקי קניין רוחני. בכפוף לעמידתך בתנאים אלה, אנו מעניקים לך רישיון מוגבל, לא בלעדי, לא ניתן להעברה וניתן לביטול לשימוש בשירות לצרכים אישיים ולא-מסחריים.
 
 ## 9. תכונות בתשלום (עתידיות)
 
@@ -397,13 +397,13 @@ Kupa אינה מתחייבת שהיתרות המחושבות נטולות שגי
 
 ## 13. הגבלת אחריות
 
-ככל המותר על פי הדין החל, Kupa, שותפיה ושלוחיה לא יישאו באחריות לכל נזק עקיף, מקרי, מיוחד, תוצאתי או עונשי, או לאובדן רווחים, נתונים או מוניטין, הנובע או קשור לשירות. סך האחריות המצטברת שלנו לכל תביעה הקשורה לשירות מוגבל לגדול מבין (א) הסכומים ששילמת לנו ב-12 החודשים שקדמו לתביעה, או (ב) **מאה שקלים חדשים (₪100)**.
+ככל המותר על פי הדין החל, Kupay, שותפיה ושלוחיה לא יישאו באחריות לכל נזק עקיף, מקרי, מיוחד, תוצאתי או עונשי, או לאובדן רווחים, נתונים או מוניטין, הנובע או קשור לשירות. סך האחריות המצטברת שלנו לכל תביעה הקשורה לשירות מוגבל לגדול מבין (א) הסכומים ששילמת לנו ב-12 החודשים שקדמו לתביעה, או (ב) **מאה שקלים חדשים (₪100)**.
 
 שום דבר בתנאים אלה אינו מגביל אחריות שלא ניתן להגביל לפי דין (לדוגמה, רשלנות חמורה, התנהגות פסולה במזיד, או נזק גוף).
 
 ## 14. שיפוי
 
-אתה מסכים לשפות את Kupa ולפטור אותה מכל תביעה, אובדן או הוצאה (לרבות שכר טרחת עורכי דין סביר) הנובעים מתוכן המשתמש שלך, מהשימוש שלך בשירות, או מהפרה של תנאים אלה או של כל דין.
+אתה מסכים לשפות את Kupay ולפטור אותה מכל תביעה, אובדן או הוצאה (לרבות שכר טרחת עורכי דין סביר) הנובעים מתוכן המשתמש שלך, מהשימוש שלך בשירות, או מהפרה של תנאים אלה או של כל דין.
 
 ## 15. שינויים בתנאים
 
@@ -417,7 +417,7 @@ Kupa אינה מתחייבת שהיתרות המחושבות נטולות שגי
 
 - **בטלות חלקית.** אם הוראה כלשהי בתנאים אלה תיקבע כלא-תקפה, יתר ההוראות יעמדו בתוקף מלא.
 - **אי-ויתור.** אי-אכיפת זכות אינה מהווה ויתור עליה.
-- **הסכם כולל.** התנאים, יחד עם מדיניות הפרטיות, מהווים את ההסכם המלא בינך לבין Kupa בכל הנוגע לשירות.
+- **הסכם כולל.** התנאים, יחד עם מדיניות הפרטיות, מהווים את ההסכם המלא בינך לבין Kupay בכל הנוגע לשירות.
 - **המחאה.** אינך רשאי להמחות את התנאים; אנו רשאים להמחותם בקשר למיזוג, רכישה או מכירת נכסים.
 
 ## 18. יצירת קשר
@@ -478,11 +478,11 @@ VALUES (
 **Effective date:** {{EFFECTIVE_DATE}}
 **Version:** 1.0.0
 
-This Privacy Policy explains how **[Partnership Name]** ("Kupa", "we", "us"), a partnership organized under the laws of the State of Israel, collects, uses, and discloses information when you use the Kupa mobile application and related services (the "Service"). For questions, contact **sarussilberg@gmail.com**.
+This Privacy Policy explains how **[Partnership Name]** ("Kupay", "we", "us"), a partnership organized under the laws of the State of Israel, collects, uses, and discloses information when you use the Kupay mobile application and related services (the "Service"). For questions, contact **sarussilberg@gmail.com**.
 
 ## 1. Who We Are (Data Controller)
 
-Kupa is the controller of your personal data under the EU General Data Protection Regulation (GDPR), the UK GDPR, the California Consumer Privacy Act (CCPA/CPRA), and the Israeli Privacy Protection Law, 5741-1981, where applicable.
+Kupay is the controller of your personal data under the EU General Data Protection Regulation (GDPR), the UK GDPR, the California Consumer Privacy Act (CCPA/CPRA), and the Israeli Privacy Protection Law, 5741-1981, where applicable.
 
 ## 2. Information We Collect
 
@@ -543,7 +543,7 @@ These providers act on our behalf under written data-processing agreements and a
 
 ### 4.3 For legal reasons
 
-We may disclose information when we are required to do so by a valid legal process (subpoena, court order), or when necessary to protect the rights, safety, or property of Kupa, our users, or the public.
+We may disclose information when we are required to do so by a valid legal process (subpoena, court order), or when necessary to protect the rights, safety, or property of Kupay, our users, or the public.
 
 ### 4.4 We do **not** sell your personal information
 
@@ -551,7 +551,7 @@ We do not sell your personal information and have no plans to do so.
 
 ## 5. Cookies and Tracking
 
-The Kupa mobile app does not use cookies and does not engage in cross-site or cross-app tracking. The Google Sign-In flow may involve Google's own cookies/policies; please review Google's privacy notices.
+The Kupay mobile app does not use cookies and does not engage in cross-site or cross-app tracking. The Google Sign-In flow may involve Google's own cookies/policies; please review Google's privacy notices.
 
 ## 6. International Data Transfers
 
@@ -669,11 +669,11 @@ VALUES (
 **תאריך כניסה לתוקף:** {{EFFECTIVE_DATE}}
 **גרסה:** 1.0.0
 
-מדיניות פרטיות זו מסבירה כיצד **[Partnership Name]** ("Kupa", "אנחנו", "אנו"), שותפות הפועלת לפי חוקי מדינת ישראל, אוספת, משתמשת וחושפת מידע במסגרת השימוש שלך באפליקציית המובייל של Kupa ובשירותים הקשורים אליה ("השירות"). לשאלות: **sarussilberg@gmail.com**.
+מדיניות פרטיות זו מסבירה כיצד **[Partnership Name]** ("Kupay", "אנחנו", "אנו"), שותפות הפועלת לפי חוקי מדינת ישראל, אוספת, משתמשת וחושפת מידע במסגרת השימוש שלך באפליקציית המובייל של Kupay ובשירותים הקשורים אליה ("השירות"). לשאלות: **sarussilberg@gmail.com**.
 
 ## 1. מי אנחנו (בעל השליטה במידע)
 
-Kupa הוא בעל השליטה במידע האישי שלך לפי תקנת ה-GDPR האירופית, ה-UK GDPR, חוק הפרטיות של קליפורניה (CCPA/CPRA), וחוק הגנת הפרטיות הישראלי, התשמ"א-1981, ככל שאלה חלים.
+Kupay הוא בעל השליטה במידע האישי שלך לפי תקנת ה-GDPR האירופית, ה-UK GDPR, חוק הפרטיות של קליפורניה (CCPA/CPRA), וחוק הגנת הפרטיות הישראלי, התשמ"א-1981, ככל שאלה חלים.
 
 ## 2. איזה מידע אנו אוספים
 
@@ -734,7 +734,7 @@ Kupa הוא בעל השליטה במידע האישי שלך לפי תקנת ה-
 
 ### 4.3 מסיבות משפטיות
 
-ייתכן ונחשוף מידע כשנידרש לכך בהליך משפטי תקף (הזמנה, צו בית משפט), או כשהדבר נחוץ להגנה על זכויות, בטיחות או רכוש של Kupa, המשתמשים שלנו או הציבור.
+ייתכן ונחשוף מידע כשנידרש לכך בהליך משפטי תקף (הזמנה, צו בית משפט), או כשהדבר נחוץ להגנה על זכויות, בטיחות או רכוש של Kupay, המשתמשים שלנו או הציבור.
 
 ### 4.4 איננו **מוכרים** את המידע האישי שלך
 
@@ -742,7 +742,7 @@ Kupa הוא בעל השליטה במידע האישי שלך לפי תקנת ה-
 
 ## 5. עוגיות ומעקב
 
-אפליקציית המובייל של Kupa אינה משתמשת בעוגיות ואינה מבצעת מעקב חוצה-אתרים או חוצה-אפליקציות. תהליך ה-Google Sign-In עשוי לכלול עוגיות/מדיניות של Google; אנא עיין בהודעות הפרטיות של Google.
+אפליקציית המובייל של Kupay אינה משתמשת בעוגיות ואינה מבצעת מעקב חוצה-אתרים או חוצה-אפליקציות. תהליך ה-Google Sign-In עשוי לכלול עוגיות/מדיניות של Google; אנא עיין בהודעות הפרטיות של Google.
 
 ## 6. העברות בינלאומיות של נתונים
 

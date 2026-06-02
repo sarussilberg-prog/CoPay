@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupa · GroupsListScreen — wordmark header, search row, list of GroupCards.
+// Kupay · GroupsListScreen — wordmark header, search row, list of GroupCards.
 
 function GroupsListScreen({ groups, onOpenGroup, onCreateGroup, onSearch }) {
   const [query, setQuery] = React.useState('');
