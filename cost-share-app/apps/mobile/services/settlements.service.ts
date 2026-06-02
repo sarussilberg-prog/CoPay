@@ -120,19 +120,11 @@ export async function deleteSettlement(id: string): Promise<boolean> {
             .update({ deleted_at: new Date().toISOString() })
             .eq('id', id);
         if (error) throw error;
-        Toast.show({
-            type: 'success',
-            text1: i18n.t('common.success'),
-            text2: i18n.t('settleUp.toastDeleted'),
-        });
+        showSuccessToast('settleUp.toastDeleted');
         return true;
     } catch (error) {
         console.error('Failed to delete settlement:', error);
-        Toast.show({
-            type: 'error',
-            text1: 'Failed to delete payment',
-            text2: i18n.t('common.networkError'),
-        });
+        showErrorToast('settleUp.deleteError', 'common.networkError');
         return false;
     }
 }
