@@ -65,6 +65,8 @@ import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import { FriendsScreen } from '../screens/profile/FriendsScreen';
 import { FindFriendsScreen } from '../screens/profile/FindFriendsScreen';
+import { AdminPortalScreen } from '../screens/admin/AdminPortalScreen';
+import { AdminDeletedUsersScreen } from '../screens/admin/AdminDeletedUsersScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -234,6 +236,16 @@ function ProfileStack() {
                 name="Settings"
                 component={SettingsScreen}
                 options={{ title: t('settings.title') }}
+            />
+            <Stack.Screen
+                name="AdminPortal"
+                component={AdminPortalScreen}
+                options={{ title: t('admin.portal.title') }}
+            />
+            <Stack.Screen
+                name="AdminDeletedUsers"
+                component={AdminDeletedUsersScreen}
+                options={{ title: t('admin.deletedUsers.title') }}
             />
             <Stack.Screen
                 name="Friends"

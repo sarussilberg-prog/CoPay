@@ -135,6 +135,18 @@ export function SettingsScreen() {
                     />
                 </SettingsSection>
 
+                {currentUser?.isAdmin ? (
+                    <SettingsSection title={t('settings.adminPortal')}>
+                        <SettingsRow
+                            iconName="shield-checkmark-outline"
+                            label={t('settings.adminPortal')}
+                            variant="chevron"
+                            onPress={() => navigation.navigate('AdminPortal')}
+                            testID="settings-admin-portal"
+                        />
+                    </SettingsSection>
+                ) : null}
+
                 <SettingsSection title={t('settings.support')}>
                     <SettingsRow iconName="star-outline" label={t('settings.rateUs')} variant="chevron" onPress={handleRate} />
                     <ContactSupportRow />
