@@ -47,3 +47,6 @@ play-service-account*.json
 # generated native folders
 /ios
 /android
+
+# brand asset generator venv
+scripts/.venv-brand/

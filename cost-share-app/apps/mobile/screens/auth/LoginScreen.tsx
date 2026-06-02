@@ -143,7 +143,7 @@ export function LoginScreen() {
                 <View className="flex-1 justify-center px-7">
                     <View style={styles.hero}>
                         <View style={styles.logoRing}>
-                            <AppLogo size={96} />
+                            <AppLogo size={108} />
                         </View>
                         <AppBrandTitle className="mt-5 mb-1" />
                         <Text

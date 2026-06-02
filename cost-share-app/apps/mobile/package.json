@@ -12,6 +12,7 @@
     "mobile:open": "bash scripts/open-mobile-dev.sh",
     "ios:run": "expo run:ios",
     "android:run": "bash scripts/android-run.sh",
+    "generate:brand": "python3 scripts/generate-brand-assets.py",
     "prebuild": "expo prebuild",
     "prebuild:clean": "expo prebuild --clean",
     "android": "bash scripts/android-run.sh",
