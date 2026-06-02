@@ -4,10 +4,11 @@ import { View, ScrollView, Linking, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
-import { Language, DEFAULT_CURRENCY } from '@cost-share/shared';
+import { Language } from '@cost-share/shared';
 import { useAppStore } from '../../store';
 import { useChangeAppLanguage } from '../../hooks/useChangeAppLanguage';
 import { useAppLanguage } from '../../hooks/useRtlLayout';
+import { defaultCurrencyForAppLanguage } from '../../lib/appDefaultCurrency';
 import { signOut } from '../../services/auth.service';
 import { updateUser } from '../../services/users.service';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -55,7 +56,8 @@ export function SettingsScreen() {
         [changeAppLanguage],
     );
 
-    const currencyCode = currentUser?.defaultCurrency ?? DEFAULT_CURRENCY;
+    const currencyCode =
+        currentUser?.defaultCurrency ?? defaultCurrencyForAppLanguage(language);
     const currencyMeta = currencyCodes.code(currencyCode);
     const currencyValueText = currencyMeta
         ? `${currencyMeta.code} - ${getCurrencyDisplayName(currencyMeta.code, currencyMeta.currency, language)}`

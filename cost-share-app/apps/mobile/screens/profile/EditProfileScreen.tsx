@@ -17,7 +17,8 @@ import { Button } from '../../components/Button';
 import { CurrencyPicker } from '../../components/CurrencyPicker';
 import { ProfileImagePicker } from '../../components/ProfileImagePicker';
 import { InviteLinkBlock } from '../../components/InviteLinkBlock';
-import { DEFAULT_CURRENCY } from '@cost-share/shared';
+import { useAppLanguage } from '../../hooks/useRtlLayout';
+import { defaultCurrencyForAppLanguage } from '../../lib/appDefaultCurrency';
 import Toast from 'react-native-toast-message';
 import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
@@ -26,11 +27,15 @@ export function EditProfileScreen() {
     const navigation = useNavigation<any>();
     const { isLoading, startLoading, stopLoading } = useLoading();
     const currentUser = useAppStore((state) => state.currentUser);
+    const appLanguage = useAppLanguage();
 
     // TODO(account-deletion): self-edit form initial value uses raw name on purpose so empty names stay empty (not the unknown-user fallback). Keep raw read.
     const [name, setName] = useState(currentUser?.name || '');
     const [phone, setPhone] = useState(currentUser?.phone || '');
-    const [currency, setCurrency] = useState(currentUser?.defaultCurrency || DEFAULT_CURRENCY);
+    const [currency, setCurrency] = useState(
+        () =>
+            currentUser?.defaultCurrency ?? defaultCurrencyForAppLanguage(appLanguage),
+    );
     const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
     const [avatarRemoved, setAvatarRemoved] = useState(false);
     const [nameError, setNameError] = useState('');

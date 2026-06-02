@@ -10,6 +10,7 @@ import { clearLocalAuthSession } from './auth.service';
 import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../hooks/queries/keys';
 import { useAppStore } from '../store';
+import { HEBREW_APP_DEFAULT_CURRENCY } from '../lib/appDefaultCurrency';
 
 export type ProfileHydrationResult = 'active' | 'deactivated' | 'unknown';
 
@@ -38,7 +39,17 @@ export async function hydrateCurrentUserProfile(userId: string): Promise<Profile
     // Resolve the caller's admin status via the SECURITY DEFINER RPC.
     // app_admins is RLS-locked; this RPC is the only client-facing read path.
     const { data: isAdminFlag } = await supabase.rpc('is_app_admin');
-    const user = { ...profile, isAdmin: isAdminFlag === true };
+    let user = { ...profile, isAdmin: isAdminFlag === true };
+
+    const appLanguage = useAppStore.getState().language;
+    if (appLanguage === 'he' && user.language === 'en') {
+        const patch: UpdateProfileDto = { language: 'he' };
+        if (user.defaultCurrency === 'USD') {
+            patch.defaultCurrency = HEBREW_APP_DEFAULT_CURRENCY;
+        }
+        const synced = await updateUser(userId, patch);
+        if (synced) user = { ...synced, isAdmin: isAdminFlag === true };
+    }
 
     useAppStore.getState().setCurrentUser(user);
     return 'active';

@@ -415,29 +415,57 @@ git commit -m "feat(mobile): fetchAdminPlatformMetrics service"
 **Files:**
 - Modify: `cost-share-app/supabase/__tests__/admin_portal.test.sql`
 
-- [ ] **Step 1: Extend test seed with groups**
+**Numbering note:** The existing `admin_portal.test.sql` already uses CASE 1–4. The new metrics case is **CASE 5**. The dev DB is shared, so assertions must be **deltas against a pre-seed baseline**, not absolute counts.
 
-Inside the existing `DO $outer$` block, after profile inserts, add:
+- [ ] **Step 1: Add baseline + seed variables to outer DECLARE**
+
+In `cost-share-app/supabase/__tests__/admin_portal.test.sql`, extend the outer `DECLARE` block (around line 11–18) to add:
 
 ```sql
-    -- Groups for auto-archive metrics (use fixed UUIDs)
+    v_metrics            JSONB;
+    v_base_active        INT;
+    v_base_archived      INT;
+    v_base_deleted_grp   INT;
+    v_base_registered    INT;
+```
+
+- [ ] **Step 2: Capture baseline + seed groups (before CASE 1)**
+
+In `cost-share-app/supabase/__tests__/admin_portal.test.sql`, after the audit-restore block (around line 45, immediately before `-- ---- CASE 1:`), insert:
+
+```sql
+    -- ---- Baseline counts BEFORE seeding test groups (admin metrics use deltas) ----
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', v_admin::text)::text, TRUE);
+    SELECT public.admin_get_platform_metrics() INTO v_metrics;
+    v_base_registered  := (v_metrics->'users'->>'registered')::INT;
+    v_base_active      := (v_metrics->'groups'->>'active')::INT;
+    v_base_archived    := (v_metrics->'groups'->>'archived')::INT;
+    v_base_deleted_grp := (v_metrics->'groups'->>'deleted')::INT;
+
+    -- Groups for auto-archive metrics (fixed UUIDs).
+    -- No expenses → member_balances is empty → all_settled = TRUE.
     INSERT INTO groups (id, name, default_currency, is_active, last_activity_at, created_by) VALUES
-        ('00000000-0000-0000-0000-0000000ad010', 'Active Group', 'ILS', TRUE, NOW(), v_admin),
-        ('00000000-0000-0000-0000-0000000ad011', 'Archived Group', 'ILS', TRUE, NOW() - INTERVAL '3 months', v_admin),
-        ('00000000-0000-0000-0000-0000000ad012', 'Deleted Group', 'ILS', FALSE, NOW(), v_admin);
+        ('00000000-0000-0000-0000-0000000ad010', 'Active Group',   'ILS', TRUE,  NOW(),                       v_admin),
+        ('00000000-0000-0000-0000-0000000ad011', 'Archived Group', 'ILS', TRUE,  NOW() - INTERVAL '3 months', v_admin),
+        ('00000000-0000-0000-0000-0000000ad012', 'Deleted Group',  'ILS', FALSE, NOW(),                       v_admin);
     INSERT INTO group_members (group_id, user_id, is_active) VALUES
         ('00000000-0000-0000-0000-0000000ad010', v_admin, TRUE),
         ('00000000-0000-0000-0000-0000000ad011', v_admin, TRUE),
         ('00000000-0000-0000-0000-0000000ad012', v_admin, TRUE);
 ```
 
-(No expenses → zero balances → archived group qualifies on `last_activity_at` alone.)
+**Why a baseline:** dev is shared, so absolute counts include unrelated rows. Asserting deltas isolates this test's effect.
 
-- [ ] **Step 2: Add CASE 4 — metrics RPC**
+**Schema note:** If `INSERT INTO groups` fails on a NOT NULL column not listed here (e.g., `created_at`), let the default fire; if the dev schema requires extra columns, add them with sensible defaults and keep the test runnable.
+
+- [ ] **Step 3: Add CASE 5 — metrics RPC (after CASE 4's `RESET ROLE; SET LOCAL session_replication_role = replica;`)**
+
+In `cost-share-app/supabase/__tests__/admin_portal.test.sql`, just before `RAISE NOTICE 'admin_portal.test.sql — all cases passed';`, insert:
 
 ```sql
-    -- ---- CASE 4: admin_get_platform_metrics() -------------------------
-    PERFORM set_config('request.jwt.claims', json_build_object('sub', v_alice::text)::text, TRUE);
+    -- ---- CASE 5: admin_get_platform_metrics() -------------------------
+    -- 5a: non-admin → not_authorized
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', v_bob::text)::text, TRUE);
     v_caught := FALSE;
     BEGIN
         PERFORM public.admin_get_platform_metrics();
@@ -445,37 +473,47 @@ Inside the existing `DO $outer$` block, after profile inserts, add:
         IF SQLERRM = 'not_authorized' THEN v_caught := TRUE; END IF;
     END;
     IF NOT v_caught THEN
-        RAISE EXCEPTION 'Case 4a failed: non-admin should get not_authorized';
+        RAISE EXCEPTION 'Case 5a failed: non-admin should get not_authorized';
     END IF;
 
+    -- 5b: admin sees post-seed deltas matching the seeded groups
     PERFORM set_config('request.jwt.claims', json_build_object('sub', v_admin::text)::text, TRUE);
-    DECLARE
-        v_metrics JSONB;
-    BEGIN
-        SELECT public.admin_get_platform_metrics() INTO v_metrics;
-        -- registered: admin + bob active (alice deleted)
-        IF (v_metrics->'users'->>'registered')::INT < 2 THEN
-            RAISE EXCEPTION 'Case 4b failed: registered users count';
-        END IF;
-        IF (v_metrics->'groups'->>'active')::INT <> 1 THEN
-            RAISE EXCEPTION 'Case 4c failed: expected 1 active group, got %', v_metrics->'groups'->>'active';
-        END IF;
-        IF (v_metrics->'groups'->>'archived')::INT <> 1 THEN
-            RAISE EXCEPTION 'Case 4d failed: expected 1 archived group';
-        END IF;
-        IF (v_metrics->'groups'->>'deleted')::INT <> 1 THEN
-            RAISE EXCEPTION 'Case 4e failed: expected 1 deleted group';
-        END IF;
-    END;
+    SELECT public.admin_get_platform_metrics() INTO v_metrics;
+
+    -- Registered users: by this point CASE 3 has restored Alice, so admin/alice/bob
+    -- are all is_active = TRUE. Three test profiles were created and remain registered.
+    IF (v_metrics->'users'->>'registered')::INT - v_base_registered < 3 THEN
+        RAISE EXCEPTION 'Case 5b failed: registered delta expected >= 3, got %',
+            (v_metrics->'users'->>'registered')::INT - v_base_registered;
+    END IF;
+
+    IF (v_metrics->'groups'->>'active')::INT - v_base_active <> 1 THEN
+        RAISE EXCEPTION 'Case 5c failed: active groups delta expected 1, got %',
+            (v_metrics->'groups'->>'active')::INT - v_base_active;
+    END IF;
+
+    IF (v_metrics->'groups'->>'archived')::INT - v_base_archived <> 1 THEN
+        RAISE EXCEPTION 'Case 5d failed: archived groups delta expected 1, got %',
+            (v_metrics->'groups'->>'archived')::INT - v_base_archived;
+    END IF;
+
+    IF (v_metrics->'groups'->>'deleted')::INT - v_base_deleted_grp <> 1 THEN
+        RAISE EXCEPTION 'Case 5e failed: deleted groups delta expected 1, got %',
+            (v_metrics->'groups'->>'deleted')::INT - v_base_deleted_grp;
+    END IF;
+
+    IF (v_metrics->>'version')::INT <> 1 THEN
+        RAISE EXCEPTION 'Case 5f failed: expected version 1, got %', v_metrics->>'version';
+    END IF;
 ```
 
-**Note:** Nest the `DECLARE` block correctly inside PL/pgSQL (use a sub-block or move `v_metrics` to the outer `DECLARE` section).
+**Why bob (not alice) is the non-admin caller:** CASE 3 already mutated alice's session state earlier; bob is a clean non-admin profile at this point.
 
-- [ ] **Step 3: Run test on dev**
+- [ ] **Step 4: Run test on dev**
 
-Run the SQL file via Supabase MCP / `psql` against dev. Expected: `admin_portal.test.sql — all cases passed` then `ROLLBACK`.
+Run the SQL file via Supabase MCP / `psql` against dev (`drxfbicunusmipdgbgdk`). Expected NOTICE: `admin_portal.test.sql — all cases passed`, then the transaction `ROLLBACK`s.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add cost-share-app/supabase/__tests__/admin_portal.test.sql
@@ -681,36 +719,89 @@ git commit -m "feat(mobile): AdminMetricsPanel component"
 
 - [ ] **Step 2: Update screen**
 
+The existing screen wraps `<ScrollView/>` + `<ConfirmDialog/>` in a `<>` fragment. **Preserve that wrapper and all three existing `SettingsRow` entries** — only add the new imports, the hook call, the `RefreshControl`, and the `<AdminMetricsPanel/>` above `SettingsSection`.
+
+Modify `cost-share-app/apps/mobile/screens/admin/AdminPortalScreen.tsx`:
+
+1. Replace the `ScrollView` import line with one that also pulls in `RefreshControl`:
+
+```tsx
+import { ScrollView, RefreshControl } from 'react-native';
+```
+
+2. Add the two new imports below the existing settings imports:
+
 ```tsx
 import { AdminMetricsPanel } from '../../components/admin/AdminMetricsPanel';
 import { useAdminPlatformMetricsQuery } from '../../hooks/queries/useAdminPlatformMetricsQuery';
-
-// inside component:
-const metricsQuery = useAdminPlatformMetricsQuery();
-
-return (
-    <ScrollView
-        className="flex-1 bg-slate-50"
-        refreshControl={
-            <RefreshControl
-                refreshing={metricsQuery.isRefetching}
-                onRefresh={() => void metricsQuery.refetch()}
-            />
-        }
-    >
-        <AdminMetricsPanel
-            metrics={metricsQuery.data ?? null}
-            isLoading={metricsQuery.isLoading}
-            isError={metricsQuery.isError}
-        />
-        <SettingsSection title={t('admin.portal.sectionLabel')}>
-            ...
-        </SettingsSection>
-    </ScrollView>
-);
 ```
 
-Add `RefreshControl` import from `react-native`.
+3. Inside `AdminPortalScreen`, after the existing `useState` hooks, add the query:
+
+```tsx
+const metricsQuery = useAdminPlatformMetricsQuery();
+```
+
+4. Replace the current `<ScrollView className="flex-1 bg-slate-50">` with the refresh-enabled version and add `<AdminMetricsPanel/>` immediately above the existing `<SettingsSection>`. The full returned JSX should be:
+
+```tsx
+return (
+    <>
+        <ScrollView
+            className="flex-1 bg-slate-50"
+            refreshControl={
+                <RefreshControl
+                    refreshing={metricsQuery.isRefetching}
+                    onRefresh={() => void metricsQuery.refetch()}
+                />
+            }
+        >
+            <AdminMetricsPanel
+                metrics={metricsQuery.data ?? null}
+                isLoading={metricsQuery.isLoading}
+                isError={metricsQuery.isError}
+            />
+            <SettingsSection title={t('admin.portal.sectionLabel')}>
+                <SettingsRow
+                    iconName="trash-outline"
+                    label={t('admin.portal.deletedUsersRow')}
+                    variant="chevron"
+                    onPress={() => navigation.navigate('AdminDeletedUsers')}
+                    testID="admin-portal-deleted-users"
+                />
+                <SettingsRow
+                    iconName="refresh-outline"
+                    label={t('admin.portal.resetOnboardingRow')}
+                    variant="chevron"
+                    onPress={() => setResetConfirmOpen(true)}
+                    testID="admin-portal-reset-onboarding"
+                />
+                <SettingsRow
+                    iconName="eye-outline"
+                    label={t('admin.portal.previewCreateGroupRow')}
+                    variant="chevron"
+                    onPress={() => navigation.navigate('AdminOnboardingPreview')}
+                    testID="admin-portal-preview-onboarding"
+                />
+            </SettingsSection>
+        </ScrollView>
+
+        <ConfirmDialog
+            visible={resetConfirmOpen}
+            title={t('admin.onboarding.resetTitle')}
+            message={t('admin.onboarding.resetMessage')}
+            confirmText={t('admin.onboarding.resetConfirm')}
+            cancelText={t('common.cancel')}
+            destructive
+            onConfirm={() => void onConfirmReset()}
+            onCancel={() => {
+                if (!resetting) setResetConfirmOpen(false);
+            }}
+            confirmTestID="admin-onboarding-reset-confirm"
+        />
+    </>
+);
+```
 
 - [ ] **Step 3: Mock hook in screen test**
 

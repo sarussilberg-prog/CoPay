@@ -8,7 +8,7 @@ import { platformAlert } from '../../lib/platformAlert';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { GroupType, DEFAULT_CURRENCY, User } from '@cost-share/shared';
+import { GroupType, User } from '@cost-share/shared';
 import { useLoading } from '../../hooks/useLoading';
 import { useAppStore } from '../../store';
 import {
@@ -28,6 +28,8 @@ import { Text } from '../../components/AppText';
 import { colors } from '../../theme';
 import { CreateGroupFormShell } from '../../components/groups/CreateGroupFormShell';
 import { CreateGroupFormFields } from '../../components/groups/CreateGroupFormFields';
+import { useAppLanguage } from '../../hooks/useRtlLayout';
+import { initialCreateGroupCurrency } from '../../lib/appDefaultCurrency';
 
 export function CreateGroupScreen() {
     const { t } = useTranslation();
@@ -38,10 +40,13 @@ export function CreateGroupScreen() {
     const isEdit = Boolean(groupId);
     const { isLoading, startLoading, stopLoading } = useLoading();
     const currentUser = useAppStore((state) => state.currentUser);
+    const appLanguage = useAppLanguage();
 
     const [name, setName] = useState('');
     const [groupType, setGroupType] = useState<GroupType>('general');
-    const [currency, setCurrency] = useState(currentUser?.defaultCurrency || DEFAULT_CURRENCY);
+    const [currency, setCurrency] = useState(() =>
+        initialCreateGroupCurrency(appLanguage, currentUser),
+    );
     const [nameError, setNameError] = useState('');
     const [imageUrl, setImageUrl] = useState<string | undefined>();
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);

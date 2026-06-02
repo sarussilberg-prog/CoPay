@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { platformAlert } from '../../lib/platformAlert';
 import { useTranslation } from 'react-i18next';
-import { GroupType, DEFAULT_CURRENCY, User } from '@cost-share/shared';
+import { GroupType, User } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 import { useLoading } from '../../hooks/useLoading';
 import { useAppStore } from '../../store';
@@ -22,7 +22,8 @@ import { CreateGroupFormFields } from '../../components/groups/CreateGroupFormFi
 import { OnboardingCreateGroupHero } from '../../components/onboarding/OnboardingCreateGroupHero';
 import { OnboardingNameSuggestions } from '../../components/onboarding/OnboardingNameSuggestions';
 import { colors } from '../../theme';
-import { useRtlLayout } from '../../hooks/useRtlLayout';
+import { useAppLanguage, useRtlLayout } from '../../hooks/useRtlLayout';
+import { initialCreateGroupCurrency } from '../../lib/appDefaultCurrency';
 
 type Props = {
     onDone: () => void;
@@ -33,13 +34,16 @@ type Props = {
 export function OnboardingCreateGroupScreen({ onDone, previewMode = false }: Props) {
     const { t } = useTranslation();
     const isRtl = useRtlLayout();
+    const appLanguage = useAppLanguage();
     const currentUser = useAppStore((s) => s.currentUser);
     const { isLoading, startLoading, stopLoading } = useLoading();
 
     const [name, setName] = useState('');
     const [nameError, setNameError] = useState('');
     const [groupType, setGroupType] = useState<GroupType>('trip');
-    const [currency, setCurrency] = useState(currentUser?.defaultCurrency ?? DEFAULT_CURRENCY);
+    const [currency, setCurrency] = useState(() =>
+        initialCreateGroupCurrency(appLanguage, currentUser),
+    );
     const [localImageUri, setLocalImageUri] = useState<string | null>(null);
     const [members, setMembers] = useState<User[]>([]);
     const [addMembersOpen, setAddMembersOpen] = useState(false);

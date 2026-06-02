@@ -12,7 +12,7 @@ import { AppIcon } from '../AppIcon';
 import type { AppIconName } from '../AppIcon';
 import { onboardingColors } from '../../theme/onboardingColors';
 import { onboardingMotion } from '../../theme/onboardingMotion';
-import { rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
+import { centeredTextStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 
 const QUICK_WIN_KEYS = [
     'onboarding.create.hero.win1',
@@ -180,11 +180,8 @@ export function OnboardingCreateGroupHero({ hasName, hasExtraMembers }: Props) {
                                 />
                             </View>
                             <Text
-                                className={rtlTextClassName(
-                                    isRtl,
-                                    'text-[11px] font-semibold leading-snug mt-2 text-center',
-                                )}
-                                style={{ color: onboardingColors.ink2 }}
+                                className="text-[11px] font-semibold leading-snug mt-2"
+                                style={[centeredTextStyle, { color: onboardingColors.ink2 }]}
                             >
                                 {t(key)}
                             </Text>

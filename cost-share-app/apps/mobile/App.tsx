@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platfor
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from './lib/toastConfig';
 import { handleAuthRedirectUrl, isAuthCallbackUrl } from './services/auth.service';
 import { AuthenticatedAppGate } from './components/AuthenticatedAppGate';
 import { LoginScreen } from './screens/auth/LoginScreen';
@@ -240,7 +241,7 @@ export default function App() {
               <LoginScreen />
             )}
           </WebFrame>
-          <Toast />
+          <Toast config={toastConfig} topOffset={56} />
         </RtlLayoutProvider>
       </SafeAreaProvider>
     );
@@ -253,7 +254,7 @@ export default function App() {
           <WebFrame>
             <AuthenticatedAppGate />
           </WebFrame>
-          <Toast />
+          <Toast config={toastConfig} topOffset={56} />
         </RtlLayoutProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
