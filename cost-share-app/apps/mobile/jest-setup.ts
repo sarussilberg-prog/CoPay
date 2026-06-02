@@ -82,6 +82,25 @@ jest.mock('react-native-safe-area-context', () => {
     };
 });
 
+// Mock Sentry: ships as ESM (`export ... from '@sentry/core'`) which Jest can't parse,
+// and we don't want test runs hitting the SDK or its native modules anyway.
+jest.mock('@sentry/react-native', () => ({
+    __esModule: true,
+    init: jest.fn(),
+    wrap: <T>(component: T) => component,
+    setUser: jest.fn(),
+    setTag: jest.fn(),
+    setTags: jest.fn(),
+    setContext: jest.fn(),
+    setExtra: jest.fn(),
+    captureException: jest.fn(),
+    captureMessage: jest.fn(),
+    addBreadcrumb: jest.fn(),
+    reactNavigationIntegration: () => ({
+        registerNavigationContainer: jest.fn(),
+    }),
+}));
+
 // Mock native Google Sign-In: it touches TurboModule at import time.
 jest.mock('@react-native-google-signin/google-signin', () => ({
     GoogleSignin: {

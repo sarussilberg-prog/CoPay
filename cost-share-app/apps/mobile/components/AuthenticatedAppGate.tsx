@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { AppNavigator } from '../navigation/AppNavigator';
+import { navigationIntegration } from '../lib/sentry';
 import { OnboardingCreateGroupScreen } from '../screens/onboarding/OnboardingCreateGroupScreen';
 import {
     hasCompletedPostLoginOnboarding,
@@ -19,6 +20,7 @@ type GateState = 'loading' | 'create' | 'main';
 
 export function AuthenticatedAppGate() {
     const [gate, setGate] = useState<GateState>('loading');
+    const navigationRef = useNavigationContainerRef();
 
     const enterMainAfterGroupInvite = useCallback(async () => {
         await markPostLoginOnboardingComplete();
@@ -67,7 +69,10 @@ export function AuthenticatedAppGate() {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer
+            ref={navigationRef}
+            onReady={() => navigationIntegration.registerNavigationContainer(navigationRef)}
+        >
             <AppNavigator />
         </NavigationContainer>
     );

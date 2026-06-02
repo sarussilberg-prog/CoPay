@@ -127,7 +127,7 @@ describe('updateExpense', () => {
         expect(mockToastShow).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'error',
-                text2: expect.stringContaining('does not equal total amount'),
+                text2: 'expenses.splitMismatch',
             }),
         );
     });

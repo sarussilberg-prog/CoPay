@@ -121,7 +121,14 @@
         }
       ],
       "expo-localization",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "kupay-hb",
+          "project": "kupa-mobile-prod"
+        }
+      ]
     ],
     "extra": {
       "eas": {

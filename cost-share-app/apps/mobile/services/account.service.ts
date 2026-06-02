@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '../lib/supabase';
 import { clearLocalAuthSession } from './auth.service';
 
@@ -29,6 +30,9 @@ const FALLBACK_CURRENCY = 'ILS';
 export async function deleteMyAccount(): Promise<DeleteAccountResult> {
     const { error: rpcError } = await supabase.rpc('delete_my_account');
     if (rpcError) {
+        Sentry.captureException(rpcError, {
+            tags: { service: 'account', op: 'deleteMyAccount' },
+        });
         console.error('deleteMyAccount: RPC failed', rpcError);
         return { ok: false, error: 'deleteAccount.deleteFailed' };
     }
@@ -49,7 +53,12 @@ export async function getMyOpenBalances(): Promise<OpenBalancesSummary> {
     const { data, error } = await supabase.rpc('get_my_open_balances');
 
     if (error || !data) {
-        if (error) console.warn('getMyOpenBalances: RPC failed', error);
+        if (error) {
+            Sentry.captureException(error, {
+                tags: { service: 'account', op: 'getMyOpenBalances' },
+            });
+            console.warn('getMyOpenBalances: RPC failed', error);
+        }
         return { hasOpenBalances: false, totalOwed: 0, totalOwing: 0, currency: FALLBACK_CURRENCY };
     }
 

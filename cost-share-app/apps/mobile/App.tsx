@@ -1,8 +1,11 @@
+import './lib/sentry';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
+import * as Sentry from '@sentry/react-native';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from './lib/toastConfig';
 import { handleAuthRedirectUrl, isAuthCallbackUrl } from './services/auth.service';
@@ -56,15 +59,35 @@ function WebFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+function App() {
   const [isReady, setIsReady] = useState(false);
   const [preOnboardingDone, setPreOnboardingDone] = useState<boolean | null>(null);
   const session = useAppStore((s) => s.session);
   const setSession = useAppStore((s) => s.setSession);
-  const currentUserId = useAppStore((s) => s.currentUser?.id ?? null);
+  const currentUser = useAppStore((s) => s.currentUser);
+  const currentUserId = currentUser?.id ?? null;
+  const language = useAppStore((s) => s.language);
   useAppRealtime(currentUserId);
   const setPendingDeactivationNotice = useAppStore((s) => s.setPendingDeactivationNotice);
   const incomingUrl = Linking.useURL();
+
+  useEffect(() => {
+    if (currentUser) {
+      Sentry.setUser({
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.name,
+      });
+      Sentry.setTag('default_currency', currentUser.defaultCurrency);
+    } else {
+      Sentry.setUser(null);
+      Sentry.setTag('default_currency', undefined);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    Sentry.setTag('app_language', language);
+  }, [language]);
 
   const rejectDeactivatedSession = useCallback(async () => {
     void signalDeactivatedAccount(setPendingDeactivationNotice);
@@ -260,3 +283,5 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+
+export default Sentry.wrap(App);

@@ -4,6 +4,7 @@
 
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
+import * as Sentry from '@sentry/react-native';
 import { Group, FeedItem, GroupMemberLite, PairwiseDebt } from '@cost-share/shared';
 import Toast from 'react-native-toast-message';
 import i18n from '../i18n';
@@ -84,6 +85,9 @@ export async function exportGroupCsv(
         });
         return true;
     } catch (error) {
+        Sentry.captureException(error, {
+            tags: { service: 'group-share', op: 'export' },
+        });
         console.error('Failed to export group report:', error);
         Toast.show({
             type: 'error',

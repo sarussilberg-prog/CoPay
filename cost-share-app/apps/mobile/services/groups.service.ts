@@ -27,6 +27,7 @@ import {
     simplifyDebts,
     UnbalancedLedgerError,
 } from '@cost-share/shared';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
 import { useAppStore } from '../store';
@@ -324,6 +325,10 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
         });
         return group;
     } catch (error) {
+        Sentry.captureException(error, {
+            tags: { service: 'groups', op: 'create' },
+            extra: { memberCount: dto.memberIds.length, groupType: dto.groupType },
+        });
         console.error('Failed to create group:', error);
         Toast.show({
             type: 'error',
@@ -531,6 +536,10 @@ export async function getGroupContributions(
         const { expenses, splits, userIds } = await loadBalanceData(groupId);
         return calculateMemberContributions({ userIds, expenses, splits });
     } catch (error) {
+        Sentry.captureException(error, {
+            tags: { service: 'groups', op: 'getContributions' },
+            extra: { groupId },
+        });
         console.error('Failed to fetch member contributions:', error);
         return { totals: [], matrix: [], expenseCount: 0 };
     }
@@ -549,6 +558,10 @@ export async function getGroupBalancesByCurrency(
             settlements,
         });
     } catch (error) {
+        Sentry.captureException(error, {
+            tags: { service: 'groups', op: 'getBalancesByCurrency' },
+            extra: { groupId },
+        });
         console.error('Failed to fetch per-currency balances:', error);
         return [];
     }
@@ -614,6 +627,10 @@ export async function getGroupSimplifiedDebtsByCurrency(
         out.sort((a, b) => a.currency.localeCompare(b.currency));
         return out;
     } catch (error) {
+        Sentry.captureException(error, {
+            tags: { service: 'groups', op: 'getSimplifiedDebts' },
+            extra: { groupId },
+        });
         console.error('Failed to fetch simplified debts by currency:', error);
         return [];
     }

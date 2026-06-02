@@ -41,12 +41,17 @@ google-play-service-account.json
 play-service-account*.json
 *service-account*.json
 
+# Sentry CLI config — contains auth tokens.
+.sentryclirc
+
 # typescript
 *.tsbuildinfo
 
 # generated native folders
 /ios
 /android
+
+.env.local
 
 # brand asset generator venv
 scripts/.venv-brand/

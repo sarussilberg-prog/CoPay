@@ -10,8 +10,7 @@
  *   └────────────────────────────────────────┘
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
-import { platformAlert } from '../lib/platformAlert';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import type { GroupMemberLite, PairwiseDebt, PaymentMethod } from '@cost-share/shared';
@@ -30,8 +29,6 @@ import { MemberPickerPopup } from './expenseV2/MemberPickerPopup';
 import { CurrencyPicker } from './CurrencyPicker';
 import { rtlRowStyle, useRtlLayout } from '../hooks/useRtlLayout';
 import { getAvatarUrlForMember } from '../lib/userDisplay';
-import { openPaymentApp, type IsraeliPaymentApp } from '../lib/israeliPaymentLinks';
-import { PaymentAppLogo } from './settleUp/PaymentAppLogo';
 
 export interface SettleUpFormValues {
     fromUserId: string;
@@ -76,8 +73,6 @@ const METHOD_TILES: ReadonlyArray<{ key: MethodKey; icon: AppIconName }> = [
     { key: 'credit_card', icon: 'card-outline' },
     { key: 'paypal', icon: 'logo-paypal' },
 ];
-
-const PAYMENT_APPS: ReadonlyArray<IsraeliPaymentApp> = ['bit', 'paybox'];
 
 const DEFAULT_METHOD: MethodKey = 'credit_card';
 
@@ -624,28 +619,9 @@ interface PaymentMethodSectionProps {
 
 function PaymentMethodSection({ selected, onSelect, isRtl }: PaymentMethodSectionProps) {
     const { t } = useTranslation();
-    const showAppLaunchers = Platform.OS === 'ios' || Platform.OS === 'android';
 
     return (
         <View className="px-4 pt-5 self-stretch">
-            {showAppLaunchers ? (
-                <>
-                    <SectionLabel
-                        isRtl={isRtl}
-                        title={t('settleUp.paymentApps')}
-                        subtitle={t('settleUp.paymentAppsSubtitle')}
-                    />
-                    <PaymentAppTiles t={t} isRtl={isRtl} />
-                    <View
-                        className="my-4 self-stretch"
-                        style={{
-                            height: 1,
-                            backgroundColor: '#E5E7EB',
-                        }}
-                    />
-                </>
-            ) : null}
-
             <SectionLabel isRtl={isRtl} title={t('settleUp.methodType')} />
             <MethodTiles selected={selected} onSelect={onSelect} t={t} isRtl={isRtl} />
         </View>
@@ -719,78 +695,6 @@ function MethodTiles({ selected, onSelect, t, isRtl }: MethodTilesProps) {
                             >
                                 {label}
                             </Text>
-                        </Pressable>
-                    );
-                })}
-            </View>
-        </ScrollView>
-    );
-}
-
-function PaymentAppTiles({
-    t,
-    isRtl,
-}: {
-    t: (key: string, opts?: Record<string, unknown>) => string;
-    isRtl: boolean;
-}) {
-    const handleOpenApp = useCallback(
-        async (app: IsraeliPaymentApp) => {
-            try {
-                await openPaymentApp(app);
-            } catch {
-                platformAlert(t('settleUp.paymentAppErrorTitle'), t('settleUp.paymentAppOpenFailed'));
-            }
-        },
-        [t],
-    );
-
-    return (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled>
-            <View style={[rtlRowStyle(isRtl), { gap: 12 }]}>
-                {PAYMENT_APPS.map((key) => {
-                    const appLabel = t(`settleUp.paymentAppLabels.${key}`);
-                    const isPaybox = key === 'paybox';
-                    return (
-                        <Pressable
-                            key={key}
-                            onPress={() => void handleOpenApp(key)}
-                            testID={`payment-app-tile-${key}`}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('settleUp.openPaymentApp', { app: appLabel })}
-                            style={{ alignItems: 'center', width: 72 }}
-                        >
-                            <View
-                                style={{
-                                    width: 72,
-                                    height: 72,
-                                    borderRadius: 16,
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderWidth: isPaybox ? 0 : 1,
-                                    borderColor: '#E5E7EB',
-                                    backgroundColor: isPaybox ? '#5BC8F5' : '#FFFFFF',
-                                    overflow: 'hidden',
-                                    shadowColor: '#000',
-                                    shadowOpacity: 0.06,
-                                    shadowRadius: 8,
-                                    shadowOffset: { width: 0, height: 2 },
-                                }}
-                            >
-                                {isPaybox ? (
-                                    <PaymentAppLogo app={key} size={72} />
-                                ) : (
-                                    <PaymentAppLogo app={key} size={56} />
-                                )}
-                            </View>
-                            {!isPaybox ? (
-                                <Text
-                                    className="text-[10px] font-semibold text-gray-600 mt-1"
-                                    numberOfLines={1}
-                                >
-                                    {appLabel}
-                                </Text>
-                            ) : null}
                         </Pressable>
                     );
                 })}
