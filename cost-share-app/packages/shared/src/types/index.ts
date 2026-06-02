@@ -29,6 +29,7 @@ export interface User {
     defaultCurrency: string;  // 'USD', 'ILS', 'EUR', etc.
     language: Language;
     isActive: boolean;  // Soft-delete flag — false means the user has deleted their account
+    isAdmin: boolean;   // App-admin flag (gates admin portal entry in Settings) — set by hydrateCurrentUserProfile via is_app_admin() RPC
     createdAt: Date;
     updatedAt: Date;
 }

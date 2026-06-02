@@ -27,6 +27,7 @@ export function resolveGroupMemberUsers(
             defaultCurrency: fallbackCurrency,
             language: 'en' as Language,
             isActive: lite?.isActive ?? true,
+            isAdmin: false,
             createdAt: now,
             updatedAt: now,
         };

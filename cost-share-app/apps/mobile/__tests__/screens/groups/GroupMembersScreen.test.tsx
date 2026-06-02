@@ -39,6 +39,7 @@ const user = {
     defaultCurrency: 'USD',
     language: 'en' as const,
     isActive: true,
+    isAdmin: false,
     createdAt: new Date(),
     updatedAt: new Date(),
 };

@@ -30,6 +30,7 @@ export const profileFromRow = (r: Row): User => ({
     // should not accidentally render every user as "Deleted". Once Phase E
     // rolls out every select includes `is_active` and this default never kicks in.
     isActive: r.is_active === undefined ? true : (r.is_active as boolean),
+    isAdmin: false,  // The profiles table does NOT carry admin status; populated by hydrateCurrentUserProfile via is_app_admin() RPC.
     createdAt: toDate(r.created_at),
     updatedAt: toDate(r.updated_at),
 });

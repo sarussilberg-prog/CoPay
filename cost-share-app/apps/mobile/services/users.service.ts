@@ -29,11 +29,16 @@ export async function hydrateCurrentUserProfile(userId: string): Promise<Profile
 
     if (error || !data) return 'unknown';
 
-    const user = profileFromRow(data);
-    if (user.isActive === false) {
+    const profile = profileFromRow(data);
+    if (profile.isActive === false) {
         await clearLocalAuthSession();
         return 'deactivated';
     }
+
+    // Resolve the caller's admin status via the SECURITY DEFINER RPC.
+    // app_admins is RLS-locked; this RPC is the only client-facing read path.
+    const { data: isAdminFlag } = await supabase.rpc('is_app_admin');
+    const user = { ...profile, isAdmin: isAdminFlag === true };
 
     useAppStore.getState().setCurrentUser(user);
     return 'active';

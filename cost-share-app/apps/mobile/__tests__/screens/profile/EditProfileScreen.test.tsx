@@ -59,6 +59,7 @@ beforeEach(() => {
             defaultCurrency: 'USD',
             language: 'en',
             isActive: true,
+            isAdmin: false,
             createdAt: new Date(),
             updatedAt: new Date(),
         },
