@@ -3,7 +3,7 @@ jest.mock('../../lib/supabase', () => ({
     supabase: { rpc: (...a: any[]) => mockRpc(...a) },
 }));
 
-import { listDeletedAccounts, restoreDeletedAccount } from '../../services/admin.service';
+import { listDeletedAccounts, restoreDeletedAccount, fetchAdminPlatformMetrics } from '../../services/admin.service';
 
 beforeEach(() => {
     mockRpc.mockReset();
@@ -65,5 +65,32 @@ describe('restoreDeletedAccount', () => {
         mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
         const result = await restoreDeletedAccount('u1');
         expect(result).toEqual({ ok: false, error: 'admin.deletedUsers.restoreError' });
+    });
+});
+
+describe('fetchAdminPlatformMetrics', () => {
+    it('maps RPC JSONB to AdminPlatformMetrics', async () => {
+        mockRpc.mockResolvedValue({
+            data: {
+                version: 1,
+                generatedAt: '2026-06-02T12:00:00Z',
+                users: { registered: 10, deleted: 2 },
+                groups: { active: 5, archived: 3, deleted: 1, manualArchiveMemberships: 7 },
+            },
+            error: null,
+        });
+        const m = await fetchAdminPlatformMetrics();
+        expect(mockRpc).toHaveBeenCalledWith('admin_get_platform_metrics');
+        expect(m).toEqual({
+            version: 1,
+            generatedAt: '2026-06-02T12:00:00Z',
+            users: { registered: 10, deleted: 2 },
+            groups: { active: 5, archived: 3, deleted: 1, manualArchiveMemberships: 7 },
+        });
+    });
+
+    it('returns null on RPC error', async () => {
+        mockRpc.mockResolvedValue({ data: null, error: { message: 'not_authorized' } });
+        expect(await fetchAdminPlatformMetrics()).toBeNull();
     });
 });

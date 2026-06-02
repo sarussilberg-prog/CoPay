@@ -52,3 +52,35 @@ export async function restoreDeletedAccount(userId: string): Promise<RestoreResu
     }
     return { ok: false, error: 'admin.deletedUsers.restoreError' };
 }
+
+import type { AdminPlatformMetrics } from '@cost-share/shared';
+
+type MetricsRow = {
+    version: number;
+    generatedAt: string;
+    users: AdminPlatformMetrics['users'];
+    groups: AdminPlatformMetrics['groups'];
+};
+
+export async function fetchAdminPlatformMetrics(): Promise<AdminPlatformMetrics | null> {
+    const { data, error } = await supabase.rpc('admin_get_platform_metrics');
+    if (error || !data) {
+        if (error) console.warn('fetchAdminPlatformMetrics: RPC failed', error);
+        return null;
+    }
+    const r = data as MetricsRow;
+    return {
+        version: r.version,
+        generatedAt: r.generatedAt,
+        users: {
+            registered: Number(r.users?.registered ?? 0),
+            deleted: Number(r.users?.deleted ?? 0),
+        },
+        groups: {
+            active: Number(r.groups?.active ?? 0),
+            archived: Number(r.groups?.archived ?? 0),
+            deleted: Number(r.groups?.deleted ?? 0),
+            manualArchiveMemberships: Number(r.groups?.manualArchiveMemberships ?? 0),
+        },
+    };
+}
