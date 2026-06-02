@@ -335,7 +335,7 @@ async function proxyIssueEvents(
     if (!body.issueId || typeof body.issueId !== 'string') {
         return jsonResponse({ ok: false, error: 'invalid_issue_id' }, 400);
     }
-    const url = `https://sentry.io/api/0/issues/${encodeURIComponent(body.issueId)}/events/?limit=20`;
+    const url = `https://sentry.io/api/0/organizations/${env.SENTRY_ORG}/issues/${encodeURIComponent(body.issueId)}/events/?limit=20`;
     const result = await callSentry(url, env, fetchFn);
     if (!result.ok) return result.response;
     const data = result.data as SentryEventRaw[];
@@ -389,7 +389,7 @@ async function proxyIssueDetail(
     if (!body.issueId || typeof body.issueId !== 'string') {
         return jsonResponse({ ok: false, error: 'invalid_issue_id' }, 400);
     }
-    const url = `https://sentry.io/api/0/issues/${encodeURIComponent(body.issueId)}/`;
+    const url = `https://sentry.io/api/0/organizations/${env.SENTRY_ORG}/issues/${encodeURIComponent(body.issueId)}/`;
     const result = await callSentry(url, env, fetchFn);
     if (!result.ok) return result.response;
     const data = result.data as SentryIssueDetailRaw;

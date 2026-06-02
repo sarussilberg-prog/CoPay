@@ -236,6 +236,8 @@ Deno.test(
         const res = await handleRequest(req, baseEnv, sentryFetch);
         assertEquals(res.status, 200);
         const json = await res.json();
+        // URL is now org-scoped: /api/0/organizations/{org}/issues/{id}/events/.
+        // (bare /api/0/issues/{id}/ returns 404 on modern Sentry orgs.)
         assertEquals(json.data[0].id, 'evt-1');
         assertEquals(json.data[0].tags['device.model'], 'iPhone15,3');
         assertEquals(json.data[0].tags.browser, undefined);
