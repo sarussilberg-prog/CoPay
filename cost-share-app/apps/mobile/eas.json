@@ -31,6 +31,12 @@
     "production": {
       "ios": {
         "appleId": "sarussilberg@gmail.com"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft",
+        "changesNotSentForReview": false
       }
     }
   }

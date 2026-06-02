@@ -5,6 +5,7 @@
 import { createClient } from 'supabase';
 import { renderFriendInvite, renderGroupInvite, renderInvalid, renderRoot } from './render.ts';
 import { handleWellKnown } from './well-known.ts';
+import { handleAccountDeletion, handleLegal } from './legal.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -45,6 +46,14 @@ Deno.serve(async (req: Request) => {
     // well-known files
     const wk = handleWellKnown(path);
     if (wk) return wk;
+
+    // legal pages (privacy / terms) — content from legal_documents table
+    const legal = await handleLegal(req, path, client);
+    if (legal) return legal;
+
+    // account deletion instructions (required by Google Play Data safety)
+    const deletion = handleAccountDeletion(req, path);
+    if (deletion) return deletion;
 
     // friend invite
     const friend = path.match(/^\/i\/([^/?#]+)\/?$/);

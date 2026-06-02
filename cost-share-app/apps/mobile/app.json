@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Kupa",
+    "name": "Kupay",
     "slug": "mobile",
-    "scheme": "com.kupa.mobile",
+    "scheme": "com.kupay.mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,14 +17,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kupa.mobile",
+      "bundleIdentifier": "com.kupay.mobile",
       "associatedDomains": [
         "applinks:kupa.pro"
       ],
       "icon": "./assets/icon.png",
       "infoPlist": {
-        "CFBundleDisplayName": "Kupa",
-        "CFBundleName": "Kupa",
+        "CFBundleDisplayName": "Kupay",
+        "CFBundleName": "Kupay",
         "LSApplicationQueriesSchemes": [
           "bit",
           "paybox",
@@ -33,8 +33,8 @@
       }
     },
     "android": {
-      "package": "com.kupa.mobile",
-      "label": "Kupa",
+      "package": "com.kupay.mobile",
+      "label": "Kupay",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -42,6 +42,18 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
@@ -66,8 +78,8 @@
       ]
     },
     "web": {
-      "name": "Kupa",
-      "shortName": "Kupa",
+      "name": "Kupay",
+      "shortName": "Kupay",
       "description": "Split expenses with friends",
       "themeColor": "#3B82F6",
       "backgroundColor": "#ffffff",
@@ -80,9 +92,20 @@
       "expo-dev-client",
       "expo-web-browser",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
         "expo-image-picker",
         {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a group or profile image."
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set a group or profile image.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take a receipt photo for an expense.",
+          "microphonePermission": false
         }
       ],
       "expo-localization"

@@ -6,6 +6,30 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/.well-known/apple-app-site-association",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/.well-known/apple-app-site-association"
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/.well-known/assetlinks.json"
+    },
+    {
+      "source": "/i/:token",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/i/:token"
+    },
+    {
+      "source": "/g/:token",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/g/:token"
+    },
+    {
+      "source": "/legal/:slug",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/legal/:slug"
+    },
+    {
+      "source": "/account-deletion",
+      "destination": "https://jfqxjjjbpxbwwvoygahu.supabase.co/functions/v1/invite-landing/account-deletion"
+    },
+    {
       "source": "/((?!_expo/|favicon\\.ico|manifest\\.json|.*\\.(?:css|js|png|jpg|jpeg|gif|webp|svg|ttf|woff2?|ico)$).*)",
       "destination": "/index.html"
     }
