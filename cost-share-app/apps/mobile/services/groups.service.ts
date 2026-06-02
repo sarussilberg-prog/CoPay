@@ -33,7 +33,12 @@ import { useAppStore } from '../store';
 import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../hooks/queries/keys';
 import { fetchBalanceSummary } from './users.service';
-import Toast from 'react-native-toast-message';
+import {
+    showAppToast,
+    showErrorToast,
+    showSuccessMessage,
+    showSuccessToast,
+} from '../lib/appToast';
 import i18n from '../i18n';
 
 type GroupArchiveState = { mine: boolean; auto: boolean };
@@ -223,13 +228,12 @@ export async function archiveGroup(groupId: string): Promise<ArchiveGroupError |
             : error.message?.includes('not_a_member')
                 ? 'not_a_member'
                 : 'unknown';
-        Toast.show({
+        showAppToast({
             type: 'error',
-            text1: i18n.t(
+            titleKey:
                 code === 'has_balance'
                     ? 'groups.archive.errorHasBalance'
                     : 'groups.archive.errorGeneric',
-            ),
         });
         return code;
     }
@@ -238,18 +242,14 @@ export async function archiveGroup(groupId: string): Promise<ArchiveGroupError |
     if (existing) {
         useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: true });
     }
-    Toast.show({ type: 'success', text1: i18n.t('groups.archive.archivedToast') });
+    showSuccessMessage('groups.archive.archivedToast');
     return null;
 }
 
 export async function unarchiveGroup(groupId: string): Promise<boolean> {
     const { error } = await supabase.rpc('unarchive_group', { p_group_id: groupId });
     if (error) {
-        Toast.show({
-            type: 'error',
-            text1: i18n.t('groups.archive.errorGeneric'),
-            text2: i18n.t('common.networkError'),
-        });
+        showErrorToast('groups.archive.errorGeneric', 'common.networkError');
         return false;
     }
 
@@ -257,7 +257,7 @@ export async function unarchiveGroup(groupId: string): Promise<boolean> {
     if (existing) {
         useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: false });
     }
-    Toast.show({ type: 'success', text1: i18n.t('groups.archive.unarchivedToast') });
+    showSuccessMessage('groups.archive.unarchivedToast');
     return true;
 }
 
