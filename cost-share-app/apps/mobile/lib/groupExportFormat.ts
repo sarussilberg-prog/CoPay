@@ -9,7 +9,7 @@ export function htmlEscape(value: string): string {
 }
 
 /** Wraps the app brand name in export HTML with canonical styling. */
-export function formatBrandFooter(footer: string, brandTitle = 'Kupa'): string {
+export function formatBrandFooter(footer: string, brandTitle = 'Kupay'): string {
     const parts = footer.split(brandTitle);
     return parts
         .map((part, index) =>

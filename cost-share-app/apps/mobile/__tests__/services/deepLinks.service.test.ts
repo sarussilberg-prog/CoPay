@@ -14,13 +14,13 @@ describe('parseIncomingUrl', () => {
         });
     });
     it('parses custom-scheme friend link', () => {
-        expect(parseIncomingUrl('com.kupa.mobile://invite/i/ZZZ0000111')).toEqual({
+        expect(parseIncomingUrl('com.kupay.mobile://invite/i/ZZZ0000111')).toEqual({
             kind: 'friend',
             token: 'ZZZ0000111',
         });
     });
     it('parses custom-scheme group link', () => {
-        expect(parseIncomingUrl('com.kupa.mobile://invite/g/AAA1112223')).toEqual({
+        expect(parseIncomingUrl('com.kupay.mobile://invite/g/AAA1112223')).toEqual({
             kind: 'group',
             token: 'AAA1112223',
         });

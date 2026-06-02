@@ -7,6 +7,11 @@ import {
     hasCompletedPostLoginOnboarding,
     markPostLoginOnboardingComplete,
 } from '../lib/onboardingStorage';
+import {
+    resolveAuthenticatedGateTarget,
+    shouldMarkPostOnboardingAfterGroups,
+} from '../lib/authenticatedGateResolve';
+import { useAuthenticatedInviteRedemption } from '../hooks/useAuthenticatedInviteRedemption';
 import { fetchGroups } from '../services/groups.service';
 import { colors } from '../theme';
 
@@ -15,23 +20,34 @@ type GateState = 'loading' | 'create' | 'main';
 export function AuthenticatedAppGate() {
     const [gate, setGate] = useState<GateState>('loading');
 
+    const enterMainAfterGroupInvite = useCallback(async () => {
+        await markPostLoginOnboardingComplete();
+        setGate('main');
+    }, []);
+
+    useAuthenticatedInviteRedemption({ onGroupRedeemed: () => void enterMainAfterGroupInvite() });
+
     const resolveGate = useCallback(async () => {
-        if (await hasCompletedPostLoginOnboarding()) {
+        const postOnboardingComplete = await hasCompletedPostLoginOnboarding();
+        if (postOnboardingComplete) {
             setGate('main');
             return;
         }
+
+        let groupsCount = 0;
+        let fetchFailed = false;
         try {
             const groups = await fetchGroups();
-            if (groups.length > 0) {
-                await markPostLoginOnboardingComplete();
-                setGate('main');
-                return;
-            }
+            groupsCount = groups.length;
         } catch {
-            setGate('main');
-            return;
+            fetchFailed = true;
         }
-        setGate('create');
+
+        const input = { postOnboardingComplete, groupsCount, fetchFailed };
+        if (shouldMarkPostOnboardingAfterGroups(input)) {
+            await markPostLoginOnboardingComplete();
+        }
+        setGate(resolveAuthenticatedGateTarget(input));
     }, []);
 
     useEffect(() => {

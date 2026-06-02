@@ -1,6 +1,6 @@
 import { authStorage } from './authStorage';
 
-const DEACTIVATION_NOTICE_KEY = '@kupa/pending_deactivation_notice';
+const DEACTIVATION_NOTICE_KEY = '@kupay/pending_deactivation_notice';
 
 /** Persist across web OAuth full-page reloads (zustand alone is lost). */
 export async function markDeactivationNoticePending(): Promise<void> {

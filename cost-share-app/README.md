@@ -99,7 +99,7 @@ npm install
 cp apps/mobile/.env.example apps/mobile/.env
 cp apps/web/.env.example apps/web/.env.local
 cp supabase/.env.example supabase/.env
-# Fill keys from Supabase → Kupa - dev → Project Settings → API
+# Fill keys from Supabase → Kupay - dev → Project Settings → API
 ```
 
 3. **Apply database schema:**

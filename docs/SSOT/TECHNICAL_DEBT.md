@@ -4,6 +4,8 @@ Items deferred from active development, with rationale and trigger conditions fo
 
 This file is the single source of truth for "we chose not to build X now". When a spec defers something, it should be logged here.
 
+**Bugs and active gaps** (things that should work but don't) belong in [KNOWN_ISSUES.md](./KNOWN_ISSUES.md), not here.
+
 ---
 
 ## Notifications (deferred from 2026-05-20 spec)

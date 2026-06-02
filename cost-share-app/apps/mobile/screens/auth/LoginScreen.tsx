@@ -255,11 +255,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoRing: {
-        padding: 18,
+        padding: 20,
         borderRadius: 999,
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderWidth: 1,
         borderColor: 'rgba(147,197,253,0.45)',
+        overflow: 'visible',
         shadowColor: '#3B82F6',
         shadowOffset: { width: 0, height: 12 },
         shadowOpacity: 0.1,

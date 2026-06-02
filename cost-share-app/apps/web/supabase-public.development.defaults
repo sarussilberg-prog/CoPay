@@ -1,4 +1,4 @@
 # Development Supabase — used for Vercel Preview and local dev web builds.
-# Project: Kupa - dev (drxfbicunusmipdgbgdk)
+# Project: Kupay - dev (drxfbicunusmipdgbgdk)
 NEXT_PUBLIC_SUPABASE_URL=https://drxfbicunusmipdgbgdk.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YkB0Syx43FA7kDbqzAsF6A_6pir6C3S

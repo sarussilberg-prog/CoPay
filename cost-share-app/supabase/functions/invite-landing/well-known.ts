@@ -12,7 +12,7 @@ const AASA_JSON = JSON.stringify({
     applinks: {
         apps: [],
         details: [{
-            appID: `${TEAM_ID}.com.kupa.mobile`,
+            appID: `${TEAM_ID}.com.kupay.mobile`,
             paths: ['/i/*', '/g/*'],
         }],
     },
@@ -22,7 +22,7 @@ const ANDROID_LINKS_JSON = JSON.stringify([{
     relation: ['delegate_permission/common.handle_all_urls'],
     target: {
         namespace: 'android_app',
-        package_name: 'com.kupa.mobile',
+        package_name: 'com.kupay.mobile',
         sha256_cert_fingerprints: [ANDROID_RELEASE_SHA, ANDROID_DEBUG_SHA].filter(Boolean),
     },
 }]);

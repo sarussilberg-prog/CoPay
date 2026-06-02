@@ -9,14 +9,14 @@ interface AppLogoProps {
     testID?: string;
 }
 
-/** Kupa brand mark — use on auth and marketing surfaces. */
+/** Kupay brand mark — use on auth and marketing surfaces. */
 export function AppLogo({ size = 120, style, testID = 'app-logo' }: AppLogoProps) {
     return (
         <Image
             source={logoSource}
             style={[{ width: size, height: size }, style]}
             resizeMode="contain"
-            accessibilityLabel="Kupa"
+            accessibilityLabel="Kupay"
             testID={testID}
         />
     );

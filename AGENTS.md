@@ -16,6 +16,8 @@ Default MCP (`.mcp.json`) is **development only**. Do not run seed, destructive 
 - [docs/SSOT/README.md](docs/SSOT/README.md)
 - [docs/SSOT/SRS.md](docs/SSOT/SRS.md)
 - [docs/SSOT/CODE QUALITY.md](docs/SSOT/CODE%20QUALITY.md)
+- [docs/SSOT/KNOWN_ISSUES.md](docs/SSOT/KNOWN_ISSUES.md) — bugs & technical gaps (P0–P2)
+- [docs/SSOT/TECHNICAL_DEBT.md](docs/SSOT/TECHNICAL_DEBT.md) — intentional deferrals
 
 ## Mobile
 

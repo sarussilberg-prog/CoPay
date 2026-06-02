@@ -5,7 +5,7 @@
 // publication time; before publication, the env var falls back to the marketing
 // site itself. Set KUPA_APP_STORE_URL once the app is published.
 const APP_STORE_URL = Deno.env.get('KUPA_APP_STORE_URL') ?? 'https://kupa.pro/';
-const PLAY_STORE_URL = Deno.env.get('KUPA_PLAY_STORE_URL') ?? 'https://play.google.com/store/apps/details?id=com.kupa.mobile';
+const PLAY_STORE_URL = Deno.env.get('KUPA_PLAY_STORE_URL') ?? 'https://play.google.com/store/apps/details?id=com.kupay.mobile';
 
 function escapeHtml(s: string): string {
     return s.replace(/[&<>"']/g, (c) => ({
@@ -68,13 +68,13 @@ function shell({
   // Best-effort custom-scheme attempt for users who land here despite app being installed.
   setTimeout(() => {
     const m = location.pathname.match(/^\\/(i|g)\\/([A-Za-z0-9_-]{10})$/);
-    if (m) location.href = 'com.kupa.mobile://invite/' + m[1] + '/' + m[2];
+    if (m) location.href = 'com.kupay.mobile://invite/' + m[1] + '/' + m[2];
   }, 100);
 </script>
 </body></html>`;
 }
 
-const APP_BRAND_TITLE = 'Kupa';
+const APP_BRAND_TITLE = 'Kupay';
 
 function brandName(): string {
     return `<span class="brand-name">${APP_BRAND_TITLE}</span>`;
@@ -98,13 +98,13 @@ export function renderFriendInvite(
         ${avatar}
         <h1>${inviterName} רוצה לחלוק איתך הוצאות דרך ${brandName()}</h1>
         <p>חלקו את חשבון המסעדה, הטיול, והדירה — בלי לעשות חשבונות.</p>
-        <a class="btn primary" href="com.kupa.mobile://invite/i/${escapeHtml(token)}">פתח את ${brandName()}</a>
+        <a class="btn primary" href="com.kupay.mobile://invite/i/${escapeHtml(token)}">פתח את ${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
     return shell({
-        title: `${preview.inviter.name} הזמין אותך ל-Kupa`,
-        description: 'הצטרף ל-Kupa וחלוק הוצאות בקלות.',
+        title: `${preview.inviter.name} הזמין אותך ל-Kupay`,
+        description: 'הצטרף ל-Kupay וחלוק הוצאות בקלות.',
         canonical: `https://kupa.pro/i/${token}`,
         body,
     });
@@ -136,12 +136,12 @@ export function renderGroupInvite(
         <h2>${name}</h2>
         <div class="members">${memberAvatars}</div>
         <div class="meta">${g.member_count} חברים · ${escapeHtml(g.currency)}</div>
-        <a class="btn primary" href="com.kupa.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-${brandName()}</a>
+        <a class="btn primary" href="com.kupay.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
     return shell({
-        title: `הוזמנת לקופת '${g.name}' ב-Kupa`,
+        title: `הוזמנת לקופת '${g.name}' ב-Kupay`,
         description: `${g.member_count} חברים · מטבע ${g.currency} · הצטרף בקלות`,
         canonical: `https://kupa.pro/g/${token}`,
         body,

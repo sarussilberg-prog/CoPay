@@ -16,6 +16,7 @@ import {
   isInvalidRefreshTokenError,
   setupSupabaseAuthAutoRefresh,
 } from './lib/authSessionLifecycle';
+import { configureNativeGoogleSignIn } from './lib/googleSignInNative';
 import { supabase } from './lib/supabase';
 import { assertProfileActiveWithTimeout } from './lib/auth';
 import { signalDeactivatedAccount } from './lib/signalDeactivatedAccount';
@@ -27,7 +28,6 @@ import { colors } from './theme';
 import { RtlLayoutProvider } from './hooks/useRtlLayout';
 import { WebAlertHost } from './components/WebAlertHost';
 import type { Session } from '@supabase/supabase-js';
-import './i18n';
 import './global.css';
 
 // Benign when a persisted session was revoked server-side (global sign-out, token rotation, etc.).
@@ -136,6 +136,7 @@ export default function App() {
 
     const init = async () => {
       try {
+        configureNativeGoogleSignIn();
         await initializeLanguage();
         const preDone = await hasCompletedPreLoginOnboarding();
         if (mounted) setPreOnboardingDone(preDone);

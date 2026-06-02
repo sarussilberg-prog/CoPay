@@ -53,6 +53,15 @@ interface AppState {
     pendingInvite: PendingInvite | null;
     setPendingInvite: (invite: PendingInvite | null) => void;
 
+    /** Navigation deferred until AppNavigator mounts (invite redeem outside NavigationContainer). */
+    pendingNavigation:
+        | { target: 'friends' }
+        | { target: 'groupDetail'; groupId: string }
+        | null;
+    setPendingNavigation: (
+        nav: AppState['pendingNavigation'],
+    ) => void;
+
     // Deactivation notice — set when assertProfileActive detects a deactivated
     // (deleted) profile during sign-in. LoginScreen watches this flag and shows
     // an Alert once the user has been routed back. Reset after display.
@@ -157,6 +166,9 @@ export const useAppStore = create<AppState>((set) => ({
     // Pending invite state
     pendingInvite: null,
     setPendingInvite: (invite) => set({ pendingInvite: invite }),
+
+    pendingNavigation: null,
+    setPendingNavigation: (nav) => set({ pendingNavigation: nav }),
 
     // Deactivation notice flag
     pendingDeactivationNotice: false,

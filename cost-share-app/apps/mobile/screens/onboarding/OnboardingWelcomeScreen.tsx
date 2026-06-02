@@ -51,7 +51,7 @@ export function OnboardingWelcomeScreen({ onStart, onExistingAccount }: Props) {
                 subtitle={t('onboarding.welcome.card1Subtitle')}
                 style={{ top: insets.top + 56, end: 24 }}
                 rotateDeg={-3}
-                delayMs={140}
+                delayMs={60}
             />
             <OnboardingFloatingCard
                 icon="swap-horizontal-outline"
@@ -63,7 +63,7 @@ export function OnboardingWelcomeScreen({ onStart, onExistingAccount }: Props) {
                 subtitleBold
                 style={{ top: insets.top + 156, start: 28 }}
                 rotateDeg={4}
-                delayMs={260}
+                delayMs={120}
             />
             <OnboardingFloatingCard
                 icon="people-outline"
@@ -73,14 +73,14 @@ export function OnboardingWelcomeScreen({ onStart, onExistingAccount }: Props) {
                 subtitle={t('onboarding.welcome.card3Subtitle')}
                 style={{ top: insets.top + 276, end: 20 }}
                 rotateDeg={-2}
-                delayMs={380}
+                delayMs={180}
             />
 
             <Animated.View
-                entering={onboardingMotion.fadeUp(440)}
+                entering={onboardingMotion.fadeUp(220)}
                 style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}
             >
-                <Animated.View entering={onboardingMotion.fadeDown(520)}>
+                <Animated.View entering={onboardingMotion.fadeDown(280)}>
                     <Text style={styles.wordmark}>{t('onboarding.welcome.brand')}</Text>
                     <Text
                         className={rtlTextClassName(isRtl, 'text-[17px] font-medium leading-snug mt-3.5')}

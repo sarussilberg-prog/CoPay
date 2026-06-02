@@ -32,6 +32,7 @@ export function LoginFeatureChips() {
                             isRtl,
                             'text-xs font-semibold text-gray-700 text-center',
                         )}
+                        style={styles.chipLabel}
                         numberOfLines={1}
                     >
                         {t(`auth.feature.${key}`)}
@@ -69,5 +70,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 6,
+    },
+    chipLabel: {
+        width: '100%',
+        alignSelf: 'stretch',
+        textAlign: 'center',
     },
 });

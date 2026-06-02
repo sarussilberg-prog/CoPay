@@ -111,6 +111,8 @@ netBalance = totalPaid - totalOwed + totalSettledReceived - totalSettledPaid
 | [PENDING REFACTOR]: Move balance fetch to Supabase RPC/view | Optional server-side aggregation |
 | [PENDING REFACTOR]: Prune stale superpowers plans referencing `apps/server` | Historical docs under `docs/superpowers/` |
 
+**Bugs and launch gaps:** [KNOWN_ISSUES.md](./KNOWN_ISSUES.md). **Deferred features:** [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md).
+
 ---
 
 ## 7. Adding a feature (agent checklist)

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Re-open the Kupa dev client on a running Android emulator with the current Metro URL.
+# Re-open the Kupay dev client on a running Android emulator with the current Metro URL.
 # Requires a local dev build: npm run android:run (once) before using android:open.
 
 set -euo pipefail
 
 PORT="${EXPO_METRO_PORT:-8081}"
 METRO_STATUS="http://127.0.0.1:${PORT}/status"
-PACKAGE="com.kupa.mobile"
-SCHEME="com.kupa.mobile"
+PACKAGE="com.kupay.mobile"
+SCHEME="com.kupay.mobile"
 METRO_URL="http://127.0.0.1:${PORT}"
 ENCODED_METRO_URL="$(python3 -c "import urllib.parse; print(urllib.parse.quote('${METRO_URL}', safe=''))")"
 DEV_CLIENT_URL="${SCHEME}://expo-development-client/?url=${ENCODED_METRO_URL}"
@@ -41,7 +41,7 @@ if [[ $tries -eq 0 ]]; then
   exit 1
 fi
 
-echo "Opening Kupa dev client on Android (Metro :${PORT})..."
+echo "Opening Kupay dev client on Android (Metro :${PORT})..."
 adb -s "$device" reverse "tcp:${PORT}" "tcp:${PORT}" 2>/dev/null || true
 adb -s "$device" shell am force-stop "$PACKAGE" 2>/dev/null || true
 sleep 0.5

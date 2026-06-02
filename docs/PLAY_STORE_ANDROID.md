@@ -135,6 +135,23 @@ Requires `google-play-service-account.json` in place.
 3. Supabase Dashboard → **Authentication → Providers → Google** → Android section → add the same **SHA-1** (and Web Client ID if not already set).
 4. Supabase Dashboard → **Edge Function Secrets** → set `KUPA_ANDROID_RELEASE_SHA256` to the **SHA-256** (uppercase, colon-separated). Then redeploy `invite-landing`.
 
+### 3.4 Native Google Sign-In (Android)
+
+The mobile app uses `@react-native-google-signin/google-signin` + `signInWithIdToken` on Android when `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` is set (requires a **dev client** or EAS build — not Expo Go).
+
+| Credential (Google Cloud) | Purpose |
+|---------------------------|---------|
+| **Web application** | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` + Supabase Google provider Client ID |
+| **Android** | Package `com.kupay.mobile` + SHA-1 (debug keystore for local builds; Play **App signing** SHA-1 for store builds) |
+
+Do **not** use an **Installed** (desktop) OAuth client in the app. Local debug SHA-1:
+
+```bash
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+```
+
+After changing native deps or `app.json` plugins: `npx expo prebuild --clean` then rebuild (`npm run android:run` or EAS).
+
 ---
 
 ## 4. Vercel deploy (required before submitting Privacy URL)

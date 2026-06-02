@@ -5,8 +5,6 @@ import {
     TouchableOpacity,
     StatusBar,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { onboardingMotion } from '../../theme/onboardingMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Text } from '../../components/AppText';
@@ -71,23 +69,17 @@ export function OnboardingFeatureScreen({
             </View>
 
             <View style={styles.mockupArea}>
-                <Animated.View
-                    entering={onboardingMotion.fadeDown(80)}
-                    style={styles.mockupScale}
-                >
+                <View style={styles.mockupScale}>
                     <OnboardingAppMockup
                         highlight={mockupHighlight}
                         hero={mockupHero}
                         balanceLabelKey={balanceLabelKey}
                         balanceAmountKey={balanceAmountKey}
                     />
-                </Animated.View>
+                </View>
             </View>
 
-            <Animated.View
-                entering={onboardingMotion.fadeDown(160)}
-                style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}
-            >
+            <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
                 <Text
                     className={rtlTextClassName(isRtl, 'text-xs font-bold tracking-wider mb-2.5')}
                     style={{ color: onboardingColors.blue }}
@@ -124,7 +116,7 @@ export function OnboardingFeatureScreen({
                         />
                     </TouchableOpacity>
                 </View>
-            </Animated.View>
+            </View>
         </View>
     );
 }

@@ -8,6 +8,11 @@ import { queryClient } from '../lib/queryClient';
 import { clearStaleAuthSession } from '../lib/authSessionLifecycle';
 import { clearNavigationState } from '../lib/navigationPersistence';
 import { isAuthSessionAllowed } from '../lib/auth';
+import {
+  isNativeGoogleSignInEnabled,
+  signInWithGoogleNative,
+  signOutNativeGoogle,
+} from '../lib/googleSignInNative';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 
@@ -36,7 +41,7 @@ function toAuthError(err: unknown): AuthError {
   return { code: 'generic', message };
 }
 
-const NATIVE_SCHEME = 'com.kupa.mobile';
+const NATIVE_SCHEME = 'com.kupay.mobile';
 const AUTH_CALLBACK_PATH = 'auth/callback';
 
 /**
@@ -45,9 +50,15 @@ const AUTH_CALLBACK_PATH = 'auth/callback';
  */
 function resolveNativeOAuthRedirectUri(): string {
   const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+  const nativeRedirect = `${NATIVE_SCHEME}://${AUTH_CALLBACK_PATH}`;
+
+  // Dev/production builds must use the custom scheme — not exp:// or https://.
+  // Android intent filters are registered for NATIVE_SCHEME in app.json / AndroidManifest.
+  if (!isExpoGo) {
+    return nativeRedirect;
+  }
 
   let uri = makeRedirectUri({
-    scheme: isExpoGo ? undefined : NATIVE_SCHEME,
     path: AUTH_CALLBACK_PATH,
     preferLocalhost: false,
   });
@@ -58,7 +69,7 @@ function resolveNativeOAuthRedirectUri(): string {
   }
 
   if (uri.includes('localhost')) {
-    uri = `${NATIVE_SCHEME}://${AUTH_CALLBACK_PATH}`;
+    return nativeRedirect;
   }
 
   return uri;
@@ -157,8 +168,12 @@ const googleOAuthOptions = (oauthRedirect: string) => ({
   queryParams: { prompt: 'select_account' },
 });
 
-export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
+async function signInWithGoogleBrowser(): Promise<{ error: AuthError | null }> {
   const oauthRedirect = getAuthRedirectUri();
+
+  if (__DEV__) {
+    console.info('[Auth] OAuth redirectTo =', oauthRedirect);
+  }
 
   if (Platform.OS === 'web') {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -192,7 +207,48 @@ export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
     return { error: toAuthError(`Unexpected browser result: ${result.type}`) };
   }
 
+  // Supabase rejects unknown redirect_to values and falls back to Site URL (kupa.pro web).
+  if (result.url.startsWith('http://') || result.url.startsWith('https://')) {
+    return {
+      error: toAuthError(
+        `OAuth returned to the web app (${result.url.split('?')[0]}). `
+        + `Add ${oauthRedirect} to Supabase → Authentication → URL Configuration → Redirect URLs.`,
+      ),
+    };
+  }
+
   return handleAuthRedirectUrl(result.url);
+}
+
+async function signInWithGoogleAndroidNative(): Promise<{ error: AuthError | null }> {
+  const native = await signInWithGoogleNative();
+  if ('error' in native) {
+    return { error: toAuthError(native.error) };
+  }
+
+  const { error } = await supabase.auth.signInWithIdToken({
+    provider: 'google',
+    token: native.idToken,
+  });
+  if (error) return { error: toAuthError(error) };
+
+  const allowed = await isAuthSessionAllowed();
+  if (!allowed) {
+    return { error: { code: 'account_deleted', message: 'account deleted' } satisfies AuthError };
+  }
+
+  return { error: null };
+}
+
+export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
+  if (isNativeGoogleSignInEnabled()) {
+    if (__DEV__) {
+      console.info('[Auth] Using native Google Sign-In (Android)');
+    }
+    return signInWithGoogleAndroidNative();
+  }
+
+  return signInWithGoogleBrowser();
 }
 
 /** Clears cached app state, wipes the local Supabase session, and drops the Zustand session. */
@@ -210,5 +266,6 @@ export async function signOut(): Promise<void> {
   if (error) {
     console.warn('signOut: global revoke failed, clearing local session', error);
   }
+  await signOutNativeGoogle();
   await clearLocalAuthSession();
 }

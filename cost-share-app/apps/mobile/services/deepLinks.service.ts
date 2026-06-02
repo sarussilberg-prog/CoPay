@@ -12,6 +12,11 @@ import { QueryClient } from '@tanstack/react-query';
 import i18n from '../i18n';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from '../hooks/queries/keys';
+import { useAppStore } from '../store';
+
+export type InviteRedemptionResult =
+    | { kind: 'friend' }
+    | { kind: 'group'; groupId: string };
 
 export type InviteLink =
     | { kind: 'friend'; token: string }
@@ -40,8 +45,8 @@ export function parseIncomingUrl(rawUrl: string): InviteLink {
         }
     }
 
-    // com.kupa.mobile://invite/i/<token> | /g/<token>
-    if (parsed.protocol === 'com.kupa.mobile:' && parsed.hostname === 'invite') {
+    // com.kupay.mobile://invite/i/<token> | /g/<token>
+    if (parsed.protocol === 'com.kupay.mobile:' && parsed.hostname === 'invite') {
         const m = parsed.pathname.match(/^\/(i|g)\/([^/?#]+)\/?$/);
         if (m && TOKEN_RE.test(m[2])) {
             return m[1] === 'i'
@@ -53,18 +58,40 @@ export function parseIncomingUrl(rawUrl: string): InviteLink {
     return { kind: 'unknown' };
 }
 
+function navigateAfterFriendInvite(navigation: NavigationProp<any> | null): void {
+    if (navigation) {
+        (navigation.navigate as any)('Profile', { screen: 'Friends' });
+        return;
+    }
+    useAppStore.getState().setPendingNavigation({ target: 'friends' });
+}
+
+function navigateAfterGroupInvite(
+    navigation: NavigationProp<any> | null,
+    groupId: string,
+): void {
+    if (navigation) {
+        (navigation.navigate as any)('Groups', {
+            screen: 'GroupDetail',
+            params: { groupId },
+        });
+        return;
+    }
+    useAppStore.getState().setPendingNavigation({ target: 'groupDetail', groupId });
+}
+
 export async function handleInviteLink(
     link: InviteLink,
-    navigation: NavigationProp<any>,
+    navigation: NavigationProp<any> | null,
     queryClient: QueryClient,
-): Promise<void> {
-    if (link.kind === 'unknown') return;
+): Promise<InviteRedemptionResult | null> {
+    if (link.kind === 'unknown') return null;
 
     if (link.kind === 'friend') {
         const { data, error } = await supabase.rpc('redeem_friend_invite', { p_token: link.token });
         if (error) {
             handleRedemptionError(error.message, 'friend');
-            return;
+            return null;
         }
         const payload = data as { friend_id: string; friend_name: string };
         Toast.show({
@@ -73,15 +100,14 @@ export async function handleInviteLink(
         });
         void queryClient.invalidateQueries({ queryKey: queryKeys.friends });
         void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
-        (navigation.navigate as any)('Profile', { screen: 'Friends' });
-        return;
+        navigateAfterFriendInvite(navigation);
+        return { kind: 'friend' };
     }
 
-    // group
     const { data, error } = await supabase.rpc('redeem_group_invite', { p_token: link.token });
     if (error) {
         handleRedemptionError(error.message, 'group');
-        return;
+        return null;
     }
     const payload = data as { group_id: string; group_name: string; already_member: boolean };
     Toast.show({
@@ -92,10 +118,8 @@ export async function handleInviteLink(
     });
     void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     void queryClient.invalidateQueries({ queryKey: ['groups'] });
-    (navigation.navigate as any)('Groups', {
-        screen: 'GroupDetail',
-        params: { groupId: payload.group_id },
-    });
+    navigateAfterGroupInvite(navigation, payload.group_id);
+    return { kind: 'group', groupId: payload.group_id };
 }
 
 function handleRedemptionError(message: string, kind: 'friend' | 'group'): void {

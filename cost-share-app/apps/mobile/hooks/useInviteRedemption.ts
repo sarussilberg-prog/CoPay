@@ -39,7 +39,7 @@ export function useInviteRedemption(): void {
         void handleInviteLink(link, navigation, queryClient);
     }, [incomingUrl, session, navigation, queryClient, setPendingInvite]);
 
-    // Replay pending invite once signed in
+    // Replay pending invite once signed in (AppNavigator mounted — navigation available)
     useEffect(() => {
         if (!session || !pendingInvite) return;
         void handleInviteLink(pendingInvite, navigation, queryClient).finally(() => {

@@ -18,7 +18,8 @@ const FEATURE_STEPS: Step[] = ['feature1', 'feature2', 'feature3', 'feature4'];
 export function OnboardingPreAuthFlow({ onFinished }: Props) {
     const isRtl = useRtlLayout();
     const [step, setStep] = useState<Step>('welcome');
-    const screenEnter = onboardingMotion.screenSlide(isRtl);
+    const screenEnter = onboardingMotion.screenEnter(isRtl);
+    const screenExit = onboardingMotion.screenExit(isRtl);
 
     const finishPre = useCallback(async () => {
         await markPreLoginOnboardingComplete();
@@ -55,7 +56,7 @@ export function OnboardingPreAuthFlow({ onFinished }: Props) {
             )}
 
             {step === 'feature1' && (
-                <Animated.View key="f1" entering={screenEnter} style={styles.fill}>
+                <Animated.View key="f1" entering={screenEnter} exiting={screenExit} style={styles.fill}>
                     <OnboardingFeatureScreen
                         stepIndex={0}
                         eyebrowKey="onboarding.feature1.eyebrow"
@@ -70,7 +71,7 @@ export function OnboardingPreAuthFlow({ onFinished }: Props) {
             )}
 
             {step === 'feature2' && (
-                <Animated.View key="f2" entering={screenEnter} style={styles.fill}>
+                <Animated.View key="f2" entering={screenEnter} exiting={screenExit} style={styles.fill}>
                     <OnboardingFeatureScreen
                         stepIndex={1}
                         eyebrowKey="onboarding.feature2.eyebrow"
@@ -85,7 +86,7 @@ export function OnboardingPreAuthFlow({ onFinished }: Props) {
             )}
 
             {step === 'feature3' && (
-                <Animated.View key="f3" entering={screenEnter} style={styles.fill}>
+                <Animated.View key="f3" entering={screenEnter} exiting={screenExit} style={styles.fill}>
                     <OnboardingFeatureScreen
                         stepIndex={2}
                         eyebrowKey="onboarding.feature3.eyebrow"
@@ -102,7 +103,7 @@ export function OnboardingPreAuthFlow({ onFinished }: Props) {
             )}
 
             {step === 'feature4' && (
-                <Animated.View key="f4" entering={screenEnter} style={styles.fill}>
+                <Animated.View key="f4" entering={screenEnter} exiting={screenExit} style={styles.fill}>
                     <OnboardingFeatureScreen
                         stepIndex={3}
                         eyebrowKey="onboarding.feature4.eyebrow"

@@ -34,7 +34,7 @@
         "profile": "פרופיל"
     },
     "auth": {
-        "appName": "kupa",
+        "appName": "Kupay",
         "signInWithGoogle": "המשך עם Google",
         "subtitle": "חלוקת הוצאות עם חברים",
         "tagline": "הקופה עם החבר'ה",
@@ -328,7 +328,7 @@
             "typeExpense": "הוצאה",
             "typeMessage": "הודעה",
             "typeSettlement": "סגירת חשבון",
-            "footer": "נוצר על ידי Kupa"
+            "footer": "נוצר על ידי Kupay"
         },
         "expense": {
             "youLent": "הלוויתָ {{amount}}",
@@ -775,21 +775,21 @@
     },
     "invite": {
         "friend": {
-            "title": "הזמן חבר ל-Kupa",
+            "title": "הזמן חבר ל-Kupay",
             "subtitle": "שלח קישור דרך וואצאפ ועוד",
             "cta": "שתף קישור חברות",
-            "shareMessage": "היי! בוא נחלק הוצאות יחד דרך Kupa. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {{url}}",
+            "shareMessage": "היי! בוא נחלק הוצאות יחד דרך Kupay. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {{url}}",
             "rotate": "שנה קישור",
             "rotateConfirmTitle": "לשנות את קישור ההזמנה?",
             "rotateConfirmBody": "הקישור הקודם יפסיק לעבוד. כל מי שיש לו את הקישור הישן לא יוכל להפוך לחבר שלך עד שתשלח לו את החדש.",
             "rotated": "קישור ההזמנה עודכן",
             "findEmpty": "לא מצאת את מי שחיפשת?",
             "findEmptyCta": "הזמן חבר חדש דרך קישור",
-            "findInviteName": "הזמן את {{name}} ל-Kupa"
+            "findInviteName": "הזמן את {{name}} ל-Kupay"
         },
         "group": {
             "title": "שתף קישור לקופה",
-            "shareMessage": "הוספתי אותך לקופת '{{groupName}}' ב-Kupa. הצטרף דרך הקישור: {{url}}",
+            "shareMessage": "הוספתי אותך לקופת '{{groupName}}' ב-Kupay. הצטרף דרך הקישור: {{url}}",
             "rotate": "שנה קישור",
             "rotateConfirmTitle": "לשנות את קישור הקופה?",
             "rotateConfirmBody": "כל מי שיש לו את הקישור הנוכחי לא יוכל להצטרף עד שתשלח לו את החדש. חברים שכבר בקופה לא מושפעים.",
@@ -809,7 +809,7 @@
         }
     },
     "dashboard": {
-        "appTitle": "Kupa",
+        "appTitle": "Kupay",
         "youOwe": "אתה חייב",
         "youAreOwed": "חייבים לך",
         "balanceOverview": "סיכום יתרות",

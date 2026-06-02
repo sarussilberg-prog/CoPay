@@ -1,5 +1,8 @@
 /** App brand name — always English in headers (not i18n). */
-export const APP_BRAND_TITLE = 'Kupa';
+export const APP_BRAND_TITLE = 'Kupay';
+
+/** Logo artwork fills this fraction of its square frame (rest is transparent padding). */
+export const APP_LOGO_CONTENT_SCALE = 0.82;
 
 /** Canonical brand title color (matches mobile `colors.primaryDark`). */
 export const APP_BRAND_COLOR = '#3B82F6';
