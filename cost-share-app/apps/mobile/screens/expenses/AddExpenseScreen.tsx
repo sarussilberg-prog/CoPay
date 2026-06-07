@@ -63,13 +63,23 @@ import { useLoading } from '../../hooks/useLoading';
 import { useAppStore } from '../../store';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
 import { useGroupMembersQuery } from '../../hooks/queries/useGroupMembersQuery';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
+import {
+    cancelPendingAddExpense,
+    chainEditFollowUp,
+    getPendingExpenseFromCache,
+    resolvePendingEditAction,
+    useAddExpenseMutation,
+} from '../../hooks/mutations/useAddExpenseMutation';
+import { isPendingExpenseId } from '../../lib/pendingExpense';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     createExpense,
     getExpenseWithSplits,
     updateExpense,
 } from '../../services/expenses.service';
 import { uploadExpenseReceipt } from '../../services/storage.service';
-import { showErrorToast } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { resolveGroupMemberUsers } from '../../lib/groupMemberUsers';
 import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 import {
@@ -152,9 +162,12 @@ export function AddExpenseScreen() {
     const groupId = resolvedGroupId ?? '';
     const { isLoading, startLoading, stopLoading } = useLoading();
     const currentUser = useAppStore(state => state.currentUser);
-    const storeGroup = useAppStore(s =>
-        groupId ? s.groups.find(g => g.id === groupId) : undefined,
-    );
+    const groupsQuery = useGroupsQuery();
+    const storeGroup = groupId
+        ? groupsQuery.data?.find(g => g.id === groupId)
+        : undefined;
+    const queryClient = useQueryClient();
+    const addExpense = useAddExpenseMutation(groupId);
 
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
@@ -232,6 +245,52 @@ export function AddExpenseScreen() {
         if (!isEditMode || !expenseId) return;
         const load = async () => {
             setExpenseLoading(true);
+            // Pending row — hydrate from the optimistic cache, no network.
+            if (isPendingExpenseId(expenseId)) {
+                const activeGroupId = routeGroupId ?? groupId;
+                if (activeGroupId) {
+                    const cached = getPendingExpenseFromCache(
+                        queryClient,
+                        activeGroupId,
+                        expenseId,
+                    );
+                    if (cached) {
+                        setResolvedGroupId(activeGroupId);
+                        setDescription(cached.description);
+                        setAmount(String(cached.amount));
+                        setCurrency(cached.currency);
+                        setPaidBy(cached.paidBy);
+                        const initialDate =
+                            cached.expenseDate instanceof Date
+                                ? cached.expenseDate
+                                : new Date(cached.expenseDate);
+                        setDate(initialDate);
+                        if (cached.splits.length > 0) {
+                            const initialMemberIds = cached.splits.map((s) => s.userId);
+                            setSelectedMemberIds(initialMemberIds);
+                            setMembersInitialized(true);
+                            const initialSplitMode = cached.splitMode
+                                ? storedSplitModeToUi(cached.splitMode)
+                                : ('equal' as UiSplitMode);
+                            setSplitMode(initialSplitMode);
+                        }
+                        editSnapshotRef.current = snapshotKey({
+                            description: cached.description,
+                            amount: String(cached.amount),
+                            currency: cached.currency,
+                            paidBy: cached.paidBy,
+                            dateMs: initialDate.getTime(),
+                            splitMode: cached.splitMode
+                                ? storedSplitModeToUi(cached.splitMode)
+                                : ('equal' as UiSplitMode),
+                            selectedMemberIds: cached.splits.map((s) => s.userId),
+                            unequalValues: {},
+                        });
+                    }
+                }
+                setExpenseLoading(false);
+                return;
+            }
             const data = await getExpenseWithSplits(expenseId);
             if (data) {
                 const activeGroupId = routeGroupId ?? data.expense.groupId;
@@ -450,7 +509,11 @@ export function AddExpenseScreen() {
             const uploaded = await uploadExpenseReceipt(groupId, localReceiptUri);
             if (!uploaded) {
                 stopLoading();
-                showErrorToast('common.error', 'expenses.receiptUploadError');
+                handleError(new Error('uploadExpenseReceipt returned null'), {
+                    toast: { titleKey: 'common.error', messageKey: 'expenses.receiptUploadError' },
+                    tags: { service: 'storage', op: 'uploadExpenseReceipt' },
+                    extra: { groupId, isEditMode },
+                });
                 return;
             }
             uploadedReceiptUrl = uploaded;
@@ -461,22 +524,63 @@ export function AddExpenseScreen() {
                 ? { receiptUrl: '' }
                 : {};
         const storedSplitMode = uiToStoredSplitMode(splitMode);
-        const result = isEditMode
-            ? expenseId
-                ? await updateExpense(expenseId, {
-                      description: description.trim(),
-                      amount: parsedAmount,
-                      currency,
-                      category,
-                      paidBy: payerId,
-                      expenseDate: date,
-                      splits,
-                      splitMode: storedSplitMode,
-                      ...receiptUpdate,
-                  })
-                : null
-            : await createExpense({
-                  groupId,
+
+        if (!isEditMode) {
+            // Offline-capable add via the mutation hook. Optimistic insert
+            // happens synchronously inside onMutate; queued while offline.
+            addExpense.mutate({
+                description: description.trim(),
+                amount: parsedAmount,
+                currency,
+                category,
+                paidBy: payerId,
+                expenseDate: date,
+                splits,
+                splitMode: storedSplitMode,
+                ...(uploadedReceiptUrl ? { receiptUrl: uploadedReceiptUrl } : {}),
+            });
+            stopLoading();
+            navigation.goBack();
+            return;
+        }
+
+        if (expenseId && isPendingExpenseId(expenseId)) {
+            // Editing a row whose create hasn't synced yet — branch on state.
+            const payload = {
+                description: description.trim(),
+                amount: parsedAmount,
+                currency,
+                category,
+                paidBy: payerId,
+                expenseDate: date,
+                splits,
+                splitMode: storedSplitMode,
+                ...receiptUpdate,
+            };
+            const action = resolvePendingEditAction(queryClient, expenseId);
+            if (action === 'chain-follow-up') {
+                chainEditFollowUp(queryClient, groupId, expenseId, payload);
+            } else {
+                cancelPendingAddExpense(queryClient, groupId, expenseId);
+                addExpense.mutate({
+                    description: payload.description,
+                    amount: payload.amount,
+                    currency: payload.currency,
+                    category: payload.category,
+                    paidBy: payload.paidBy,
+                    expenseDate: payload.expenseDate,
+                    splits: payload.splits,
+                    splitMode: payload.splitMode,
+                    ...(uploadedReceiptUrl ? { receiptUrl: uploadedReceiptUrl } : {}),
+                });
+            }
+            stopLoading();
+            navigation.goBack();
+            return;
+        }
+
+        const result = expenseId
+            ? await updateExpense(expenseId, {
                   description: description.trim(),
                   amount: parsedAmount,
                   currency,
@@ -485,8 +589,9 @@ export function AddExpenseScreen() {
                   expenseDate: date,
                   splits,
                   splitMode: storedSplitMode,
-                  ...(uploadedReceiptUrl ? { receiptUrl: uploadedReceiptUrl } : {}),
-              });
+                  ...receiptUpdate,
+              })
+            : null;
         stopLoading();
         if (result) {
             navigation.goBack();
@@ -511,6 +616,8 @@ export function AddExpenseScreen() {
         startLoading,
         stopLoading,
         t,
+        addExpense,
+        queryClient,
     ]);
 
     const runShake = useCallback((anim: Animated.Value) => {

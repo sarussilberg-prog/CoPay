@@ -23,7 +23,6 @@ import { AppIcon } from '../AppIcon';
 import { colors } from '../../theme';
 import { formatCurrencyAmount } from '../../lib/currencyDisplay';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
-import { useAppStore } from '../../store';
 import { queryKeys } from '../../hooks/queries/keys';
 import { fetchGroupPairwiseDebts } from '../../services/settlements.service';
 import { fetchGroups } from '../../services/groups.service';
@@ -81,7 +80,6 @@ export function FriendGroupBalancesSheet({
 }: Props) {
     const { t } = useTranslation();
     const isRtl = useRtlLayout();
-    const storeGroups = useAppStore(s => s.groups);
     const sharedGroupIds = useMemo(() => friend?.sharedGroupIds ?? [], [friend]);
 
     const groupsQuery = useQuery({
@@ -89,7 +87,7 @@ export function FriendGroupBalancesSheet({
         queryFn: fetchGroups,
         enabled: visible && sharedGroupIds.length > 0,
     });
-    const groups = groupsQuery.data ?? storeGroups;
+    const groups = groupsQuery.data ?? [];
 
     const groupsById = useMemo(() => {
         const map = new Map<string, { name: string; imageUrl?: string; groupType: string }>();

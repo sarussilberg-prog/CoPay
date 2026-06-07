@@ -21,6 +21,7 @@ jest.mock('../../../lib/deactivationNoticeStorage', () => ({
 
 jest.mock('../../../lib/appToast', () => ({
     showAppToast: jest.fn(),
+    showErrorToast: jest.fn(),
 }));
 
 import { LoginScreen } from '../../../screens/auth/LoginScreen';
@@ -31,7 +32,7 @@ import {
     clearDeactivationNoticePending,
     consumeDeactivationNoticePending,
 } from '../../../lib/deactivationNoticeStorage';
-import { showAppToast } from '../../../lib/appToast';
+import { showAppToast, showErrorToast } from '../../../lib/appToast';
 
 const mockSignIn = signInWithGoogle as jest.MockedFunction<typeof signInWithGoogle>;
 const mockUseChangeAppLanguage = useChangeAppLanguage as jest.MockedFunction<
@@ -97,8 +98,10 @@ describe('LoginScreen', () => {
         const { getByTestId } = render(<LoginScreen />);
         fireEvent.press(getByTestId('login-google-button'));
         await waitFor(() =>
-            expect(showAppToast).toHaveBeenCalledWith(
-                expect.objectContaining({ type: 'error' }),
+            expect(showErrorToast).toHaveBeenCalledWith(
+                'auth.signInError',
+                undefined,
+                'boom',
             ),
         );
     });
@@ -113,6 +116,7 @@ describe('LoginScreen', () => {
 
         expect(await findByText('deleteAccount.deactivatedTitle')).toBeTruthy();
         expect(showAppToast).not.toHaveBeenCalled();
+        expect(showErrorToast).not.toHaveBeenCalled();
     });
 
     it('shows deleted-account dialog when pendingDeactivationNotice flips on', async () => {

@@ -58,10 +58,6 @@ jest.mock('../../lib/queryClient', () => ({
     queryClient: { clear: jest.fn() },
 }));
 
-jest.mock('../../lib/groupFeedCache', () => ({
-    clearGroupFeedHydration: jest.fn(),
-}));
-
 jest.mock('expo-auth-session', () => ({
     makeRedirectUri: (...args: unknown[]) => mockMakeRedirectUri(...args),
 }));

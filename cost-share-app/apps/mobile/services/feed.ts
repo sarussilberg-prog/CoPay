@@ -11,6 +11,7 @@ import {
     Settlement,
 } from '@cost-share/shared';
 import { decorateExpense } from './expense-delta';
+import { toEpochMs } from '../lib/dateUtils';
 
 export function buildFeed(
     groupId: string,
@@ -44,6 +45,6 @@ export function buildFeed(
         }));
 
     return [...expenseItems, ...messageItems, ...settlementItems].sort(
-        (a, b) => b.sortAt.getTime() - a.sortAt.getTime(),
+        (a, b) => toEpochMs(b.sortAt) - toEpochMs(a.sortAt),
     );
 }

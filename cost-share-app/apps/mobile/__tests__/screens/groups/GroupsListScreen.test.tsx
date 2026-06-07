@@ -36,6 +36,8 @@ import { GroupsListScreen } from '../../../screens/groups/GroupsListScreen';
 import { useAppStore } from '../../../store';
 import { fetchGroups } from '../../../services/groups.service';
 import { fetchBalanceSummary } from '../../../services/users.service';
+import { queryClient } from '../../../lib/queryClient';
+import { queryKeys } from '../../../hooks/queries/keys';
 
 const mockFetchGroups = fetchGroups as jest.MockedFunction<typeof fetchGroups>;
 const mockFetchSummary = fetchBalanceSummary as jest.MockedFunction<
@@ -69,10 +71,10 @@ beforeEach(() => {
     mockFetchGroups.mockClear();
     mockFetchSummary.mockClear();
     useAppStore.setState({
-        groups: [],
         balanceSummary: [],
         groupBalances: {},
     });
+    queryClient.clear();
 });
 
 describe('GroupsListScreen', () => {
@@ -97,20 +99,20 @@ describe('GroupsListScreen', () => {
     });
 
     it('renders groups from store', async () => {
-        useAppStore.setState({ groups: [makeGroup({})] });
+        queryClient.setQueryData(queryKeys.groups, [makeGroup({})]);
         const { findByText } = render(<GroupsListScreen />);
         expect(await findByText('Trip')).toBeTruthy();
     });
 
     it('navigates to GroupDetail when a group is pressed', async () => {
-        useAppStore.setState({ groups: [makeGroup({})] });
+        queryClient.setQueryData(queryKeys.groups, [makeGroup({})]);
         const { findByText } = render(<GroupsListScreen />);
         fireEvent.press(await findByText('Trip'));
         expect(mockNavigate).toHaveBeenCalledWith('GroupDetail', { groupId: 'g1' });
     });
 
     it('renders the big create CTA when list has items', async () => {
-        useAppStore.setState({ groups: [makeGroup({})] });
+        queryClient.setQueryData(queryKeys.groups, [makeGroup({})]);
         const { findByTestId } = render(<GroupsListScreen />);
         expect(await findByTestId('groups-bottom-cta')).toBeTruthy();
     });
@@ -122,20 +124,18 @@ describe('GroupsListScreen', () => {
     });
 
     it('filters groups by member name', async () => {
-        useAppStore.setState({
-            groups: [
-                makeGroup({
-                    id: 'g1',
-                    name: 'Trip',
-                    members: [{ userId: 'u1', displayName: 'Alice', isActive: true }],
-                }),
-                makeGroup({
-                    id: 'g2',
-                    name: 'Home',
-                    members: [{ userId: 'u2', displayName: 'Bob', isActive: true }],
-                }),
-            ],
-        });
+        queryClient.setQueryData(queryKeys.groups, [
+            makeGroup({
+                id: 'g1',
+                name: 'Trip',
+                members: [{ userId: 'u1', displayName: 'Alice', isActive: true }],
+            }),
+            makeGroup({
+                id: 'g2',
+                name: 'Home',
+                members: [{ userId: 'u2', displayName: 'Bob', isActive: true }],
+            }),
+        ]);
         const { findByTestId, queryByText, getByText } = render(<GroupsListScreen />);
         const input = await findByTestId('groups-search-input');
         fireEvent.changeText(input, 'bob');
@@ -146,7 +146,7 @@ describe('GroupsListScreen', () => {
     });
 
     it('navigates to CreateGroup from the top-right add button', async () => {
-        useAppStore.setState({ groups: [makeGroup({})] });
+        queryClient.setQueryData(queryKeys.groups, [makeGroup({})]);
         const { findByTestId } = render(<GroupsListScreen />);
         fireEvent.press(await findByTestId('groups-create-btn'));
         expect(mockNavigate).toHaveBeenCalledWith('CreateGroup');

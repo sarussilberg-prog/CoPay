@@ -32,6 +32,7 @@ import { MemberContributionRow } from '../../components/balances/MemberContribut
 import { MemberContributionDialog } from '../../components/balances/MemberContributionDialog';
 import { SimplifiedDebtsSection } from '../../components/balances/SimplifiedDebtsSection';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
 import {
     useGroupContributionsQuery,
     useGroupSimplifiedDebtsByCurrencyQuery,
@@ -74,7 +75,8 @@ export function BalancesScreen() {
     const navigation = useNavigation<any>();
     const { groupId } = route.params;
     const currentUserId = useAppStore(s => s.currentUser?.id ?? '');
-    const group = useAppStore(s => s.groups.find(g => g.id === groupId));
+    const groupsQuery = useGroupsQuery();
+    const group = groupsQuery.data?.find(g => g.id === groupId);
     const groupName = group?.name;
     const defaultCurrency = group?.defaultCurrency ?? 'USD';
 

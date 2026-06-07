@@ -19,13 +19,15 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GroupWithMembers } from '@cost-share/shared';
 import { useAppStore } from '../../store';
-import { useLoading } from '../../hooks/useLoading';
-import { fetchGroups } from '../../services/groups.service';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../hooks/queries/keys';
 import { fetchBalanceSummary } from '../../services/users.service';
 import { prefetchActivityFeed } from '../../hooks/queries/useActivityQuery';
 import { prefetchGroupDetail } from '../../hooks/queries/prefetchGroupDetail';
+import { prefetchAddExpensePrerequisitesForGroup } from '../../hooks/queries/prefetchAddExpenseForAllGroups';
 import { useGroupBalancesDisplay } from '../../hooks/useGroupBalancesDisplay';
-import { LoadingIndicator } from '../../components/LoadingIndicator';
+import { GroupsListSkeleton } from '../../components/skeletons/GroupsListSkeleton';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupCard } from '../../components/GroupCard';
 import { CreateGroupFabAnchor, createGroupFabScrollPadding } from '../../components/groups/CreateGroupFabAnchor';
@@ -64,8 +66,9 @@ export function GroupsListScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const listBottomPadding = createGroupFabScrollPadding() + FAB_LIST_GAP;
-    const { isLoading, startLoading, stopLoading } = useLoading();
-    const groups = useAppStore(s => s.groups);
+    const groupsQuery = useGroupsQuery();
+    const groups = groupsQuery.data ?? [];
+    const isLoading = groupsQuery.isLoading;
     const groupBalances = useAppStore(s => s.groupBalances);
 
     const balanceDisplays = useGroupBalancesDisplay(groupBalances, groups);
@@ -78,7 +81,7 @@ export function GroupsListScreen() {
     }, [balanceDisplays]);
 
     const [refreshing, setRefreshing] = useState(false);
-    const [loadError, setLoadError] = useState(false);
+    const loadError = groupsQuery.isError;
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
     const [filtersOpen, setFiltersOpen] = useState(false);
@@ -95,28 +98,26 @@ export function GroupsListScreen() {
         navigation.setParams({ balanceState: undefined, showArchived: undefined });
     }, [incomingBalanceState, incomingShowArchived, navigation]);
 
-    const loadAll = useCallback(async () => {
-        try {
-            await fetchGroups();
-            setLoadError(false);
-        } catch {
-            setLoadError(true);
-            return;
-        }
-        void fetchBalanceSummary();
-        void prefetchActivityFeed();
-    }, []);
-
+    // Warm members + user profiles for every visible group so the
+    // AddExpenseScreen's offline path works even for groups the user has
+    // never tapped before. Without this, opening AddExpense offline on a
+    // never-visited group shows an empty member picker and can't queue
+    // an optimistic insert.
+    const groupIdsKey = groups.map(g => g.id).join(',');
     useEffect(() => {
-        startLoading();
-        void loadAll().finally(stopLoading);
-    }, []);
+        for (const g of groups) {
+            prefetchAddExpensePrerequisitesForGroup(g.id);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [groupIdsKey]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        await loadAll();
+        await queryClient.invalidateQueries({ queryKey: queryKeys.groups });
+        void fetchBalanceSummary();
+        void prefetchActivityFeed();
         setRefreshing(false);
-    }, [loadAll]);
+    }, []);
 
     const handleGroupPress = useCallback(
         (groupId: string) => {
@@ -185,7 +186,7 @@ export function GroupsListScreen() {
     );
 
     if (isLoading && groups.length === 0) {
-        return <LoadingIndicator />;
+        return <GroupsListSkeleton />;
     }
 
     return (

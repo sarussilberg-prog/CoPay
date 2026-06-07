@@ -119,8 +119,8 @@ describe('captureError helper', () => {
     });
 });
 
-describe('Service-layer captureException', () => {
-    it('createExpense reports tags.service=expenses, op=create on failure', async () => {
+describe('Service-layer createExpense', () => {
+    it('throws on Supabase failure so the mutation hook can surface the error', async () => {
         jest.resetModules();
 
         const singleMock = jest.fn().mockResolvedValue({
@@ -147,42 +147,21 @@ describe('Service-layer captureException', () => {
             showSuccessMessage: jest.fn(),
             expenseSplitValidationMessage: jest.fn(() => ''),
         }));
-        jest.doMock('../../lib/groupFeedCache', () => ({
-            markGroupExpensesHydrated: jest.fn(),
-        }));
-        jest.doMock('../../store', () => ({
-            useAppStore: {
-                getState: () => ({
-                    addExpense: jest.fn(),
-                    setExpenses: jest.fn(),
-                    updateExpense: jest.fn(),
-                    expenses: [],
-                }),
-            },
-        }));
         jest.doMock('../../i18n', () => ({
             __esModule: true,
             default: { t: (k: string) => k },
         }));
 
-        // Capture the post-reset mock — this is the same Sentry the service will require.
-        const freshSentry = require('@sentry/react-native') as { captureException: jest.Mock };
-        freshSentry.captureException.mockClear();
-
         const { createExpense } = require('../../services/expenses.service');
-        const result = await createExpense({
-            groupId: 'g1',
-            description: 'lunch',
-            amount: 100,
-            currency: 'ILS',
-            paidBy: 'u1',
-            splits: [{ userId: 'u1', amount: 100 }],
-        });
-
-        expect(result).toBeNull();
-        expect(freshSentry.captureException).toHaveBeenCalledTimes(1);
-        const [, ctx] = freshSentry.captureException.mock.calls[0];
-        expect(ctx.tags).toEqual({ service: 'expenses', op: 'create' });
-        expect(ctx.extra).toMatchObject({ groupId: 'g1', amount: 100, currency: 'ILS' });
+        await expect(
+            createExpense({
+                groupId: 'g1',
+                description: 'lunch',
+                amount: 100,
+                currency: 'ILS',
+                paidBy: 'u1',
+                splits: [{ userId: 'u1', amount: 100 }],
+            }),
+        ).rejects.toMatchObject({ message: 'db-down' });
     });
 });

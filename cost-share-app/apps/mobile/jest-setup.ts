@@ -1,5 +1,15 @@
 import '@testing-library/jest-native/extend-expect';
 
+jest.mock('expo-crypto', () => {
+    let mockCounter = 0;
+    return {
+        randomUUID: () => {
+            mockCounter += 1;
+            return `test-uuid-${mockCounter}-${Math.random().toString(36).slice(2, 10)}`;
+        },
+    };
+});
+
 jest.mock('./lib/supabase', () => ({
     supabase: {
         from: jest.fn(() => ({

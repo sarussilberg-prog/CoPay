@@ -116,8 +116,9 @@ import { fetchExpenses } from '../../../services/expenses.service';
 import { fetchMessages, createMessage } from '../../../services/messages.service';
 import { fetchSettlements } from '../../../services/settlements.service';
 import { exportGroupCsv } from '../../../services/group-share.service';
-import { clearGroupFeedHydration } from '../../../lib/groupFeedCache';
 import { useAppStore } from '../../../store';
+import { queryClient } from '../../../lib/queryClient';
+import { queryKeys } from '../../../hooks/queries/keys';
 
 const mockGetGroup = getGroupById as jest.MockedFunction<typeof getGroupById>;
 const mockFetchExpenses = fetchExpenses as jest.MockedFunction<typeof fetchExpenses>;
@@ -157,16 +158,11 @@ const group = {
 
 beforeEach(() => {
     jest.clearAllMocks();
-    clearGroupFeedHydration();
     mockGetGroup.mockResolvedValue(group);
     mockFetchExpenses.mockResolvedValue([]);
     mockFetchMessages.mockResolvedValue([]);
     mockFetchSettlements.mockResolvedValue([]);
-    useAppStore.setState({
-        expenses: [],
-        messagesByGroup: {},
-        groups: [],
-    });
+    queryClient.clear();
 });
 
 describe('GroupDetailScreen', () => {
@@ -195,7 +191,7 @@ describe('GroupDetailScreen', () => {
     });
 
     it('invokes shareGroupInvite when the share button is tapped', async () => {
-        useAppStore.setState({ groups: [group] });
+        queryClient.setQueryData(queryKeys.groups, [group]);
         const { findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId('appbar-share'));
         await waitFor(() => expect(mockShareGroupInvite).toHaveBeenCalledWith('g1'));
@@ -219,7 +215,7 @@ describe('GroupDetailScreen', () => {
     });
 
     it('shows loading instead of empty feed while data is fetching', async () => {
-        useAppStore.setState({ groups: [group] });
+        queryClient.setQueryData(queryKeys.groups, [group]);
 
         mockFetchExpenses.mockImplementation(() => new Promise(() => {}));
         mockFetchMessages.mockImplementation(() => new Promise(() => {}));
@@ -231,34 +227,33 @@ describe('GroupDetailScreen', () => {
     });
 
     it('shows no-results state when search filters out all feed items', async () => {
-        useAppStore.setState({
-            expenses: [
+        const seedExpense = {
+            id: 'e1',
+            groupId: 'g1',
+            description: 'Dinner',
+            amount: 100,
+            currency: 'USD',
+            paidBy: 'me',
+            createdBy: 'me',
+            category: 'food',
+            expenseDate: new Date(),
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            splits: [
                 {
-                    id: 'e1',
-                    groupId: 'g1',
-                    description: 'Dinner',
+                    id: 's1',
+                    expenseId: 'e1',
+                    userId: 'me',
                     amount: 100,
-                    currency: 'USD',
-                    paidBy: 'me',
-                    createdBy: 'me',
-                    category: 'food',
-                    expenseDate: new Date(),
-                    isDeleted: false,
                     createdAt: new Date(),
-                    updatedAt: new Date(),
-                    splits: [
-                        {
-                            id: 's1',
-                            expenseId: 'e1',
-                            userId: 'me',
-                            amount: 100,
-                            createdAt: new Date(),
-                        },
-                    ],
                 },
             ],
-            messagesByGroup: {},
-        });
+        };
+        queryClient.setQueryData(queryKeys.groupExpenses('g1'), [seedExpense]);
+        // refetchOnMount: 'always' fires a background refetch on mount;
+        // mock the service so the cache isn't overwritten with [].
+        mockFetchExpenses.mockResolvedValue([seedExpense] as any);
 
         const { findByTestId, queryByTestId, getByTestId } = renderWithQuery(
             <GroupDetailScreen />,
@@ -295,33 +290,34 @@ describe('GroupDetailScreen', () => {
     it('opens expense detail sheet and navigates to edit on edit icon', async () => {
         useAppStore.setState({
             currentUser: { id: 'me', name: 'Me' } as never,
-            expenses: [
+        });
+        const seedExpense = {
+            id: 'e1',
+            groupId: 'g1',
+            description: 'Dinner',
+            amount: 100,
+            currency: 'USD',
+            paidBy: 'me',
+            createdBy: 'me',
+            category: 'food',
+            expenseDate: new Date(),
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            splits: [
                 {
-                    id: 'e1',
-                    groupId: 'g1',
-                    description: 'Dinner',
+                    id: 's1',
+                    expenseId: 'e1',
+                    userId: 'me',
                     amount: 100,
-                    currency: 'USD',
-                    paidBy: 'me',
-                    createdBy: 'me',
-                    category: 'food',
-                    expenseDate: new Date(),
-                    isDeleted: false,
                     createdAt: new Date(),
-                    updatedAt: new Date(),
-                    splits: [
-                        {
-                            id: 's1',
-                            expenseId: 'e1',
-                            userId: 'me',
-                            amount: 100,
-                            createdAt: new Date(),
-                        },
-                    ],
                 },
             ],
-            messagesByGroup: {},
-        });
+        };
+        queryClient.setQueryData(queryKeys.groupExpenses('g1'), [seedExpense]);
+        // refetchOnMount: 'always' fires a background refetch — mock the
+        // service so the cache isn't overwritten.
+        mockFetchExpenses.mockResolvedValue([seedExpense] as any);
 
         const { findByText, findByTestId } = renderWithQuery(<GroupDetailScreen />);
         fireEvent.press(await findByTestId(`expense-row-e1`));

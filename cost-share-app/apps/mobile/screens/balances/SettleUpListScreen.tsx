@@ -29,6 +29,7 @@ import {
 } from '../../hooks/queries/useSettlementQueries';
 import { useGroupSimplifiedDebtsByCurrencyQuery } from '../../hooks/queries/useGroupBalancesQueries';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
 import { useGroupSettlementsRealtime } from '../../hooks/useGroupSettlementsRealtime';
 import { useAppStore } from '../../store';
 import { colors } from '../../theme';
@@ -61,12 +62,10 @@ export function SettleUpListScreen() {
     const navigation = useNavigation<any>();
     const { groupId } = route.params;
     const currentUserId = useAppStore(s => s.currentUser?.id ?? '');
-    const groupName = useAppStore(
-        s => s.groups.find(g => g.id === groupId)?.name,
-    );
-    const groupDefaultCurrency = useAppStore(
-        s => s.groups.find(g => g.id === groupId)?.defaultCurrency ?? 'USD',
-    );
+    const groupsQuery = useGroupsQuery();
+    const group = groupsQuery.data?.find(g => g.id === groupId);
+    const groupName = group?.name;
+    const groupDefaultCurrency = group?.defaultCurrency ?? 'USD';
 
     useLayoutEffect(() => {
         if (groupName) {

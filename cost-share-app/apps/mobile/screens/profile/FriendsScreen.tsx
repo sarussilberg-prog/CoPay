@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { showAppToast, showSuccessMessage } from '../../lib/appToast';
+import { showSuccessMessage } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { Text } from '../../components/AppText';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AppIcon } from '../../components/AppIcon';
@@ -58,8 +59,12 @@ export function FriendsScreen() {
             try {
                 await acceptM.mutateAsync(req.id);
                 showSuccessMessage('friends.toasts.accepted');
-            } catch {
-                showAppToast({ type: 'error', titleKey: 'friends.toasts.error' });
+            } catch (err) {
+                handleError(err, {
+                    toast: { titleKey: 'friends.toasts.error' },
+                    tags: { service: 'friends', op: 'accept' },
+                    extra: { requestId: req.id },
+                });
             }
         },
         [acceptM, t],
@@ -70,8 +75,12 @@ export function FriendsScreen() {
             try {
                 await rejectM.mutateAsync(req.id);
                 showSuccessMessage('friends.toasts.rejected');
-            } catch {
-                showAppToast({ type: 'error', titleKey: 'friends.toasts.error' });
+            } catch (err) {
+                handleError(err, {
+                    toast: { titleKey: 'friends.toasts.error' },
+                    tags: { service: 'friends', op: 'reject' },
+                    extra: { requestId: req.id },
+                });
             }
         },
         [rejectM, t],
@@ -84,8 +93,12 @@ export function FriendsScreen() {
         try {
             await removeM.mutateAsync(friend.id);
             showSuccessMessage('friends.toasts.removed');
-        } catch {
-            showAppToast({ type: 'error', titleKey: 'friends.toasts.error' });
+        } catch (err) {
+            handleError(err, {
+                toast: { titleKey: 'friends.toasts.error' },
+                tags: { service: 'friends', op: 'remove' },
+                extra: { friendId: friend.id },
+            });
         }
     }, [confirmRemove, removeM, t]);
 

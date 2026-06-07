@@ -28,15 +28,14 @@ import {
     UnbalancedLedgerError,
 } from '@cost-share/shared';
 import { captureError } from '../lib/captureError';
+import { handleError } from '../lib/handleError';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
-import { useAppStore } from '../store';
 import { queryClient } from '../lib/queryClient';
 import { queryKeys } from '../hooks/queries/keys';
 import { fetchBalanceSummary } from './users.service';
 import {
     showAppToast,
-    showErrorToast,
     showSuccessMessage,
     showSuccessToast,
 } from '../lib/appToast';
@@ -59,40 +58,39 @@ async function fetchGroupsArchiveState(): Promise<Map<string, GroupArchiveState>
     return archiveByGroup;
 }
 
-function applyArchiveStateToStore(archiveByGroup: Map<string, GroupArchiveState>): void {
+function applyArchiveStateToCache(archiveByGroup: Map<string, GroupArchiveState>): void {
     if (archiveByGroup.size === 0) return;
 
-    const store = useAppStore.getState();
-    const current = store.groups;
-    if (current.length === 0) return;
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) => {
+        const current = prev ?? [];
+        if (current.length === 0) return current;
 
-    let changed = false;
-    const updated = current.map(group => {
-        const state = archiveByGroup.get(group.id);
-        if (!state) return group;
-        if (
-            group.isArchivedByMe === state.mine &&
-            group.isAutoArchived === state.auto
-        ) {
-            return group;
-        }
-        changed = true;
-        return {
-            ...group,
-            isArchivedByMe: state.mine,
-            isAutoArchived: state.auto,
-        };
+        let changed = false;
+        const updated = current.map(group => {
+            const state = archiveByGroup.get(group.id);
+            if (!state) return group;
+            if (
+                group.isArchivedByMe === state.mine &&
+                group.isAutoArchived === state.auto
+            ) {
+                return group;
+            }
+            changed = true;
+            return {
+                ...group,
+                isArchivedByMe: state.mine,
+                isAutoArchived: state.auto,
+            };
+        });
+
+        return changed ? updated : current;
     });
-
-    if (changed) {
-        store.setGroups(updated);
-    }
 }
 
 /** Heavy RPC — runs after the list is visible; updates archive badges/filters. */
 function hydrateGroupsArchiveStateInBackground(): void {
     void fetchGroupsArchiveState()
-        .then(applyArchiveStateToStore)
+        .then(applyArchiveStateToCache)
         .catch(err => {
             console.error('hydrateGroupsArchiveStateInBackground failed:', err);
         });
@@ -171,7 +169,13 @@ let fetchGroupsInFlight: Promise<GroupWithMembers[]> | null = null;
 
 async function fetchGroupsInternal(): Promise<GroupWithMembers[]> {
     const userId = await getCurrentUserId();
-    if (!userId) return [];
+    if (!userId) {
+        // Throw so React Query treats this as an error and does NOT cache an
+        // empty list. Caching [] here would persist to disk and shadow the
+        // real groups on the next cold start, requiring a pull-to-refresh
+        // to recover.
+        throw new Error('fetchGroups: no authenticated user');
+    }
 
     try {
         const { data: memberships, error: memberErr } = await supabase
@@ -183,7 +187,6 @@ async function fetchGroupsInternal(): Promise<GroupWithMembers[]> {
 
         const groupIds = (memberships ?? []).map(m => m.group_id as string);
         if (groupIds.length === 0) {
-            useAppStore.getState().setGroups([]);
             return [];
         }
 
@@ -199,7 +202,6 @@ async function fetchGroupsInternal(): Promise<GroupWithMembers[]> {
         if (groupsErr) throw groupsErr;
 
         const groups = (data ?? []).map(row => groupWithMembersFromRow(row));
-        useAppStore.getState().setGroups(groups);
         hydrateGroupsArchiveStateInBackground();
         return groups;
     } catch (error) {
@@ -227,20 +229,21 @@ export async function archiveGroup(groupId: string): Promise<ArchiveGroupError |
             : error.message?.includes('not_a_member')
                 ? 'not_a_member'
                 : 'unknown';
-        showAppToast({
-            type: 'error',
-            titleKey:
-                code === 'has_balance'
-                    ? 'groups.archive.errorHasBalance'
-                    : 'groups.archive.errorGeneric',
+        const titleKey =
+            code === 'has_balance'
+                ? 'groups.archive.errorHasBalance'
+                : 'groups.archive.errorGeneric';
+        handleError(error, {
+            toast: { titleKey },
+            tags: { service: 'groups', op: 'archive', reason: code },
+            extra: { groupId },
         });
         return code;
     }
 
-    const existing = useAppStore.getState().groups.find(g => g.id === groupId);
-    if (existing) {
-        useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: true });
-    }
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+        (prev ?? []).map((g) => (g.id === groupId ? { ...g, isArchivedByMe: true } : g)),
+    );
     showSuccessMessage('groups.archive.archivedToast');
     return null;
 }
@@ -248,14 +251,17 @@ export async function archiveGroup(groupId: string): Promise<ArchiveGroupError |
 export async function unarchiveGroup(groupId: string): Promise<boolean> {
     const { error } = await supabase.rpc('unarchive_group', { p_group_id: groupId });
     if (error) {
-        showErrorToast('groups.archive.errorGeneric', 'common.networkError');
+        handleError(error, {
+            toast: { titleKey: 'groups.archive.errorGeneric', messageKey: 'common.networkError' },
+            tags: { service: 'groups', op: 'unarchive' },
+            extra: { groupId },
+        });
         return false;
     }
 
-    const existing = useAppStore.getState().groups.find(g => g.id === groupId);
-    if (existing) {
-        useAppStore.getState().updateGroup({ ...existing, isArchivedByMe: false });
-    }
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+        (prev ?? []).map((g) => (g.id === groupId ? { ...g, isArchivedByMe: false } : g)),
+    );
     showSuccessMessage('groups.archive.unarchivedToast');
     return true;
 }
@@ -312,16 +318,17 @@ export async function createGroup(dto: CreateGroupDto): Promise<Group | null> {
             isArchivedByMe: false,
             isAutoArchived: false,
         };
-        useAppStore.getState().addGroup(group);
+        queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+            [group, ...(prev ?? []).filter((g) => g.id !== group.id)],
+        );
         showSuccessToast('groups.groupCreated');
         return group;
     } catch (error) {
-        captureError(error, {
+        handleError(error, {
+            toast: { titleKey: 'groups.createError', messageKey: 'common.networkError' },
             tags: { service: 'groups', op: 'create' },
             extra: { memberCount: dto.memberIds.length, groupType: dto.groupType },
         });
-        console.error('Failed to create group:', error);
-        showErrorToast('groups.createError', 'common.networkError');
         return null;
     }
 }
@@ -344,24 +351,31 @@ export async function updateGroup(id: string, dto: UpdateGroupDto): Promise<Grou
         .maybeSingle();
 
     if (error || !data) {
-        console.error('Failed to update group:', error?.message ?? 'no rows updated');
-        showErrorToast(
-            'groups.updateError',
-            error?.message ? undefined : 'common.networkError',
-            error?.message,
-        );
+        handleError(error ?? new Error('Update failed: no rows updated'), {
+            toast: {
+                titleKey: 'groups.updateError',
+                messageKey: error?.message ? undefined : 'common.networkError',
+                message: error?.message,
+            },
+            tags: { service: 'groups', op: 'update' },
+            extra: { groupId: id, patchKeys: Object.keys(patch) },
+        });
         return null;
     }
 
     const base = groupFromRow(data);
-    const existing = useAppStore.getState().groups.find(g => g.id === id);
+    const existing = (queryClient.getQueryData<GroupWithMembers[]>(queryKeys.groups) ?? []).find(
+        g => g.id === id,
+    );
     const group: GroupWithMembers = {
         ...base,
         members: existing?.members ?? [],
         isArchivedByMe: existing?.isArchivedByMe ?? false,
         isAutoArchived: existing?.isAutoArchived ?? false,
     };
-    useAppStore.getState().updateGroup(group);
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+        (prev ?? []).map((g) => (g.id === id ? group : g)),
+    );
     if (dto.defaultCurrency !== undefined) {
         void fetchBalanceSummary();
     }
@@ -378,11 +392,17 @@ export async function deleteGroup(id: string): Promise<boolean> {
         .maybeSingle();
 
     if (error || !data) {
-        showErrorToast('groups.deleteError', 'common.networkError');
+        handleError(error ?? new Error('Delete failed: no rows updated'), {
+            toast: { titleKey: 'groups.deleteError', messageKey: 'common.networkError' },
+            tags: { service: 'groups', op: 'delete' },
+            extra: { groupId: id },
+        });
         return false;
     }
 
-    useAppStore.getState().removeGroup(id);
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+        (prev ?? []).filter((g) => g.id !== id),
+    );
     showSuccessMessage('groups.groupDeleted');
     return true;
 }
@@ -443,11 +463,19 @@ async function syncGroupMembershipState(groupId: string): Promise<void> {
 
     if (!error && data) {
         const refreshed = groupWithMembersFromRow(data);
-        const existing = useAppStore.getState().groups.find(g => g.id === groupId);
-        useAppStore.getState().updateGroup({
+        const existing = (queryClient.getQueryData<GroupWithMembers[]>(queryKeys.groups) ?? []).find(
+            g => g.id === groupId,
+        );
+        const merged: GroupWithMembers = {
             ...refreshed,
             isArchivedByMe: existing?.isArchivedByMe ?? refreshed.isArchivedByMe,
             isAutoArchived: existing?.isAutoArchived ?? refreshed.isAutoArchived,
+        };
+        queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) => {
+            const list = prev ?? [];
+            return list.some(g => g.id === groupId)
+                ? list.map(g => (g.id === groupId ? merged : g))
+                : [merged, ...list];
         });
     }
 
@@ -475,7 +503,11 @@ export async function addGroupMember(groupId: string, userId: string): Promise<G
         .single();
 
     if (error || !data) {
-        showErrorToast('groups.memberAddError', 'common.networkError');
+        handleError(error ?? new Error('Member add failed: no rows returned'), {
+            toast: { titleKey: 'groups.memberAddError', messageKey: 'common.networkError' },
+            tags: { service: 'groups', op: 'addMember' },
+            extra: { groupId, userId },
+        });
         return null;
     }
 
@@ -495,7 +527,11 @@ export async function removeGroupMember(groupId: string, userId: string): Promis
         .maybeSingle();
 
     if (error || !data) {
-        showErrorToast('groups.memberRemoveError', 'common.networkError');
+        handleError(error ?? new Error('Member remove failed: no rows updated'), {
+            toast: { titleKey: 'groups.memberRemoveError', messageKey: 'common.networkError' },
+            tags: { service: 'groups', op: 'removeMember' },
+            extra: { groupId, userId },
+        });
         return false;
     }
 

@@ -3,7 +3,6 @@ import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
-import { clearGroupFeedHydration } from '../lib/groupFeedCache';
 import { queryClient } from '../lib/queryClient';
 import { clearStaleAuthSession } from '../lib/authSessionLifecycle';
 import { clearNavigationState } from '../lib/navigationPersistence';
@@ -235,7 +234,6 @@ export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
 
 /** Clears cached app state, wipes the local Supabase session, and drops the Zustand session. */
 export async function clearLocalAuthSession(): Promise<void> {
-  clearGroupFeedHydration();
   exchangeByCode.clear();
   queryClient.clear();
   await clearNavigationState();

@@ -4,14 +4,14 @@
  * Uses NativeWind styling only, full i18n support
  */
 
-import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { View, FlatList, RefreshControl } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Expense } from '@cost-share/shared';
-import { useAppStore } from '../../store';
-import { useLoading } from '../../hooks/useLoading';
-import { fetchExpenses } from '../../services/expenses.service';
+import { useGroupExpensesQuery } from '../../hooks/queries/useGroupExpensesQuery';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../hooks/queries/keys';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { EmptyState } from '../../components/EmptyState';
 import { ExpenseCard } from '../../components/ExpenseCard';
@@ -22,30 +22,24 @@ export function ExpenseListScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { groupId } = route.params;
-    const { isLoading, startLoading, stopLoading } = useLoading();
+    const expensesQuery = useGroupExpensesQuery(groupId);
     const [refreshing, setRefreshing] = useState(false);
 
-    const allExpenses = useAppStore((state) => state.expenses);
     const expenses = useMemo(
-        () => allExpenses
-            .filter((e) => e.groupId === groupId && !e.isDeleted)
-            .sort((a, b) => new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime()),
-        [allExpenses, groupId]
+        () =>
+            (expensesQuery.data ?? [])
+                .filter((e) => !e.isDeleted)
+                .sort(
+                    (a, b) =>
+                        new Date(b.expenseDate).getTime() -
+                        new Date(a.expenseDate).getTime(),
+                ),
+        [expensesQuery.data],
     );
-
-    const loadExpenses = useCallback(async () => {
-        startLoading();
-        await fetchExpenses(groupId);
-        stopLoading();
-    }, [groupId, startLoading, stopLoading]);
-
-    useEffect(() => {
-        void loadExpenses();
-    }, []);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        await fetchExpenses(groupId);
+        await queryClient.invalidateQueries({ queryKey: queryKeys.groupExpenses(groupId) });
         setRefreshing(false);
     }, [groupId]);
 
@@ -53,14 +47,14 @@ export function ExpenseListScreen() {
         (expenseId: string) => {
             navigation.navigate('ExpenseDetail', { expenseId, groupId });
         },
-        [navigation, groupId]
+        [navigation, groupId],
     );
 
     const renderExpense = ({ item }: { item: Expense }) => (
         <ExpenseCard expense={item} onPress={handleExpensePress} />
     );
 
-    if (isLoading && expenses.length === 0) {
+    if (expensesQuery.isLoading && expenses.length === 0) {
         return <LoadingIndicator />;
     }
 

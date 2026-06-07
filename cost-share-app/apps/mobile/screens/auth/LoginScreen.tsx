@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useLoading } from '../../hooks/useLoading';
 import { signInWithGoogle } from '../../services/auth.service';
 import { showAppToast } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
 import { useChangeAppLanguage } from '../../hooks/useChangeAppLanguage';
 import { centeredTextStyle, useAppLanguage } from '../../hooks/useRtlLayout';
@@ -84,18 +85,23 @@ export function LoginScreen() {
         try {
             const { error } = await signInWithGoogle();
             if (error) {
+                // account_deleted is expected business state (user previously deleted their account),
+                // shown via a dedicated dialog — not a bug, so no Sentry capture.
                 if (error.code === 'account_deleted') {
                     showDeletedAccountNotice();
                     return;
                 }
-                showAppToast({
-                    type: 'error',
-                    titleKey: 'auth.signInError',
-                    message: error.message,
+                handleError(error, {
+                    toast: { titleKey: 'auth.signInError', message: error.message },
+                    tags: { service: 'auth', op: 'signInWithGoogle' },
+                    extra: { errorCode: error.code },
                 });
             }
-        } catch {
-            showAppToast({ type: 'error', titleKey: 'auth.signInError' });
+        } catch (error) {
+            handleError(error, {
+                toast: { titleKey: 'auth.signInError' },
+                tags: { service: 'auth', op: 'signInWithGoogle' },
+            });
         } finally {
             stopLoading();
         }

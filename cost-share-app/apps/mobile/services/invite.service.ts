@@ -4,11 +4,13 @@
  * writes via SECURITY DEFINER RPCs.
  */
 
-import { APP_WEB_ORIGIN } from '@cost-share/shared';
+import { APP_WEB_ORIGIN, type GroupWithMembers } from '@cost-share/shared';
 import i18n from '../i18n';
 import { shareTextMessage } from '../lib/platformShare';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
+import { queryClient } from '../lib/queryClient';
+import { queryKeys } from '../hooks/queries/keys';
 
 const INVITE_ORIGIN = (process.env.EXPO_PUBLIC_WEB_APP_URL ?? APP_WEB_ORIGIN).replace(/\/$/, '');
 
@@ -43,7 +45,8 @@ export async function shareFriendInvite(): Promise<void> {
 
 export async function shareGroupInvite(groupId: string): Promise<void> {
     const user = useAppStore.getState().currentUser;
-    const group = useAppStore.getState().groups.find(g => g.id === groupId);
+    const groups = queryClient.getQueryData<GroupWithMembers[]>(queryKeys.groups) ?? [];
+    const group = groups.find(g => g.id === groupId);
     if (!user) throw new Error('not_authenticated');
     if (!group || !group.inviteToken) throw new Error('group_invite_token_unavailable');
     const url = buildInviteUrl('group', group.inviteToken);
@@ -67,11 +70,11 @@ export async function rotateGroupInvite(groupId: string): Promise<string> {
     const { data, error } = await supabase.rpc('rotate_group_invite', { p_group_id: groupId });
     if (error) throw error;
     const newToken = data as string;
-    const state = useAppStore.getState();
-    const group = state.groups.find(g => g.id === groupId);
-    if (group) {
-        state.updateGroup({ ...group, inviteToken: newToken });
-    }
+    queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+        (prev ?? []).map((g) =>
+            g.id === groupId ? { ...g, inviteToken: newToken } : g,
+        ),
+    );
     return newToken;
 }
 

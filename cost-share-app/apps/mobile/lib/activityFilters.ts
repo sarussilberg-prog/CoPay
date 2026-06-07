@@ -8,6 +8,7 @@
  */
 
 import { ActivityEvent, ActivityEventKind, GroupType } from '@cost-share/shared';
+import { toEpochMs } from './dateUtils';
 
 export type ActivityTypeFilter = 'expense' | 'settlement' | 'message';
 export type ActivitySortOption = 'dateDesc' | 'dateAsc' | 'amountDesc' | 'amountAsc';
@@ -122,7 +123,7 @@ export function filterAndSortActivities(
     const toMs = filters.dateTo ? parseDateEndExclusive(filters.dateTo) : null;
     if (fromMs !== null || toMs !== null) {
         list = list.filter(item => {
-            const t = item.createdAt.getTime();
+            const t = toEpochMs(item.createdAt);
             if (fromMs !== null && t < fromMs) return false;
             if (toMs !== null && t >= toMs) return false;
             return true;
@@ -132,14 +133,14 @@ export function filterAndSortActivities(
     list.sort((a, b) => {
         switch (filters.sortBy) {
             case 'dateAsc':
-                return a.createdAt.getTime() - b.createdAt.getTime();
+                return toEpochMs(a.createdAt) - toEpochMs(b.createdAt);
             case 'amountDesc':
                 return amountOf(b) - amountOf(a);
             case 'amountAsc':
                 return amountOf(a) - amountOf(b);
             case 'dateDesc':
             default:
-                return b.createdAt.getTime() - a.createdAt.getTime();
+                return toEpochMs(b.createdAt) - toEpochMs(a.createdAt);
         }
     });
 

@@ -23,6 +23,7 @@ import {
     Settlement,
 } from '@cost-share/shared';
 import { useActivityQuery } from '../../hooks/queries/useActivityQuery';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
 import {
     ACTIVITY_INITIAL_SKELETON_COUNT,
     fetchActivityLastSeenAt,
@@ -36,6 +37,7 @@ import { decorateExpense } from '../../services/expense-delta';
 import { fetchProfilesByUserIds } from '../../services/groups.service';
 import { supabase } from '../../lib/supabase';
 import { queryKeys } from '../../hooks/queries/keys';
+import { toEpochMs } from '../../lib/dateUtils';
 import { resolveAutoTextInputStyle, rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 import { EmptyState } from '../../components/EmptyState';
 import { ActivityItem } from '../../components/ActivityItem';
@@ -115,7 +117,8 @@ export function ActivityFeedScreen() {
     const navigation = useNavigation<any>();
     const queryClient = useQueryClient();
     const currentUser = useAppStore(s => s.currentUser);
-    const groups = useAppStore(s => s.groups);
+    const groupsQuery = useGroupsQuery();
+    const groups = groupsQuery.data ?? [];
 
     const {
         data,
@@ -248,7 +251,7 @@ export function ActivityFeedScreen() {
         }
         const cutoffMs = freezeWatermark.getTime();
         const splitIdx = displayedActivities.findIndex(
-            evt => evt.createdAt.getTime() <= cutoffMs,
+            (evt) => toEpochMs(evt.createdAt) <= cutoffMs,
         );
         if (splitIdx <= 0 || splitIdx >= displayedActivities.length) {
             return displayedActivities;
@@ -298,7 +301,9 @@ export function ActivityFeedScreen() {
     const seedMemberMapFromGroup = useCallback(
         (groupId: string | null): Record<string, GroupMemberLite> => {
             if (!groupId) return {};
-            const group = useAppStore.getState().groups.find(g => g.id === groupId);
+            const cachedGroups =
+                queryClient.getQueryData<typeof groups>(queryKeys.groups) ?? [];
+            const group = cachedGroups.find((g) => g.id === groupId);
             if (!group) return {};
             const map: Record<string, GroupMemberLite> = {};
             for (const m of group.members) map[m.userId] = m;

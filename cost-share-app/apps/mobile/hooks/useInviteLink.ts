@@ -10,8 +10,12 @@
 import { useCallback, useMemo } from 'react';
 import { platformAlert } from '../lib/platformAlert';
 import { useTranslation } from 'react-i18next';
-import { showAppToast, showErrorToast, showSuccessMessage } from '../lib/appToast';
+import { showSuccessMessage } from '../lib/appToast';
+import { handleError } from '../lib/handleError';
 import { useAppStore } from '../store';
+import { queryClient } from '../lib/queryClient';
+import { queryKeys } from './queries/keys';
+import type { GroupWithMembers } from '@cost-share/shared';
 import {
     buildInviteUrl,
     rotateFriendInvite,
@@ -30,7 +34,11 @@ export interface UseInviteLinkResult {
 export function useInviteLink(groupId?: string): UseInviteLinkResult {
     const { t } = useTranslation();
     const user = useAppStore(s => s.currentUser);
-    const group = useAppStore(s => (groupId ? s.groups.find(g => g.id === groupId) : null));
+    const cachedGroups =
+        queryClient.getQueryData<GroupWithMembers[]>(queryKeys.groups) ?? [];
+    const group = groupId
+        ? cachedGroups.find(g => g.id === groupId) ?? null
+        : null;
 
     const kind: 'friend' | 'group' = groupId ? 'group' : 'friend';
     const token = groupId ? group?.inviteToken : user?.inviteToken;
@@ -45,8 +53,11 @@ export function useInviteLink(groupId?: string): UseInviteLinkResult {
             if (groupId) await shareGroupInvite(groupId);
             else await shareFriendInvite();
         } catch (err) {
-            console.error('Invite share failed:', err);
-            showAppToast({ type: 'error', titleKey: 'common.error' });
+            handleError(err, {
+                toast: { titleKey: 'common.error' },
+                tags: { service: 'invite', op: 'share', kind: groupId ? 'group' : 'friend' },
+                extra: { groupId },
+            });
         }
     }, [groupId]);
 
@@ -72,8 +83,11 @@ export function useInviteLink(groupId?: string): UseInviteLinkResult {
                                 else await rotateFriendInvite();
                                 showSuccessMessage(successKey);
                             } catch (err) {
-                                console.error('Invite rotation failed:', err);
-                                showErrorToast('common.networkError');
+                                handleError(err, {
+                                    toast: { titleKey: 'common.networkError' },
+                                    tags: { service: 'invite', op: 'rotate', kind: groupId ? 'group' : 'friend' },
+                                    extra: { groupId },
+                                });
                             } finally {
                                 resolve();
                             }

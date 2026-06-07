@@ -13,7 +13,8 @@ import {
     RefreshControl,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { showAppToast, showSuccessMessage } from '../../lib/appToast';
+import { showSuccessMessage } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { Text } from '../../components/AppText';
 import { MemberAvatar } from '../../components/MemberAvatar';
 import { AppIcon } from '../../components/AppIcon';
@@ -51,8 +52,12 @@ export function FindFriendsScreen() {
             try {
                 await sendM.mutateAsync(userId);
                 showSuccessMessage('friends.toasts.requestSent');
-            } catch {
-                showAppToast({ type: 'error', titleKey: 'friends.toasts.requestSentError' });
+            } catch (err) {
+                handleError(err, {
+                    toast: { titleKey: 'friends.toasts.requestSentError' },
+                    tags: { service: 'friends', op: 'sendRequest' },
+                    extra: { targetUserId: userId },
+                });
             }
         },
         [sendM, t],
@@ -63,8 +68,12 @@ export function FindFriendsScreen() {
             try {
                 await acceptM.mutateAsync(requestId);
                 showSuccessMessage('friends.toasts.accepted');
-            } catch {
-                showAppToast({ type: 'error', titleKey: 'friends.toasts.error' });
+            } catch (err) {
+                handleError(err, {
+                    toast: { titleKey: 'friends.toasts.error' },
+                    tags: { service: 'friends', op: 'accept' },
+                    extra: { requestId },
+                });
             }
         },
         [acceptM, t],
@@ -75,8 +84,12 @@ export function FindFriendsScreen() {
             try {
                 await rejectM.mutateAsync(requestId);
                 showSuccessMessage('friends.toasts.rejected');
-            } catch {
-                showAppToast({ type: 'error', titleKey: 'friends.toasts.error' });
+            } catch (err) {
+                handleError(err, {
+                    toast: { titleKey: 'friends.toasts.error' },
+                    tags: { service: 'friends', op: 'reject' },
+                    extra: { requestId },
+                });
             }
         },
         [rejectM, t],

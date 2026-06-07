@@ -16,17 +16,9 @@ jest.mock('react-native-toast-message', () => ({
 
 jest.mock('../../i18n', () => ({ __esModule: true, default: { t: (k: string) => k } }));
 
-jest.mock('../../store', () => ({
-    useAppStore: {
-        getState: jest.fn(() => ({
-            expenses: [],
-            updateExpense: jest.fn(),
-        })),
-    },
-}));
-
 import { updateExpense } from '../../services/expenses.service';
-import { useAppStore } from '../../store';
+import { queryClient } from '../../lib/queryClient';
+import { queryKeys } from '../../hooks/queries/keys';
 
 const expenseRow = {
     id: 'e1',
@@ -85,11 +77,7 @@ describe('updateExpense', () => {
     });
 
     it('resolves equal splits when amounts are omitted', async () => {
-        const updateExpenseInStore = jest.fn();
-        (useAppStore.getState as jest.Mock).mockReturnValue({
-            expenses: [],
-            updateExpense: updateExpenseInStore,
-        });
+        queryClient.setQueryData(queryKeys.groupExpenses('g1'), []);
 
         const result = await updateExpense('e1', {
             splits: [{ userId: 'u1' }, { userId: 'u2' }],
@@ -105,13 +93,18 @@ describe('updateExpense', () => {
             { expense_id: 'e1', user_id: 'u2', amount: 50 },
         ]);
 
-        expect(updateExpenseInStore).toHaveBeenCalledWith(
-            expect.objectContaining({
-                splits: expect.arrayContaining([
-                    expect.objectContaining({ userId: 'u1', amount: 50 }),
-                    expect.objectContaining({ userId: 'u2', amount: 50 }),
-                ]),
-            }),
+        const cached = queryClient.getQueryData<Array<{ splits: Array<{ userId: string; amount: number }> }>>(
+            queryKeys.groupExpenses('g1'),
+        );
+        expect(cached).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    splits: expect.arrayContaining([
+                        expect.objectContaining({ userId: 'u1', amount: 50 }),
+                        expect.objectContaining({ userId: 'u2', amount: 50 }),
+                    ]),
+                }),
+            ]),
         );
     });
 

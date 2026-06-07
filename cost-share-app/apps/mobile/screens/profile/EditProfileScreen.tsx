@@ -19,7 +19,8 @@ import { ProfileImagePicker } from '../../components/ProfileImagePicker';
 import { InviteLinkBlock } from '../../components/InviteLinkBlock';
 import { useAppLanguage } from '../../hooks/useRtlLayout';
 import { defaultCurrencyForAppLanguage } from '../../lib/appDefaultCurrency';
-import { showErrorToast, showSuccessToast } from '../../lib/appToast';
+import { showSuccessToast } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 
 export function EditProfileScreen() {
@@ -65,7 +66,11 @@ export function EditProfileScreen() {
             const uploadedUrl = await uploadProfileImage(currentUser.id, localAvatarUri);
             if (!uploadedUrl) {
                 stopLoading();
-                showErrorToast('common.error', 'profile.imageUploadError');
+                handleError(new Error('uploadProfileImage returned null'), {
+                    toast: { titleKey: 'common.error', messageKey: 'profile.imageUploadError' },
+                    tags: { service: 'storage', op: 'uploadProfileImage' },
+                    extra: { userId: currentUser.id },
+                });
                 return;
             }
             nextAvatarUrl = uploadedUrl;
@@ -83,7 +88,11 @@ export function EditProfileScreen() {
             showSuccessToast('profile.profileUpdated');
             navigation.goBack();
         } else {
-            showErrorToast('common.error', 'profile.updateError');
+            handleError(new Error('updateUser returned null'), {
+                toast: { titleKey: 'common.error', messageKey: 'profile.updateError' },
+                tags: { service: 'users', op: 'updateUser' },
+                extra: { userId: currentUser.id, flow: 'editProfile' },
+            });
         }
     };
 

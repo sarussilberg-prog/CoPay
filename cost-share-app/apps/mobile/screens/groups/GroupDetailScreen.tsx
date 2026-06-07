@@ -28,7 +28,6 @@ import {
 } from '@cost-share/shared';
 import { platformAlert } from '../../lib/platformAlert';
 import { useAppStore } from '../../store';
-import { useLoading } from '../../hooks/useLoading';
 import {
     getGroupById,
     archiveGroup,
@@ -38,9 +37,8 @@ import {
     fetchProfilesByUserIds,
 } from '../../services/groups.service';
 import { collectFeedUserIds } from '../../lib/feedParticipants';
-import { deleteExpense, fetchExpenses } from '../../services/expenses.service';
+import { deleteExpense } from '../../services/expenses.service';
 import {
-    fetchMessages,
     createMessage,
     updateMessage,
     deleteMessage,
@@ -51,17 +49,25 @@ import { buildFeed } from '../../services/feed';
 import { useGroupMessagesRealtime } from '../../hooks/useGroupMessagesRealtime';
 import { useGroupExpensesRealtime } from '../../hooks/useGroupExpensesRealtime';
 import { useGroupSettlementsRealtime } from '../../hooks/useGroupSettlementsRealtime';
-import {
-    hasStoreGroupMembers,
-    isGroupExpensesHydrated,
-    isGroupFeedHydrated,
-    isGroupMessagesHydrated,
-} from '../../lib/groupFeedCache';
 import { queryClient } from '../../lib/queryClient';
 import { queryKeys } from '../../hooks/queries/keys';
 import { prefetchAddExpense } from '../../hooks/queries/prefetchAddExpense';
 import { useGroupUsersQuery } from '../../hooks/queries/useGroupUsersQuery';
-import { LoadingIndicator } from '../../components/LoadingIndicator';
+import { useGroupsQuery } from '../../hooks/queries/useGroupsQuery';
+import { useGroupExpensesQuery } from '../../hooks/queries/useGroupExpensesQuery';
+import { useGroupMessagesQuery } from '../../hooks/queries/useGroupMessagesQuery';
+import { GroupDetailSkeleton } from '../../components/skeletons/GroupDetailSkeleton';
+import {
+    cancelPendingAddExpense,
+    chainDeleteFollowUp,
+    resolvePendingEditAction,
+} from '../../hooks/mutations/useAddExpenseMutation';
+import { isPendingExpenseId } from '../../lib/pendingExpense';
+import {
+    PendingSyncIcon,
+    type PendingSyncState,
+} from '../../components/PendingSyncIcon';
+import { useNetworkStatus } from '../../lib/networkStatus';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupSummaryCard } from '../../components/groupDetail/GroupSummaryCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -117,6 +123,69 @@ const CATEGORIES: ExpenseCategory[] = [
     'other',
 ];
 
+const PENDING_SYNC_SPINNER_MS = 2000;
+
+function PendingSyncBadge({
+    expenseId,
+    pendingFailed,
+}: {
+    expenseId: string;
+    pendingFailed: boolean;
+}) {
+    // Show the spinner for 2s when the badge first appears AND every time the
+    // user taps to retry. After the timer, fall back to a static "tap-to-retry"
+    // refresh icon so the user knows the row is waiting and can poke it again.
+    // The actual mutation may still be running underneath — the timer is a UX
+    // affordance, not a real timeout on the network call.
+    const [showSpinner, setShowSpinner] = useState(true);
+
+    useEffect(() => {
+        const t = setTimeout(() => setShowSpinner(false), PENDING_SYNC_SPINNER_MS);
+        return () => clearTimeout(t);
+    }, []);
+
+    const handleRetry = useCallback(() => {
+        setShowSpinner(true);
+        // Kick the queued mutation. resumePausedMutations() runs every paused
+        // mutation that has matching defaults; if the network is back up, this
+        // is what actually sends the create. If still offline, it's a no-op
+        // and the spinner just spins out the 2s before reverting.
+        void queryClient.resumePausedMutations();
+        setTimeout(() => setShowSpinner(false), PENDING_SYNC_SPINNER_MS);
+    }, []);
+
+    let state: PendingSyncState;
+    let onPress: (() => void) | undefined;
+    if (pendingFailed) {
+        state = 'failed';
+        onPress = handleRetry;
+    } else if (showSpinner) {
+        state = 'syncing';
+    } else {
+        state = 'tap-to-retry';
+        onPress = handleRetry;
+    }
+
+    return (
+        <View
+            style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                padding: 4,
+                borderRadius: 12,
+                backgroundColor: 'rgba(255,255,255,0.9)',
+            }}
+        >
+            <PendingSyncIcon
+                state={state}
+                onPress={onPress}
+                accessibilityLabel="expense not yet synced — tap to retry"
+            />
+        </View>
+    );
+}
+
 export function GroupDetailScreen() {
     const { t } = useTranslation();
     const isRtl = useRtlLayout();
@@ -134,13 +203,10 @@ export function GroupDetailScreen() {
     const listRef = useRef<FlatList<FeedItem>>(null);
     const focusConsumedRef = useRef(false);
     const pendingFocusKeyRef = useRef<string | null>(null);
-    const { isLoading, startLoading, stopLoading } = useLoading();
-    const [isFeedLoading, setIsFeedLoading] = useState(
-        () => !isGroupFeedHydrated(groupId),
-    );
 
     const [group, setGroup] = useState<Group | null>(null);
-    const storeGroup = useAppStore(s => s.groups.find(g => g.id === groupId));
+    const groupsQuery = useGroupsQuery();
+    const storeGroup = groupsQuery.data?.find((g) => g.id === groupId);
     const displayGroup = storeGroup ?? group;
     const isArchivedByMe = storeGroup?.isArchivedByMe ?? false;
     const hasOpenBalance = useAppStore(s => Boolean(s.groupBalances[groupId]));
@@ -191,21 +257,22 @@ export function GroupDetailScreen() {
     const updateSettlementMutation = useUpdateSettlementMutation(groupId);
     const deleteSettlementMutation = useDeleteSettlementMutation(groupId);
 
-    const expenses = useAppStore(s => s.expenses);
-    const messagesMap = useAppStore(s => s.messagesByGroup);
-    const messages = useMemo(
-        () => messagesMap[groupId] ?? [],
-        [messagesMap, groupId],
+    const expensesQuery = useGroupExpensesQuery(groupId);
+    const messagesQuery = useGroupMessagesQuery(groupId);
+    const groupExpenses = useMemo(
+        () => expensesQuery.data ?? [],
+        [expensesQuery.data],
     );
+    const messages = useMemo(
+        () => messagesQuery.data ?? [],
+        [messagesQuery.data],
+    );
+    const isLoading = expensesQuery.isLoading || messagesQuery.isLoading;
+    const isFeedLoading = isLoading && groupExpenses.length === 0 && messages.length === 0;
 
     useGroupMessagesRealtime(groupId);
     useGroupExpensesRealtime(groupId);
     useGroupSettlementsRealtime(groupId);
-
-    const groupExpenses = useMemo(
-        () => expenses.filter(e => e.groupId === groupId),
-        [expenses, groupId],
-    );
 
     const groupBalance = useAppStore(s => s.groupBalances[groupId]);
     const balanceDisplay = useGroupBalanceDisplay(
@@ -267,26 +334,31 @@ export function GroupDetailScreen() {
     const loadAll = useCallback(
         async (options?: { force?: boolean }) => {
             const force = options?.force ?? false;
-            const needsGroupFetch = !useAppStore
-                .getState()
-                .groups.some(g => g.id === groupId);
+            const cachedGroups = queryClient.getQueryData<typeof groupsQuery.data>(
+                queryKeys.groups,
+            );
+            const needsGroupFetch = !cachedGroups?.some((g) => g.id === groupId);
 
             const tasks: Promise<unknown>[] = [];
 
             if (needsGroupFetch) {
                 tasks.push(
-                    getGroupById(groupId).then(g => {
+                    getGroupById(groupId).then((g) => {
                         if (g) setGroup(g);
                     }),
                 );
             }
-            if (force || !isGroupExpensesHydrated(groupId)) {
-                tasks.push(fetchExpenses(groupId));
-            }
-            if (force || !isGroupMessagesHydrated(groupId)) {
-                tasks.push(fetchMessages(groupId));
-            }
-            if (force || !hasStoreGroupMembers(groupId)) {
+            if (force) {
+                tasks.push(
+                    queryClient.invalidateQueries({
+                        queryKey: queryKeys.groupExpenses(groupId),
+                    }),
+                );
+                tasks.push(
+                    queryClient.invalidateQueries({
+                        queryKey: queryKeys.groupMessages(groupId),
+                    }),
+                );
                 tasks.push(refetchGroupUsers());
             }
 
@@ -297,24 +369,15 @@ export function GroupDetailScreen() {
 
     useEffect(() => {
         let cancelled = false;
-        const hasCachedGroup = Boolean(
-            useAppStore.getState().groups.find(g => g.id === groupId),
-        );
-        const needsFeedFetch = !isGroupFeedHydrated(groupId);
-
-        if (!hasCachedGroup) startLoading();
-        setIsFeedLoading(needsFeedFetch);
 
         void loadAll().finally(() => {
             if (cancelled) return;
-            stopLoading();
-            setIsFeedLoading(false);
         });
 
         return () => {
             cancelled = true;
         };
-    }, [groupId, loadAll, startLoading, stopLoading]);
+    }, [groupId, loadAll]);
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -331,8 +394,8 @@ export function GroupDetailScreen() {
     }, [loadAll, groupId]);
 
     const feed = useMemo<FeedItem[]>(
-        () => buildFeed(groupId, expenses, messages, settlements, currentUserId),
-        [groupId, expenses, messages, settlements, currentUserId],
+        () => buildFeed(groupId, groupExpenses, messages, settlements, currentUserId),
+        [groupId, groupExpenses, messages, settlements, currentUserId],
     );
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
@@ -570,6 +633,27 @@ export function GroupDetailScreen() {
                 onPress: () => {
                     void (async () => {
                         if (item.kind === 'expense') {
+                            if (isPendingExpenseId(item.expense.id)) {
+                                const action = resolvePendingEditAction(
+                                    queryClient,
+                                    item.expense.id,
+                                );
+                                if (action === 'chain-follow-up') {
+                                    chainDeleteFollowUp(
+                                        queryClient,
+                                        groupId,
+                                        item.expense.id,
+                                    );
+                                } else {
+                                    cancelPendingAddExpense(
+                                        queryClient,
+                                        groupId,
+                                        item.expense.id,
+                                    );
+                                }
+                                setFeedDetailItem(null);
+                                return;
+                            }
                             const ok = await deleteExpense(item.expense.id);
                             if (ok) setFeedDetailItem(null);
                         } else {
@@ -633,8 +717,8 @@ export function GroupDetailScreen() {
         [composer, groupId],
     );
 
-    if (isLoading && !displayGroup) {
-        return <LoadingIndicator />;
+    if (isLoading && groupExpenses.length === 0 && !displayGroup) {
+        return <GroupDetailSkeleton />;
     }
 
     if (!displayGroup) {
@@ -669,7 +753,7 @@ export function GroupDetailScreen() {
                             : `m:${item.message.id}`
                 }
                 renderItem={({ item }) => (
-                    <View className="px-2">
+                    <View className="px-2" style={{ position: 'relative' }}>
                         <FeedItemRow
                             item={item}
                             currentUserId={currentUserId}
@@ -680,6 +764,16 @@ export function GroupDetailScreen() {
                             onSettlementPress={handleSettlementPress}
                             searchQuery={trimmedQuery || undefined}
                         />
+                        {item.kind === 'expense' &&
+                            isPendingExpenseId(item.expense.id) && (
+                                <PendingSyncBadge
+                                    expenseId={item.expense.id}
+                                    pendingFailed={
+                                        (item.expense as { pendingFailed?: boolean })
+                                            .pendingFailed === true
+                                    }
+                                />
+                            )}
                     </View>
                 )}
                 ListHeaderComponent={

@@ -7,6 +7,7 @@ import {
     FeedItem,
     GroupMemberLite,
 } from '@cost-share/shared';
+import { toEpochMs } from './dateUtils';
 
 export type GroupFeedTypeFilter = 'expense' | 'settlement' | 'message';
 export type GroupFeedSortOption = 'dateDesc' | 'dateAsc';
@@ -158,7 +159,7 @@ export function filterAndSortGroupFeed(
             }
         }
         if (dateFromMs !== null || dateToMs !== null) {
-            const msgMs = item.message.createdAt.getTime();
+            const msgMs = toEpochMs(item.message.createdAt);
             if (dateFromMs !== null && msgMs < dateFromMs) return false;
             if (dateToMs !== null && msgMs >= dateToMs) return false;
         }
@@ -166,7 +167,7 @@ export function filterAndSortGroupFeed(
     });
 
     const sorted = [...filtered].sort((a, b) => {
-        const diff = b.sortAt.getTime() - a.sortAt.getTime();
+        const diff = toEpochMs(b.sortAt) - toEpochMs(a.sortAt);
         return filters.sortBy === 'dateDesc' ? diff : -diff;
     });
 

@@ -53,6 +53,8 @@ jest.mock('../../../hooks/queries/useGroupUsersQuery', () => ({
 
 import { BalancesScreen } from '../../../screens/balances/BalancesScreen';
 import { useAppStore } from '../../../store';
+import { queryClient } from '../../../lib/queryClient';
+import { queryKeys } from '../../../hooks/queries/keys';
 
 const members = [
     { id: 'me', name: 'Me', email: 'me@x.com', defaultCurrency: 'USD', language: 'en', createdAt: new Date(), updatedAt: new Date(), inviteToken: 'me-token' },
@@ -106,17 +108,17 @@ beforeEach(() => {
             updatedAt: new Date(),
             inviteToken: 'me-token',
         } as any,
-        groups: [
-            {
-                id: 'g1',
-                name: 'Trip',
-                defaultCurrency: 'USD',
-                groupType: 'travel',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            } as any,
-        ],
     });
+    queryClient.setQueryData(queryKeys.groups, [
+        {
+            id: 'g1',
+            name: 'Trip',
+            defaultCurrency: 'USD',
+            groupType: 'travel',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        } as any,
+    ]);
 });
 
 describe('BalancesScreen', () => {

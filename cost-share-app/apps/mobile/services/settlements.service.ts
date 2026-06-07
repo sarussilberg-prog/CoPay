@@ -12,6 +12,7 @@ import { settlementFromRow } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
 import { getCurrentUserId } from '../lib/auth';
 import { showSuccessToast, showErrorToast } from '../lib/appToast';
+import { handleError } from '../lib/handleError';
 
 export async function fetchSettlements(groupId?: string): Promise<Settlement[]> {
     try {
@@ -27,8 +28,11 @@ export async function fetchSettlements(groupId?: string): Promise<Settlement[]> 
         if (error) throw error;
         return (data ?? []).map(settlementFromRow);
     } catch (error) {
-        console.error('Failed to fetch settlements:', error);
-        showErrorToast('settleUp.loadError', 'common.networkError');
+        handleError(error, {
+            toast: { titleKey: 'settleUp.loadError', messageKey: 'common.networkError' },
+            tags: { service: 'settlements', op: 'fetch' },
+            extra: { groupId },
+        });
         return [];
     }
 }
@@ -75,8 +79,11 @@ export async function createSettlement(dto: CreateSettlementDto): Promise<Settle
         showSuccessToast('settleUp.toastRecorded');
         return settlementFromRow(data);
     } catch (error) {
-        console.error('Failed to create settlement:', error);
-        showErrorToast('settleUp.recordError', 'common.networkError');
+        handleError(error, {
+            toast: { titleKey: 'settleUp.recordError', messageKey: 'common.networkError' },
+            tags: { service: 'settlements', op: 'create' },
+            extra: { groupId: dto.groupId, amount: dto.amount, currency: dto.currency },
+        });
         return null;
     }
 }
@@ -107,8 +114,11 @@ export async function updateSettlement(
         showSuccessToast('settleUp.toastUpdated');
         return settlementFromRow(data);
     } catch (error) {
-        console.error('Failed to update settlement:', error);
-        showErrorToast('settleUp.updateError', 'common.networkError');
+        handleError(error, {
+            toast: { titleKey: 'settleUp.updateError', messageKey: 'common.networkError' },
+            tags: { service: 'settlements', op: 'update' },
+            extra: { settlementId: id, patchKeys: Object.keys(dto) },
+        });
         return null;
     }
 }
@@ -123,8 +133,11 @@ export async function deleteSettlement(id: string): Promise<boolean> {
         showSuccessToast('settleUp.toastDeleted');
         return true;
     } catch (error) {
-        console.error('Failed to delete settlement:', error);
-        showErrorToast('settleUp.deleteError', 'common.networkError');
+        handleError(error, {
+            toast: { titleKey: 'settleUp.deleteError', messageKey: 'common.networkError' },
+            tags: { service: 'settlements', op: 'delete' },
+            extra: { settlementId: id },
+        });
         return false;
     }
 }

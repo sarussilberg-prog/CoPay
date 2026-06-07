@@ -2,7 +2,7 @@ import './lib/sentry';
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AppState, type AppStateStatus, LogBox, View, ActivityIndicator, Platform } from 'react-native';
+import { AppState, type AppStateStatus, LogBox, View, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
 import * as Sentry from '@sentry/react-native';
@@ -27,6 +27,10 @@ import { assertProfileActiveWithTimeout } from './lib/auth';
 import { signalDeactivatedAccount } from './lib/signalDeactivatedAccount';
 import { acceptSessionIfAllowed as acceptSessionIfAllowedImpl } from './lib/acceptSessionIfAllowed';
 import { queryClient } from './lib/queryClient';
+import { restoreClient } from './lib/persistQueryClient';
+import { wireNetworkStatusToOnlineManager } from './lib/networkStatus';
+import { sweepIfOnline } from './lib/zombieSweep';
+import { AppGateSkeleton } from './components/skeletons/AppGateSkeleton';
 import { useAppStore } from './store';
 import { useAppRealtime } from './hooks/useAppRealtime';
 import { colors } from './theme';
@@ -162,6 +166,8 @@ function App() {
         const hydratedSession = await hydrateAuthSession();
         if (!mounted) return;
 
+        await restoreClient();
+
         if (hydratedSession) {
           await acceptSession(hydratedSession, 'hydration');
         } else {
@@ -216,9 +222,15 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = wireNetworkStatusToOnlineManager();
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active') {
         void guardSession();
+        sweepIfOnline(queryClient);
       }
     });
     return () => sub.remove();
@@ -229,9 +241,7 @@ function App() {
       <SafeAreaProvider>
         <RtlLayoutProvider>
           <WebFrame>
-            <View className="flex-1 justify-center items-center bg-white">
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <AppGateSkeleton />
           </WebFrame>
         </RtlLayoutProvider>
       </SafeAreaProvider>
@@ -246,9 +256,7 @@ function App() {
         <RtlLayoutProvider>
           <WebFrame>
             {preOnboardingDone === null ? (
-              <View className="flex-1 justify-center items-center bg-white">
-                <ActivityIndicator size="large" color={colors.primary} />
-              </View>
+              <AppGateSkeleton />
             ) : showPreOnboarding ? (
               <OnboardingPreAuthFlow onFinished={() => setPreOnboardingDone(true)} />
             ) : (

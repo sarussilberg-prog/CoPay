@@ -29,14 +29,14 @@ describe('fetchDashboard', () => {
         expect(mockRpc).toHaveBeenCalledWith('get_user_dashboard', { p_user_id: 'u1' });
     });
 
-    it('returns null when no user', async () => {
+    it('throws when no authenticated user', async () => {
         const auth = jest.requireMock('../../lib/auth');
         (auth.getCurrentUserId as jest.Mock).mockResolvedValueOnce(null);
-        expect(await fetchDashboard()).toBeNull();
+        await expect(fetchDashboard()).rejects.toThrow(/no authenticated user/);
     });
 
-    it('returns null on RPC error', async () => {
+    it('throws on RPC error so React Query treats it as a failure', async () => {
         mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
-        expect(await fetchDashboard()).toBeNull();
+        await expect(fetchDashboard()).rejects.toMatchObject({ message: 'boom' });
     });
 });

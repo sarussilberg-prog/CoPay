@@ -8,7 +8,8 @@
 
 import { APP_WEB_HOST } from '@cost-share/shared';
 import { NavigationProp } from '@react-navigation/native';
-import { showAppToast, showErrorToast, showInfoToast } from '../lib/appToast';
+import { showAppToast, showInfoToast } from '../lib/appToast';
+import { handleError } from '../lib/handleError';
 import { QueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { queryKeys } from '../hooks/queries/keys';
@@ -90,7 +91,7 @@ export async function handleInviteLink(
     if (link.kind === 'friend') {
         const { data, error } = await supabase.rpc('redeem_friend_invite', { p_token: link.token });
         if (error) {
-            handleRedemptionError(error.message, 'friend');
+            handleRedemptionError(error, 'friend');
             return null;
         }
         const payload = data as { friend_id: string; friend_name: string };
@@ -107,7 +108,7 @@ export async function handleInviteLink(
 
     const { data, error } = await supabase.rpc('redeem_group_invite', { p_token: link.token });
     if (error) {
-        handleRedemptionError(error.message, 'group');
+        handleRedemptionError(error, 'group');
         return null;
     }
     const payload = data as { group_id: string; group_name: string; already_member: boolean };
@@ -124,17 +125,25 @@ export async function handleInviteLink(
     return { kind: 'group', groupId: payload.group_id };
 }
 
-function handleRedemptionError(message: string, kind: 'friend' | 'group'): void {
-    if (message.includes('invite_not_found')) {
-        showAppToast({ type: 'error', titleKey: 'invite.redemption.invalid' });
-        return;
-    }
+function handleRedemptionError(error: { message: string }, kind: 'friend' | 'group'): void {
+    const message = error.message;
+    // cannot_self_invite is pure UX guidance, not a bug — info toast, no Sentry.
     if (message.includes('cannot_self_invite')) {
         showInfoToast('invite.redemption.selfInvite');
         return;
     }
-    showErrorToast(
-        'common.networkError',
-        kind === 'friend' ? 'invite.friend.title' : 'invite.group.title',
-    );
+    if (message.includes('invite_not_found')) {
+        handleError(error, {
+            toast: { titleKey: 'invite.redemption.invalid' },
+            tags: { service: 'deepLinks', op: 'redeem', kind, reason: 'invite_not_found' },
+        });
+        return;
+    }
+    handleError(error, {
+        toast: {
+            titleKey: 'common.networkError',
+            messageKey: kind === 'friend' ? 'invite.friend.title' : 'invite.group.title',
+        },
+        tags: { service: 'deepLinks', op: 'redeem', kind },
+    });
 }

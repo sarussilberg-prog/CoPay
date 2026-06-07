@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
+import { renderWithQuery as render } from '../../helpers/renderWithQuery';
 
 const mockNavigate = jest.fn();
 
@@ -21,6 +22,8 @@ jest.mock('../../../services/expenses.service', () => ({
 import { ExpenseListScreen } from '../../../screens/expenses/ExpenseListScreen';
 import { fetchExpenses } from '../../../services/expenses.service';
 import { useAppStore } from '../../../store';
+import { queryClient } from '../../../lib/queryClient';
+import { queryKeys } from '../../../hooks/queries/keys';
 
 const mockFetchExpenses = fetchExpenses as jest.MockedFunction<typeof fetchExpenses>;
 
@@ -43,7 +46,7 @@ const expense = {
 beforeEach(() => {
     mockNavigate.mockClear();
     mockFetchExpenses.mockClear();
-    useAppStore.setState({ expenses: [] });
+    queryClient.clear();
 });
 
 describe('ExpenseListScreen', () => {
@@ -58,13 +61,13 @@ describe('ExpenseListScreen', () => {
     });
 
     it('renders expenses from store', async () => {
-        useAppStore.setState({ expenses: [expense] });
+        queryClient.setQueryData(queryKeys.groupExpenses('g1'), [expense]);
         const { findByText } = render(<ExpenseListScreen />);
         expect(await findByText('Coffee')).toBeTruthy();
     });
 
     it('navigates to ExpenseDetail when an expense is pressed', async () => {
-        useAppStore.setState({ expenses: [expense] });
+        queryClient.setQueryData(queryKeys.groupExpenses('g1'), [expense]);
         const { findByText } = render(<ExpenseListScreen />);
         fireEvent.press(await findByText('Coffee'));
         expect(mockNavigate).toHaveBeenCalledWith('ExpenseDetail', {

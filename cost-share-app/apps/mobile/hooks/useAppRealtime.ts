@@ -12,12 +12,13 @@
  */
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/react-native';
 import { groupFromRow, type GroupWithMembers } from '@cost-share/shared';
 import { supabase } from '../lib/supabase';
-import { useAppStore } from '../store';
-import { fetchGroups } from '../services/groups.service';
 import { fetchBalanceSummary } from '../services/users.service';
 import { queryClient } from '../lib/queryClient';
+import { sweepIfOnline } from '../lib/zombieSweep';
+import { SENTRY_TAGS } from '../lib/sentryTags';
 import { queryKeys } from './queries/keys';
 
 type RealtimePayload = {
@@ -27,7 +28,7 @@ type RealtimePayload = {
 };
 
 function snapshotRefetch(): void {
-    void fetchGroups();
+    void queryClient.invalidateQueries({ queryKey: queryKeys.groups });
     void fetchBalanceSummary();
     void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     void queryClient.invalidateQueries({ queryKey: queryKeys.friends });
@@ -35,6 +36,7 @@ function snapshotRefetch(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.friendRequestsOutgoing });
     void queryClient.invalidateQueries({ queryKey: queryKeys.activity });
     void queryClient.invalidateQueries({ queryKey: queryKeys.activityUnreadCount });
+    sweepIfOnline(queryClient);
 }
 
 const ACTIVITY_INVALIDATE_DEBOUNCE_MS = 500;
@@ -47,48 +49,72 @@ function invalidateActivityDebounced(): void {
     }, ACTIVITY_INVALIDATE_DEBOUNCE_MS);
 }
 
-function handleGroupsEvent(payload: RealtimePayload): void {
-    const store = useAppStore.getState();
-
+/**
+ * Pure, idempotent group-event applier — exported for tests. Upserts by id;
+ * applying the same UPDATE twice yields the same cache. INSERT is ignored
+ * here because the membership listener does a full refetch when joins land.
+ */
+export function applyGroupsRealtimeEventToCache(
+    client: typeof queryClient,
+    payload: RealtimePayload,
+): void {
     if (payload.eventType === 'DELETE' && payload.old) {
         const oldId = payload.old.id as string | undefined;
-        if (oldId) store.removeGroup(oldId);
+        if (!oldId) return;
+        client.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+            (prev ?? []).filter((g) => g.id !== oldId),
+        );
         return;
     }
 
     if (payload.eventType === 'UPDATE' && payload.new) {
         const id = payload.new.id as string | undefined;
         if (!id) return;
-
         const isActive = payload.new.is_active !== false;
-        if (!isActive) {
-            store.removeGroup(id);
-            return;
-        }
 
-        const existing = store.groups.find(g => g.id === id);
-        if (!existing) return; // membership listener will refetch the full row
+        client.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) => {
+            const list = prev ?? [];
+            const existing = list.find((g) => g.id === id);
 
-        const base = groupFromRow(payload.new);
-        const merged: GroupWithMembers = {
-            ...base,
-            members: existing.members,
-            isArchivedByMe: existing.isArchivedByMe,
-            isAutoArchived: existing.isAutoArchived,
-        };
-        store.updateGroup(merged);
+            if (!isActive) {
+                return list.filter((g) => g.id !== id);
+            }
+            if (!existing) {
+                // Membership listener will refetch with members joined.
+                return list;
+            }
+
+            const base = groupFromRow(payload.new!);
+            const merged: GroupWithMembers = {
+                ...base,
+                members: existing.members,
+                isArchivedByMe: existing.isArchivedByMe,
+                isAutoArchived: existing.isAutoArchived,
+            };
+            return list.map((g) => (g.id === id ? merged : g));
+        });
     }
-    // INSERT: ignore. New groups come in via the group_members listener,
-    // which refetches the full groups list with members joined.
+    // INSERT: ignored — membership listener performs full refetch.
+}
+
+function handleGroupsEvent(payload: RealtimePayload): void {
+    try {
+        applyGroupsRealtimeEventToCache(queryClient, payload);
+    } catch (err) {
+        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
+    }
 }
 
 function handleMembershipEvent(payload: RealtimePayload): void {
-    const store = useAppStore.getState();
     void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
 
     if (payload.eventType === 'DELETE' && payload.old) {
         const groupId = payload.old.group_id as string | undefined;
-        if (groupId) store.removeGroup(groupId);
+        if (groupId) {
+            queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+                (prev ?? []).filter((g) => g.id !== groupId),
+            );
+        }
         return;
     }
 
@@ -98,7 +124,11 @@ function handleMembershipEvent(payload: RealtimePayload): void {
         payload.new.is_active === false
     ) {
         const groupId = payload.new.group_id as string | undefined;
-        if (groupId) store.removeGroup(groupId);
+        if (groupId) {
+            queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+                (prev ?? []).filter((g) => g.id !== groupId),
+            );
+        }
         return;
     }
 
@@ -106,7 +136,7 @@ function handleMembershipEvent(payload: RealtimePayload): void {
         payload.eventType === 'INSERT' ||
         (payload.eventType === 'UPDATE' && payload.new?.is_active === true)
     ) {
-        void fetchGroups();
+        void queryClient.invalidateQueries({ queryKey: queryKeys.groups });
         void fetchBalanceSummary();
     }
 }
@@ -121,27 +151,37 @@ function handleFriendRequestsEvent(): void {
     void queryClient.invalidateQueries({ queryKey: queryKeys.friendRequestsOutgoing });
 }
 
-function handleArchiveEvent(payload: RealtimePayload): void {
-    const store = useAppStore.getState();
-
+function applyArchiveEventToCache(payload: RealtimePayload): void {
     if (payload.eventType === 'INSERT' && payload.new) {
         const groupId = payload.new.group_id as string | undefined;
         if (!groupId) return;
-        const existing = store.groups.find(g => g.id === groupId);
-        if (!existing) return;
-        store.updateGroup({ ...existing, isArchivedByMe: true });
+        queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+            (prev ?? []).map((g) =>
+                g.id === groupId ? { ...g, isArchivedByMe: true } : g,
+            ),
+        );
         return;
     }
 
     if (payload.eventType === 'DELETE' && payload.old) {
         const groupId = payload.old.group_id as string | undefined;
         if (!groupId) return;
-        const existing = store.groups.find(g => g.id === groupId);
-        if (!existing) return;
-        store.updateGroup({ ...existing, isArchivedByMe: false });
+        queryClient.setQueryData<GroupWithMembers[]>(queryKeys.groups, (prev) =>
+            (prev ?? []).map((g) =>
+                g.id === groupId ? { ...g, isArchivedByMe: false } : g,
+            ),
+        );
         return;
     }
     // UPDATE: not expected (rows are existence-based); ignore.
+}
+
+function handleArchiveEvent(payload: RealtimePayload): void {
+    try {
+        applyArchiveEventToCache(payload);
+    } catch (err) {
+        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
+    }
 }
 
 export function useAppRealtime(userId: string | undefined | null): void {
@@ -157,7 +197,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                     try {
                         handleGroupsEvent(payload);
                     } catch (err) {
-                        console.error('app realtime: groups payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )
@@ -173,7 +213,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                     try {
                         handleMembershipEvent(payload);
                     } catch (err) {
-                        console.error('app realtime: memberships payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )
@@ -184,7 +224,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                     try {
                         handleFriendshipsEvent();
                     } catch (err) {
-                        console.error('app realtime: friendships payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )
@@ -195,7 +235,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                     try {
                         handleFriendRequestsEvent();
                     } catch (err) {
-                        console.error('app realtime: friend_requests payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )
@@ -211,7 +251,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                     try {
                         handleArchiveEvent(payload);
                     } catch (err) {
-                        console.error('app realtime: archive payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )
@@ -228,7 +268,7 @@ export function useAppRealtime(userId: string | undefined | null): void {
                         invalidateActivityDebounced();
                         void queryClient.invalidateQueries({ queryKey: queryKeys.activityUnreadCount });
                     } catch (err) {
-                        console.error('app realtime: activity_events payload error:', err);
+                        Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.REALTIME_ECHO } });
                     }
                 },
             )

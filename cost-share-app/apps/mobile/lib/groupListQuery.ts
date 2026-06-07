@@ -3,6 +3,7 @@
  */
 
 import { GroupType, GroupWithMembers } from '@cost-share/shared';
+import { toEpochMs } from './dateUtils';
 
 export type BalanceState = 'all' | 'owe' | 'owed' | 'settled' | 'unsettled';
 
@@ -92,7 +93,7 @@ export function sortGroups(
             case 'nameDesc':
                 return collator(b.name, a.name);
             case 'recentAsc':
-                return a.updatedAt.getTime() - b.updatedAt.getTime();
+                return toEpochMs(a.updatedAt) - toEpochMs(b.updatedAt);
             case 'balanceDesc': {
                 const na = groupBalances[a.id]?.net ?? 0;
                 const nb = groupBalances[b.id]?.net ?? 0;
@@ -105,7 +106,7 @@ export function sortGroups(
             }
             case 'recentDesc':
             default:
-                return b.updatedAt.getTime() - a.updatedAt.getTime();
+                return toEpochMs(b.updatedAt) - toEpochMs(a.updatedAt);
         }
     });
 }

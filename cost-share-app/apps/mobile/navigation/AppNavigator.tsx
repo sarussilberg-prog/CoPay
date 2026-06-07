@@ -20,6 +20,7 @@ import { useInviteRedemption } from '../hooks/useInviteRedemption';
 import { usePendingNavigationFlush } from '../hooks/usePendingNavigationFlush';
 import { prefetchGroupsList } from '../hooks/queries/prefetchGroupsList';
 import { prefetchProfileWarmup } from '../hooks/queries/prefetchProfileWarmup';
+import { prefetchAddExpensePrerequisitesForAllGroups } from '../hooks/queries/prefetchAddExpenseForAllGroups';
 import { useActivityUnreadCount } from '../hooks/queries/useActivityUnreadCount';
 
 function HeaderBackButton({ onPress }: { onPress: () => void }) {
@@ -299,10 +300,22 @@ export function AppNavigator() {
     useEffect(() => {
         prefetchGroupsList();
         prefetchProfileWarmup();
+        // Fire-and-forget warm-up: any group that's already in the cache
+        // gets its members + profiles fetched so AddExpense works offline
+        // without ever opening the screen online first. prefetchGroupsList
+        // populates the groups cache asynchronously, so we also retry after
+        // a short delay to catch the post-fetch state.
+        prefetchAddExpensePrerequisitesForAllGroups();
+        const retry = setTimeout(
+            () => prefetchAddExpensePrerequisitesForAllGroups(),
+            1000,
+        );
+        return () => clearTimeout(retry);
     }, []);
 
     return (
         <Tab.Navigator
+            initialRouteName="Groups"
             screenOptions={{
                 tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: colors.gray400,

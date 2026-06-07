@@ -12,6 +12,7 @@
 import { Group, FeedItem, GroupMemberLite, PairwiseDebt } from '@cost-share/shared';
 import type { TFunction } from 'i18next';
 import { formatExportDate, formatExportTime } from './groupExportFormat';
+import { toEpochMs } from './dateUtils';
 
 const CRLF = '\r\n';
 const BOM = '﻿';
@@ -128,7 +129,7 @@ function buildHistoryLines(
         lines.push(row(t('groups.share.emptyHistory')));
         return lines;
     }
-    const sorted = [...feed].sort((a, b) => b.sortAt.getTime() - a.sortAt.getTime());
+    const sorted = [...feed].sort((a, b) => toEpochMs(b.sortAt) - toEpochMs(a.sortAt));
     for (const item of sorted) {
         const date = formatExportDate(item.sortAt, language);
         const time = formatExportTime(item.sortAt, language);

@@ -2,7 +2,10 @@
  * Locale-aware date + time for group feed bubbles.
  */
 
-export function formatFeedDateTime(date: Date, language: 'en' | 'he'): string {
+import { toDate, type DateLike } from './dateUtils';
+
+export function formatFeedDateTime(value: DateLike, language: 'en' | 'he'): string {
+    const date = toDate(value);
     const locale = language === 'he' ? 'he-IL' : 'en-US';
     const now = new Date();
     const sameYear = date.getFullYear() === now.getFullYear();

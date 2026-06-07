@@ -1,6 +1,7 @@
 import { AppState, type AppStateStatus } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { wipePersistedCache } from './persistQueryClient';
 
 let appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
@@ -14,6 +15,7 @@ export function isInvalidRefreshTokenError(error: unknown): boolean {
 /** Clears a broken local session without calling the auth API. */
 export async function clearStaleAuthSession(): Promise<void> {
     await supabase.auth.signOut({ scope: 'local' });
+    await wipePersistedCache();
 }
 
 function syncAutoRefresh(appState: AppStateStatus) {

@@ -1,6 +1,9 @@
 import { captureError } from '../lib/captureError';
 import { supabase } from '../lib/supabase';
 import { clearLocalAuthSession } from './auth.service';
+// Note: account.service has no user-facing toasts of its own; callers translate
+// the returned i18n key and show the toast. So this file keeps using captureError
+// directly (Sentry-only, no toast) rather than handleError.
 
 export interface DeleteAccountResult {
     ok: boolean;

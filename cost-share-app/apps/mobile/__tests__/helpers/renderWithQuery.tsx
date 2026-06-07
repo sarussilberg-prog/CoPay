@@ -1,16 +1,18 @@
 import React from 'react';
 import { render, RenderOptions } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../../lib/queryClient';
 
+// Use the singleton queryClient from lib/queryClient so that
+// `queryClient.setQueryData(...)` calls inside tests populate the same
+// client the screens under test read from via their React Query hooks.
+// Tests are expected to `queryClient.clear()` in beforeEach for isolation.
 export function renderWithQuery(
     ui: React.ReactElement,
     options?: Omit<RenderOptions, 'wrapper'>,
 ) {
-    const client = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
-    });
     return render(
-        <QueryClientProvider client={client}>{ui}</QueryClientProvider>,
+        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
         options,
     );
 }

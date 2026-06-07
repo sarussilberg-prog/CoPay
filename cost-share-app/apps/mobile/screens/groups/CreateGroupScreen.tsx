@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { TouchableOpacity, Modal, Pressable } from 'react-native';
 import { platformAlert } from '../../lib/platformAlert';
-import { showErrorToast } from '../../lib/appToast';
+import { handleError } from '../../lib/handleError';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GroupType, User } from '@cost-share/shared';
@@ -158,7 +158,11 @@ export function CreateGroupScreen() {
             if (localImageUri) {
                 const uploadedUrl = await uploadGroupImage(result.id, localImageUri);
                 if (!uploadedUrl) {
-                    showErrorToast('common.error', 'groups.imageUploadError');
+                    handleError(new Error('uploadGroupImage returned null'), {
+                        toast: { titleKey: 'common.error', messageKey: 'groups.imageUploadError' },
+                        tags: { service: 'storage', op: 'uploadGroupImage' },
+                        extra: { groupId: result.id, flow: 'create' },
+                    });
                 } else {
                     await updateGroup(result.id, { imageUrl: uploadedUrl });
                 }
@@ -178,7 +182,11 @@ export function CreateGroupScreen() {
             if (localImageUri) {
                 const uploadedUrl = await uploadGroupImage(groupId, localImageUri);
                 if (!uploadedUrl) {
-                    showErrorToast('common.error', 'groups.imageUploadError');
+                    handleError(new Error('uploadGroupImage returned null'), {
+                        toast: { titleKey: 'common.error', messageKey: 'groups.imageUploadError' },
+                        tags: { service: 'storage', op: 'uploadGroupImage' },
+                        extra: { groupId, flow: 'update' },
+                    });
                     return;
                 }
                 nextImageUrl = uploadedUrl;
