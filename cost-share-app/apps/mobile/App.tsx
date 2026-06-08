@@ -30,6 +30,7 @@ import { queryClient } from './lib/queryClient';
 import { restoreClient } from './lib/persistQueryClient';
 import { wireNetworkStatusToOnlineManager } from './lib/networkStatus';
 import { sweepIfOnline } from './lib/zombieSweep';
+import { initAvatarCache } from './lib/avatarCache';
 import { AppGateSkeleton } from './components/skeletons/AppGateSkeleton';
 import { useAppStore } from './store';
 import { useAppRealtime } from './hooks/useAppRealtime';
@@ -166,7 +167,7 @@ function App() {
         const hydratedSession = await hydrateAuthSession();
         if (!mounted) return;
 
-        await restoreClient();
+        await Promise.all([restoreClient(), initAvatarCache()]);
 
         if (hydratedSession) {
           await acceptSession(hydratedSession, 'hydration');

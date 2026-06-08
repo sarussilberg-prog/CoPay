@@ -10,6 +10,7 @@ import SuperJSON from 'superjson';
 import { queryClient } from './queryClient';
 import { registerAddExpenseMutationDefaults } from '../hooks/mutations/useAddExpenseMutation';
 import { resetAvatarPrefetchCache } from './avatarPrefetch';
+import { clearAvatarCache } from './avatarCache';
 import { SENTRY_TAGS } from './sentryTags';
 
 // Bumped to v2 when we switched the persister serializer to SuperJSON so
@@ -166,6 +167,9 @@ export async function wipePersistedCache(): Promise<void> {
         // Drop the per-session prefetched-avatars Set so the next signed-in
         // user starts fresh and their avatars get prefetched on first sight.
         resetAvatarPrefetchCache();
+        // Wipe the disk-backed avatar files + manifest so user A's friends'
+        // faces don't appear when user B signs in on the same device.
+        await clearAvatarCache();
     } catch (err) {
         Sentry.captureException(err, { tags: { tag: SENTRY_TAGS.CACHE_PERSIST } });
     }

@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GroupType } from '@cost-share/shared';
 import { getGroupTypeVisual } from '../lib/groupTypeVisuals';
 import { AppIcon } from './AppIcon';
+import { useLocalAvatar } from '../hooks/useLocalAvatar';
 
 interface GroupAvatarProps {
     imageUrl?: string | null;
@@ -31,12 +32,15 @@ export function GroupAvatar({
 }: GroupAvatarProps) {
     const { className, iconSize } = sizeStyles[size];
     const visual = getGroupTypeVisual(groupType);
+    // Use the disk-cached local URI when one is available so group images
+    // render instantly + work offline.
+    const resolvedImageUrl = useLocalAvatar(imageUrl);
 
-    if (imageUrl) {
+    if (resolvedImageUrl) {
         return (
             <View className={`${className} overflow-hidden`} testID={testID}>
                 <Image
-                    source={{ uri: imageUrl }}
+                    source={{ uri: resolvedImageUrl }}
                     className="w-full h-full"
                     resizeMode="cover"
                     testID={`${testID}-image`}

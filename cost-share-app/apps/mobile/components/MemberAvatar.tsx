@@ -7,6 +7,7 @@
 import { Text } from './AppText';
 import React from 'react';
 import { View, Image } from 'react-native';
+import { useLocalAvatar } from '../hooks/useLocalAvatar';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg';
 
@@ -52,12 +53,15 @@ export function MemberAvatar({
         height: imageSize,
         borderRadius: imageSize / 2,
     };
+    // Prefer the disk-cached local file URI when one is available so the
+    // avatar renders instantly + works offline. Falls back to the remote URL.
+    const resolvedAvatarUrl = useLocalAvatar(avatarUrl);
 
-    if (avatarUrl) {
+    if (resolvedAvatarUrl) {
         return (
             <View style={frameStyle} className="overflow-hidden shrink-0 bg-slate-100" testID={testID}>
                 <Image
-                    source={{ uri: avatarUrl }}
+                    source={{ uri: resolvedAvatarUrl }}
                     style={{ width: imageSize, height: imageSize }}
                     resizeMode="cover"
                     accessibilityLabel={name}
