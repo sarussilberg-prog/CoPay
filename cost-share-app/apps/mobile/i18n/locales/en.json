@@ -52,6 +52,7 @@
     "onboarding": {
         "skip": "Skip",
         "next": "Next",
+        "back": "Back",
         "welcome": {
             "brand": "CoPay",
             "tagline": "Split expenses with your crew.\nNo spreadsheets, no group-chat math.",
@@ -66,25 +67,21 @@
         },
         "feature1": {
             "eyebrow": "Split with who matters",
-            "title": "Pick who pays — not the whole group",
-            "body": "On every expense, choose who's in the split: gas for three, dinner without the friend who bailed. Anyone not selected doesn't pay and isn't charged for it."
+            "title": "Pick who pays — not the whole group"
         },
         "feature2": {
             "eyebrow": "Invite your crew",
-            "title": "Send a link — they're in",
-            "body": "Contacts, iMessage, or a group link. No need to explain the app — they tap and join the group."
+            "title": "Send a link — they're in"
         },
         "feature3": {
             "eyebrow": "No guesswork",
             "title": "See who owes whom — no mental math",
-            "body": "Balances update on their own. No more \"hang on, I'll Venmo you after I do the math\" — everyone in the group sees the same numbers.",
             "balanceLabel": "In your favor",
             "balanceAmount": "+ $38"
         },
         "feature4": {
             "eyebrow": "Settle up",
-            "title": "One payment — done",
-            "body": "Instead of a ping-pong of Venmo requests, we find the minimum: who pays whom and how much. One tap — and you're square."
+            "title": "One payment — done"
         },
         "mockup": {
             "groupName": "Beach weekend",
@@ -890,7 +887,6 @@
         "closedGroups": "Settled groups",
         "activeGroups": "Unsettled groups",
         "friends": "Friends",
-        "friendsCount": "{{count}} friends",
         "loadError": "Failed to load dashboard",
         "settled": "Settled up",
         "owesYou": "owes you",

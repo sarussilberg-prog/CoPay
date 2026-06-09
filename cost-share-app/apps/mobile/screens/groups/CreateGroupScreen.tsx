@@ -4,6 +4,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { TouchableOpacity, Modal, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { platformAlert } from '../../lib/platformAlert';
 import { handleError } from '../../lib/handleError';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +36,7 @@ export function CreateGroupScreen() {
     const { t } = useTranslation();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const insets = useSafeAreaInsets();
     const groupId: string | undefined = route.params?.groupId;
     const initialMembers: User[] | undefined = route.params?.initialMembers;
     const isEdit = Boolean(groupId);
@@ -167,7 +169,10 @@ export function CreateGroupScreen() {
                     await updateGroup(result.id, { imageUrl: uploadedUrl });
                 }
             }
-            navigation.replace('GroupDetail', { groupId: result.id });
+            navigation.navigate('Main', {
+                screen: 'Groups',
+                params: { screen: 'GroupDetail', params: { groupId: result.id } },
+            });
         } finally {
             stopLoading();
         }
@@ -243,6 +248,7 @@ export function CreateGroupScreen() {
             <CreateGroupFormShell
                 testID="create-group-screen"
                 title={screenTitle}
+                extraBottomInset={insets.bottom}
                 headerStart={
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -254,13 +260,30 @@ export function CreateGroupScreen() {
                         </Text>
                     </TouchableOpacity>
                 }
+                headerEnd={
+                    <TouchableOpacity
+                        onPress={handleSubmit}
+                        disabled={isLoading}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        testID="create-group-save-header"
+                    >
+                        <Text
+                            style={{
+                                fontSize: 15,
+                                fontWeight: '600',
+                                color: isLoading ? colors.gray400 : colors.primary,
+                            }}
+                        >
+                            {t('common.save')}
+                        </Text>
+                    </TouchableOpacity>
+                }
                 footer={
                     <CreateGroupFloatingButton
                         title={submitLabel}
                         onPress={handleSubmit}
                         loading={isLoading}
                         disabled={isLoading}
-                        icon={isEdit ? undefined : 'add'}
                         testID="create-group-submit"
                     />
                 }

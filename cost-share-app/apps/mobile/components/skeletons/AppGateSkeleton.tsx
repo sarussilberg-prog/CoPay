@@ -1,42 +1,51 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, Platform, View } from 'react-native';
 
-const SKELETON_BG = '#E5E7EB';
+const LOGO_SIZE = Platform.OS === 'ios' ? 216 : 200;
 
 export function AppGateSkeleton() {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        const loop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(scale, {
+                    toValue: 1.06,
+                    duration: 700,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scale, {
+                    toValue: 1,
+                    duration: 700,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]),
+        );
+        loop.start();
+        return () => {
+            loop.stop();
+        };
+    }, [scale]);
+
     return (
-        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-            <View style={{ flex: 1 }}>
-                <View style={{ paddingHorizontal: 16, paddingTop: 64 }}>
-                    <View
-                        style={{
-                            height: 28,
-                            width: '50%',
-                            borderRadius: 6,
-                            backgroundColor: SKELETON_BG,
-                        }}
-                    />
-                </View>
-                <View style={{ padding: 16, gap: 12 }}>
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                        <View
-                            key={idx}
-                            style={{
-                                height: 60,
-                                borderRadius: 8,
-                                backgroundColor: SKELETON_BG,
-                            }}
-                        />
-                    ))}
-                </View>
-            </View>
-            <View
+        <View
+            style={{
+                flex: 1,
+                backgroundColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}
+        >
+            <Animated.Image
+                source={require('../../assets/splash-icon.png')}
                 style={{
-                    height: 64,
-                    backgroundColor: SKELETON_BG,
-                    borderTopWidth: 1,
-                    borderTopColor: '#F3F4F6',
+                    width: LOGO_SIZE,
+                    height: LOGO_SIZE,
+                    transform: [{ scale }],
                 }}
+                resizeMode="contain"
             />
         </View>
     );

@@ -1,6 +1,7 @@
 /**
- * CreateGroupFormShell — shared layout (header, scroll, floating footer CTA).
- * Visual language aligned with GroupsListScreen bottom pill.
+ * CreateGroupFormShell — shared layout (header, scroll, sticky footer CTA).
+ * The footer is rendered in-flow (not absolutely positioned) so it can never
+ * overlap form content. ScrollView is strictly above it.
  */
 
 import React from 'react';
@@ -8,10 +9,6 @@ import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../AppText';
 import { colors } from '../../theme';
-import {
-    CreateGroupFabAnchor,
-    createGroupFabScrollPadding,
-} from './CreateGroupFabAnchor';
 
 type Props = {
     title: string;
@@ -25,6 +22,9 @@ type Props = {
     testID?: string;
 };
 
+const FOOTER_GAP_ABOVE = 2;
+const FOOTER_PADDING_TOP = 12;
+
 export function CreateGroupFormShell({
     title,
     headerStart,
@@ -35,8 +35,6 @@ export function CreateGroupFormShell({
     extraBottomInset = 0,
     testID,
 }: Props) {
-    const scrollBottomPadding = createGroupFabScrollPadding(extraBottomInset);
-
     return (
         <SafeAreaView edges={['top']} style={styles.root} testID={testID}>
             <KeyboardAvoidingView
@@ -57,10 +55,7 @@ export function CreateGroupFormShell({
 
                 <ScrollView
                     style={styles.scroll}
-                    contentContainerStyle={[
-                        styles.scrollContent,
-                        { paddingBottom: scrollBottomPadding },
-                    ]}
+                    contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
@@ -69,9 +64,14 @@ export function CreateGroupFormShell({
                     {children}
                 </ScrollView>
 
-                <CreateGroupFabAnchor extraBottomInset={extraBottomInset}>
+                <View
+                    style={[
+                        styles.footerBar,
+                        { paddingBottom: extraBottomInset + FOOTER_GAP_ABOVE },
+                    ]}
+                >
                     {footer}
-                </CreateGroupFabAnchor>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -137,6 +137,13 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 16,
         paddingTop: 4,
+        paddingBottom: 16,
+    },
+    footerBar: {
+        paddingTop: FOOTER_PADDING_TOP,
+        paddingHorizontal: 16,
+        alignItems: 'center',
+        backgroundColor: '#F8FAFC',
     },
     sectionShadow: {
         shadowColor: '#0F172A',

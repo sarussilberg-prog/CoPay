@@ -1,6 +1,10 @@
 /**
  * App Navigator
- * Stack and tab navigation structure
+ * Root Stack wraps the bottom Tab navigator. Screens that should not show
+ * the tab bar (Settings + admin sub-screens, Create/Edit group, Add/Edit
+ * expense) live on the Root Stack so they push above the tab navigator and
+ * cover the tab bar naturally — no `tabBarStyle: 'none'` toggling, no
+ * transition flash.
  */
 
 import React, { useEffect } from 'react';
@@ -76,6 +80,7 @@ import { AdminErrorEventScreen } from '../screens/admin/AdminErrorEventScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 function stackScreenOptions(isRtl: boolean): NativeStackNavigationOptions {
     return {
@@ -134,16 +139,6 @@ function GroupsStack() {
                 options={{ headerShown: false }}
             />
             <Stack.Screen
-                name="CreateGroup"
-                component={CreateGroupScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="EditGroup"
-                component={CreateGroupScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
                 name="GroupMembers"
                 component={GroupMembersScreen}
                 options={{ title: t('groups.members.title') }}
@@ -157,16 +152,6 @@ function GroupsStack() {
                 name="ExpenseList"
                 component={ExpenseListScreen}
                 options={{ title: t('expenses.title') }}
-            />
-            <Stack.Screen
-                name="AddExpense"
-                component={AddExpenseScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="EditExpense"
-                component={AddExpenseScreen}
-                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="ExpenseDetail"
@@ -208,16 +193,6 @@ function ActivityStack() {
                 component={ExpenseDetailScreen}
                 options={{ title: t('expenses.expenseDetail') }}
             />
-            <Stack.Screen
-                name="AddExpense"
-                component={AddExpenseScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="EditExpense"
-                component={AddExpenseScreen}
-                options={{ headerShown: false }}
-            />
         </Stack.Navigator>
     );
 }
@@ -239,45 +214,6 @@ function ProfileStack() {
                 options={{ title: t('profile.editProfile') }}
             />
             <Stack.Screen
-                name="Settings"
-                component={SettingsScreen}
-                options={{ title: t('settings.title') }}
-            />
-            <Stack.Screen
-                name="AdminPortal"
-                component={AdminPortalScreen}
-                options={{ title: t('admin.portal.title') }}
-            />
-            <Stack.Screen
-                name="AdminDeletedUsers"
-                component={AdminDeletedUsersScreen}
-                options={{ title: t('admin.deletedUsers.title') }}
-            />
-            <Stack.Screen
-                name="AdminOnboardingPreview"
-                component={AdminOnboardingPreviewScreen}
-                options={{ headerShown: false }}
-            />
-            <Stack.Screen
-                name="AdminErrors"
-                component={AdminErrorsScreen}
-                options={{ title: t('admin.errors.screenTitle') }}
-            />
-            <Stack.Screen
-                name="AdminErrorDetail"
-                component={AdminErrorDetailScreen}
-                options={({ route }) => ({
-                    title:
-                        (route.params as { title?: string } | undefined)?.title ??
-                        t('admin.errors.detailTitle'),
-                })}
-            />
-            <Stack.Screen
-                name="AdminErrorEvent"
-                component={AdminErrorEventScreen}
-                options={{ title: t('admin.errors.eventTitle') }}
-            />
-            <Stack.Screen
                 name="Friends"
                 component={FriendsScreen}
                 options={{ title: t('friends.title') }}
@@ -291,27 +227,9 @@ function ProfileStack() {
     );
 }
 
-export function AppNavigator() {
+function MainTabs() {
     const { t } = useTranslation();
-    useInviteRedemption();
-    usePendingNavigationFlush();
     const { data: unreadCount = 0 } = useActivityUnreadCount();
-
-    useEffect(() => {
-        prefetchGroupsList();
-        prefetchProfileWarmup();
-        // Fire-and-forget warm-up: any group that's already in the cache
-        // gets its members + profiles fetched so AddExpense works offline
-        // without ever opening the screen online first. prefetchGroupsList
-        // populates the groups cache asynchronously, so we also retry after
-        // a short delay to catch the post-fetch state.
-        prefetchAddExpensePrerequisitesForAllGroups();
-        const retry = setTimeout(
-            () => prefetchAddExpensePrerequisitesForAllGroups(),
-            1000,
-        );
-        return () => clearTimeout(retry);
-    }, []);
 
     return (
         <Tab.Navigator
@@ -385,5 +303,100 @@ export function AppNavigator() {
                 }}
             />
         </Tab.Navigator>
+    );
+}
+
+export function AppNavigator() {
+    const { t } = useTranslation();
+    const isRtl = useRtlLayout();
+    useInviteRedemption();
+    usePendingNavigationFlush();
+
+    useEffect(() => {
+        prefetchGroupsList();
+        prefetchProfileWarmup();
+        // Fire-and-forget warm-up: any group that's already in the cache
+        // gets its members + profiles fetched so AddExpense works offline
+        // without ever opening the screen online first. prefetchGroupsList
+        // populates the groups cache asynchronously, so we also retry after
+        // a short delay to catch the post-fetch state.
+        prefetchAddExpensePrerequisitesForAllGroups();
+        const retry = setTimeout(
+            () => prefetchAddExpensePrerequisitesForAllGroups(),
+            1000,
+        );
+        return () => clearTimeout(retry);
+    }, []);
+
+    return (
+        <RootStack.Navigator screenOptions={buildStackScreenOptions(isRtl)}>
+            <RootStack.Screen
+                name="Main"
+                component={MainTabs}
+                options={{ headerShown: false }}
+            />
+
+            <RootStack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{ title: t('settings.title') }}
+            />
+            <RootStack.Screen
+                name="AdminPortal"
+                component={AdminPortalScreen}
+                options={{ title: t('admin.portal.title') }}
+            />
+            <RootStack.Screen
+                name="AdminDeletedUsers"
+                component={AdminDeletedUsersScreen}
+                options={{ title: t('admin.deletedUsers.title') }}
+            />
+            <RootStack.Screen
+                name="AdminOnboardingPreview"
+                component={AdminOnboardingPreviewScreen}
+                options={{ headerShown: false }}
+            />
+            <RootStack.Screen
+                name="AdminErrors"
+                component={AdminErrorsScreen}
+                options={{ title: t('admin.errors.screenTitle') }}
+            />
+            <RootStack.Screen
+                name="AdminErrorDetail"
+                component={AdminErrorDetailScreen}
+                options={({ route }) => ({
+                    title:
+                        (route.params as { title?: string } | undefined)?.title ??
+                        t('admin.errors.detailTitle'),
+                })}
+            />
+            <RootStack.Screen
+                name="AdminErrorEvent"
+                component={AdminErrorEventScreen}
+                options={{ title: t('admin.errors.eventTitle') }}
+            />
+
+            <RootStack.Screen
+                name="CreateGroup"
+                component={CreateGroupScreen}
+                options={{ headerShown: false }}
+            />
+            <RootStack.Screen
+                name="EditGroup"
+                component={CreateGroupScreen}
+                options={{ headerShown: false }}
+            />
+
+            <RootStack.Screen
+                name="AddExpense"
+                component={AddExpenseScreen}
+                options={{ headerShown: false }}
+            />
+            <RootStack.Screen
+                name="EditExpense"
+                component={AddExpenseScreen}
+                options={{ headerShown: false }}
+            />
+        </RootStack.Navigator>
     );
 }

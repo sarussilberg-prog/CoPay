@@ -29,7 +29,7 @@ import { FriendBalanceRow } from '../../components/dashboard/FriendBalanceRow';
 import { FriendGroupBalancesSheet } from '../../components/dashboard/FriendGroupBalancesSheet';
 import { colors, shadows } from '../../theme';
 import { useRtlLayout, rtlRowStyle } from '../../hooks/useRtlLayout';
-import { useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQueries';
+import { useFriendsQuery, useIncomingFriendRequestsQuery } from '../../hooks/queries/useFriendsQueries';
 import { getAvatarUrl, getDisplayName } from '../../lib/userDisplay';
 import { shareFriendInvite } from '../../services/invite.service';
 
@@ -107,7 +107,7 @@ type ProfileDashboardBodyProps = {
     isRtl: boolean;
     onNavigateGroups: (params: { balanceState: 'unsettled' | 'settled' }) => void;
     onNavigateFriends: () => void;
-    friendsCountLabel: string | null;
+    friendsCount: number;
 };
 
 const ProfileDashboardBody = React.memo(function ProfileDashboardBody({
@@ -118,12 +118,46 @@ const ProfileDashboardBody = React.memo(function ProfileDashboardBody({
     isRtl,
     onNavigateGroups,
     onNavigateFriends,
-    friendsCountLabel,
+    friendsCount,
 }: ProfileDashboardBodyProps) {
     const { t } = useTranslation();
 
     return (
         <>
+            <TouchableOpacity
+                onPress={onNavigateFriends}
+                activeOpacity={0.7}
+                className="mx-4 mb-4 px-4 py-3 bg-white rounded-xl border border-slate-200/80 flex-row items-center"
+                style={shadows.sm}
+                testID="profile-friends-row"
+            >
+                <AppIcon name="people-outline" size={22} color={colors.primary} />
+                <Text className="flex-1 ml-3 text-sm font-semibold text-gray-800">
+                    {t('friends.title')}
+                </Text>
+                {pendingCount > 0 && (
+                    <View
+                        className="bg-primary rounded-full px-2 mr-2"
+                        style={{ minWidth: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}
+                    >
+                        <Text className="text-xs font-bold text-white">{pendingCount}</Text>
+                    </View>
+                )}
+                {friendsCount > 0 && (
+                    <Text
+                        className="text-sm text-gray-400 mr-2"
+                        testID="profile-friends-count"
+                    >
+                        {friendsCount}
+                    </Text>
+                )}
+                <AppIcon
+                    name={isRtl ? 'chevron-back' : 'chevron-forward'}
+                    size={18}
+                    color={colors.gray400}
+                />
+            </TouchableOpacity>
+
             <BalanceHeroCard
                 summary={balanceSummary ?? dashboard.balanceSummary}
                 conversion={conversion}
@@ -144,38 +178,6 @@ const ProfileDashboardBody = React.memo(function ProfileDashboardBody({
                     testID="stat-closed"
                 />
             </StatGroup>
-
-            <TouchableOpacity
-                onPress={onNavigateFriends}
-                activeOpacity={0.7}
-                className="mx-4 mb-4 px-4 py-3 bg-white rounded-xl border border-slate-200/80 flex-row items-center"
-                style={shadows.sm}
-                testID="profile-friends-row"
-            >
-                <AppIcon name="people-outline" size={22} color={colors.primary} />
-                <Text className="flex-1 ml-3 text-sm font-semibold text-gray-800">
-                    {t('friends.title')}
-                </Text>
-                {pendingCount > 0 && (
-                    <View
-                        className="bg-primary rounded-full px-2 mr-2"
-                        style={{ minWidth: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}
-                    >
-                        <Text className="text-xs font-bold text-white">{pendingCount}</Text>
-                    </View>
-                )}
-                <AppIcon
-                    name={isRtl ? 'chevron-back' : 'chevron-forward'}
-                    size={18}
-                    color={colors.gray400}
-                />
-            </TouchableOpacity>
-
-            {friendsCountLabel ? (
-                <Text className="text-xs font-semibold text-slate-400 text-center mb-2 mx-4">
-                    {friendsCountLabel}
-                </Text>
-            ) : null}
         </>
     );
 });
@@ -220,6 +222,8 @@ export function ProfileScreen() {
     );
     const incomingQ = useIncomingFriendRequestsQuery();
     const pendingCount = incomingQ.data?.length ?? 0;
+    const friendsQ = useFriendsQuery();
+    const friendsCount = friendsQ.data?.length ?? 0;
 
     const handleRefresh = useCallback(async () => {
         setIsManualRefreshing(true);
@@ -227,6 +231,7 @@ export function ProfileScreen() {
             await Promise.all([
                 refetch(),
                 queryClient.invalidateQueries({ queryKey: queryKeys.friendRequestsIncoming }),
+                queryClient.invalidateQueries({ queryKey: queryKeys.friends }),
                 fxSymbols.length > 0 ? ratesQuery.refetch() : Promise.resolve(),
             ]);
         } finally {
@@ -272,10 +277,6 @@ export function ProfileScreen() {
     const showError = isError || (!isLoading && !dashboard);
 
     const friends = dashboard?.friends ?? [];
-    const friendsCountLabel =
-        dashboard && friends.length > 0
-            ? t('dashboard.friendsCount', { count: friends.length })
-            : null;
 
     const listHeader = useMemo(
         () => (
@@ -311,7 +312,7 @@ export function ProfileScreen() {
                         isRtl={isRtl}
                         onNavigateGroups={handleNavigateGroups}
                         onNavigateFriends={handleNavigateFriends}
-                        friendsCountLabel={friendsCountLabel}
+                        friendsCount={friendsCount}
                     />
                 ) : null}
             </>
@@ -321,7 +322,7 @@ export function ProfileScreen() {
             conversion,
             currentUser,
             dashboard,
-            friendsCountLabel,
+            friendsCount,
             handleEditProfile,
             handleNavigateFriends,
             handleNavigateGroups,
