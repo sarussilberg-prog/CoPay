@@ -15,11 +15,12 @@ import { AppBrandTitle } from '../../components/AppBrandTitle';
 import { DeletedAccountNoticeDialog } from '../../components/DeletedAccountNoticeDialog';
 import { LoginFeatureChips } from '../../components/auth/LoginFeatureChips';
 import { LoginGoogleButton } from '../../components/auth/LoginGoogleButton';
+import { LoginAppleButton } from '../../components/auth/LoginAppleButton';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '../../hooks/useLoading';
-import { signInWithGoogle } from '../../services/auth.service';
+import { signInWithApple, signInWithGoogle } from '../../services/auth.service';
 import { showAppToast } from '../../lib/appToast';
 import { handleError } from '../../lib/handleError';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
@@ -107,6 +108,31 @@ export function LoginScreen() {
         }
     };
 
+    const handleAppleSignIn = async () => {
+        startLoading();
+        try {
+            const { error } = await signInWithApple();
+            if (error) {
+                if (error.code === 'account_deleted') {
+                    showDeletedAccountNotice();
+                    return;
+                }
+                handleError(error, {
+                    toast: { titleKey: 'auth.signInError', message: error.message },
+                    tags: { service: 'auth', op: 'signInWithApple' },
+                    extra: { errorCode: error.code },
+                });
+            }
+        } catch (error) {
+            handleError(error, {
+                toast: { titleKey: 'auth.signInError' },
+                tags: { service: 'auth', op: 'signInWithApple' },
+            });
+        } finally {
+            stopLoading();
+        }
+    };
+
     return (
         <View style={styles.root} testID="login-screen">
             <LinearGradient
@@ -160,6 +186,8 @@ export function LoginScreen() {
                         loading={isLoading}
                         disabled={isLoading}
                     />
+                    <View className="h-3" />
+                    <LoginAppleButton onPress={handleAppleSignIn} disabled={isLoading} />
                     {isLoading ? (
                         <Text
                             className="text-sm text-gray-400 mt-3 text-center"

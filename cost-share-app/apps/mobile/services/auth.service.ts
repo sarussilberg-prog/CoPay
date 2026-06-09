@@ -2,6 +2,8 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { queryClient } from '../lib/queryClient';
 import { clearStaleAuthSession } from '../lib/authSessionLifecycle';
@@ -230,6 +232,64 @@ export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
   }
 
   return signInWithGoogleBrowser();
+}
+
+function isAppleCancel(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err
+    && (err as { code?: string }).code === 'ERR_REQUEST_CANCELED';
+}
+
+export async function signInWithApple(): Promise<{ error: AuthError | null }> {
+  try {
+    const rawNonce = Crypto.randomUUID();
+    const hashedNonce = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      rawNonce,
+    );
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashedNonce,
+    });
+
+    if (!credential.identityToken) {
+      return { error: toAuthError(new Error('No Apple identity token returned')) };
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
+      nonce: rawNonce,
+    });
+    if (error) return { error: toAuthError(error) };
+
+    const allowed = await isAuthSessionAllowed();
+    if (!allowed) {
+      return { error: { code: 'account_deleted', message: 'account deleted' } satisfies AuthError };
+    }
+
+    // Apple returns fullName only on the FIRST authorization; persist it so the profile
+    // shows a real name instead of the email the DB trigger defaults to.
+    const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const userId = data.user?.id;
+    if (fullName && userId) {
+      try {
+        await supabase.from('profiles').update({ name: fullName }).eq('id', userId);
+      } catch {
+        // best-effort; never block sign-in on a name update
+      }
+    }
+
+    return { error: null };
+  } catch (err) {
+    if (isAppleCancel(err)) return { error: null };
+    return { error: toAuthError(err) };
+  }
 }
 
 /** Clears cached app state, wipes the local Supabase session, and drops the Zustand session. */

@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 jest.mock('../../../services/auth.service', () => ({
     signInWithGoogle: jest.fn(),
+    signInWithApple: jest.fn(),
 }));
 
 jest.mock('../../../hooks/useChangeAppLanguage', () => ({
