@@ -6,25 +6,93 @@ on:
     paths-ignore:
       - 'cost-share-app/apps/mobile/version.json'
 
+concurrency:
+  group: version-bump-main
+  cancel-in-progress: false
+
 jobs:
   bump:
+    name: Open version bump PR → merge
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
+
     steps:
       - uses: actions/checkout@v4
         with:
+          # DO NOT use ref: github.ref_name here — we need the exact trigger SHA
+          # so that HEAD~1 reliably points to main's state before this squash merge.
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 2  # required to access HEAD~1
 
-      - name: Bump minor version
+      - name: Compute new version
+        id: version
         run: |
           VERSION_FILE="cost-share-app/apps/mobile/version.json"
-          current=$(jq -r '.version' "$VERSION_FILE")
-          IFS='.' read -r major minor patch <<< "$current"
+
+          # Read the PREVIOUS main version (before the squash from dev overwrote it).
+          # HEAD~1 is main's last commit before this push, which holds the real minor baseline.
+          # Fallback to current file if this is the very first time version.json lands on main.
+          prev_main=$(git show HEAD~1:"$VERSION_FILE" 2>/dev/null \
+            | jq -r '.version' 2>/dev/null \
+            || jq -r '.version' "$VERSION_FILE")
+
+          IFS='.' read -r major minor patch <<< "$prev_main"
           new_version="${major}.$((minor + 1)).0"
-          jq --arg v "$new_version" '.version = $v' "$VERSION_FILE" > tmp.json && mv tmp.json "$VERSION_FILE"
-          git config user.name "github-actions[bot]"
+
+          echo "current=${prev_main}"  >> "$GITHUB_OUTPUT"
+          echo "new=${new_version}"    >> "$GITHUB_OUTPUT"
+          echo "branch=chore/version-bump/${new_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump on new branch
+        run: |
+          VERSION_FILE="cost-share-app/apps/mobile/version.json"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${{ steps.version.outputs.branch }}"
+          jq -c --arg v "${{ steps.version.outputs.new }}" '.version = $v' \
+            "$VERSION_FILE" > tmp.json && mv tmp.json "$VERSION_FILE"
           git add "$VERSION_FILE"
-          git commit -m "chore: bump version to ${new_version}"
-          git push
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new }}"
+          git push origin "${{ steps.version.outputs.branch }}"
+
+      - name: Open PR and merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREV: ${{ steps.version.outputs.current }}
+          NEXT: ${{ steps.version.outputs.new }}
+          BUMP_BRANCH: ${{ steps.version.outputs.branch }}
+        run: |
+          cat > /tmp/pr-body.md << EOF
+## 🔖 Version Bump
+
+| | |
+|---|---|
+| **Previous** | \`${PREV}\` |
+| **New** | \`${NEXT}\` |
+| **Bump type** | **Minor** — merge to \`main\` |
+| **File** | \`cost-share-app/apps/mobile/version.json\` |
+
+### What happened
+A merge reached \`main\`, triggering an automated **minor** version increment.
+The middle number increases with every production release; the patch resets to \`0\`.
+
+\`\`\`
+${PREV}  →  ${NEXT}
+   ^           ^
+minor++     patch reset
+\`\`\`
+
+---
+_🤖 Automated by [bump-version-main](../../actions/workflows/bump-version-main.yml)_
+EOF
+
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${BUMP_BRANCH}" \
+            --title "chore: bump version ${PREV} → ${NEXT}" \
+            --body-file /tmp/pr-body.md)
+
+          echo "PR created: ${PR_URL}"
+          gh pr merge "${PR_URL}" --squash --delete-branch

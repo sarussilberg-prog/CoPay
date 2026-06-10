@@ -8,10 +8,11 @@
  */
 
 import React, { useEffect } from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute, type ParamListBase, type RouteProp } from '@react-navigation/native';
+import type { ParamListBase, RouteProp } from '@react-navigation/native';
+import { shouldPopStackToInitial } from './shouldPopStackToInitial';
 import {
     createNativeStackNavigator,
     type NativeStackNavigationOptions,
@@ -83,9 +84,16 @@ const Stack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
 
 function stackScreenOptions(isRtl: boolean): NativeStackNavigationOptions {
+    // iOS: the native horizontal push isn't duration-tunable, so use simple_push,
+    // which honors animationDuration (→150ms). Android: animationDuration is
+    // iOS-only; ios_from_* runs at a fixed XML duration overridden to 150ms by the
+    // withFastStackTransitions config plugin. RTL direction is explicit on Android;
+    // iOS simple_push follows the native layout direction.
+    const animation: NativeStackNavigationOptions['animation'] =
+        Platform.OS === 'android' ? (isRtl ? 'ios_from_left' : 'ios_from_right') : 'simple_push';
     return {
-        animation: isRtl ? 'slide_from_left' : 'slide_from_right',
-        animationDuration: 200,
+        animation,
+        animationDuration: 150,
         headerTintColor: colors.primary,
         headerBackTitle: '',
     };
@@ -113,8 +121,14 @@ function tabPopToTopOnPress(initialScreen: string) {
         tabPress: (e: { preventDefault: () => void }) => {
             if (!navigation.isFocused()) return;
 
-            const focusedRouteName = getFocusedRouteNameFromRoute(route) ?? initialScreen;
-            if (focusedRouteName !== initialScreen) {
+            // Read the COMMITTED nested state, not getFocusedRouteNameFromRoute —
+            // its params.screen fallback stays stale after deep navigations
+            // (navigate('Groups', { screen: 'GroupDetail' })) and would fire a
+            // spurious pop-to-top that replays the stack enter animation.
+            const nestedState = navigation
+                .getState()
+                .routes.find((r) => r.key === route.key)?.state;
+            if (shouldPopStackToInitial(nestedState, initialScreen)) {
                 e.preventDefault();
                 navigation.navigate(route.name, { screen: initialScreen });
             }
