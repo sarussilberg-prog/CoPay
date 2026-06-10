@@ -3,7 +3,7 @@
  * Google account UI renders inside Chrome — not a WebView (allowed by Google policy).
  */
 import { Dimensions, Linking, PixelRatio } from 'react-native';
-import { openPartialCustomTabAsync } from 'kupa-partial-auth-browser';
+import { openPartialCustomTabAsync } from 'copay-partial-auth-browser';
 
 export type PartialAuthSessionResult =
   | { type: 'success'; url: string }

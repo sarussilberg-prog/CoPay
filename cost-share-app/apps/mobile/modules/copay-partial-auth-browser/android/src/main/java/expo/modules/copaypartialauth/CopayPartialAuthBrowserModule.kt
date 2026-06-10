@@ -1,4 +1,4 @@
-package expo.modules.kupapartialauth
+package expo.modules.copaypartialauth
 
 import android.content.ComponentName
 import android.content.pm.PackageManager
@@ -14,9 +14,9 @@ import expo.modules.kotlin.modules.ModuleDefinition
 
 private const val DUMMY_URL = "https://expo.dev"
 
-class KupaPartialAuthBrowserModule : Module() {
+class CopayPartialAuthBrowserModule : Module() {
   override fun definition() = ModuleDefinition {
-    Name("KupaPartialAuthBrowser")
+    Name("CopayPartialAuthBrowser")
 
     AsyncFunction("openPartialCustomTabAsync") { url: String, initialHeightPx: Int, promise: Promise ->
       val activity = appContext.throwingActivity

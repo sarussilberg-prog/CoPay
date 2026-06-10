@@ -8,7 +8,7 @@ const APP_STORE_URL =
     Deno.env.get('KUPAY_APP_STORE_URL') ?? Deno.env.get('KUPA_APP_STORE_URL') ?? 'https://kupa.pro/';
 const PLAY_STORE_URL =
     Deno.env.get('KUPAY_PLAY_STORE_URL') ?? Deno.env.get('KUPA_PLAY_STORE_URL')
-        ?? 'https://play.google.com/store/apps/details?id=com.kupay.mobile';
+        ?? 'https://play.google.com/store/apps/details?id=com.copay.mobile';
 
 function escapeHtml(s: string): string {
     return s.replace(/[&<>"']/g, (c) => ({
@@ -71,7 +71,7 @@ function shell({
   // Best-effort custom-scheme attempt for users who land here despite app being installed.
   setTimeout(() => {
     const m = location.pathname.match(/^\\/(i|g)\\/([A-Za-z0-9_-]{10})$/);
-    if (m) location.href = 'com.kupay.mobile://invite/' + m[1] + '/' + m[2];
+    if (m) location.href = 'com.copay.mobile://invite/' + m[1] + '/' + m[2];
   }, 100);
 </script>
 </body></html>`;
@@ -101,7 +101,7 @@ export function renderFriendInvite(
         ${avatar}
         <h1>${inviterName} רוצה לחלוק איתך הוצאות דרך ${brandName()}</h1>
         <p>חלקו את חשבון המסעדה, הטיול, והדירה — בלי לעשות חשבונות.</p>
-        <a class="btn primary" href="com.kupay.mobile://invite/i/${escapeHtml(token)}">פתח את ${brandName()}</a>
+        <a class="btn primary" href="com.copay.mobile://invite/i/${escapeHtml(token)}">פתח את ${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
@@ -139,7 +139,7 @@ export function renderGroupInvite(
         <h2>${name}</h2>
         <div class="members">${memberAvatars}</div>
         <div class="meta">${g.member_count} חברים · ${escapeHtml(g.currency)}</div>
-        <a class="btn primary" href="com.kupay.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-${brandName()}</a>
+        <a class="btn primary" href="com.copay.mobile://invite/g/${escapeHtml(token)}">הצטרף לקופה ב-${brandName()}</a>
         ${platformButtons()}
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;

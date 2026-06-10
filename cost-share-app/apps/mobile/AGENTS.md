@@ -12,7 +12,7 @@ Read [docs/SSOT/SUPABASE_ENVIRONMENTS.md](../../../docs/SSOT/SUPABASE_ENVIRONMEN
 Local dev: copy `.env.example` → `.env`.  
 EAS production: `bash scripts/eas-sync-secrets.sh .env.production`
 
-**Android Google sign-in:** OAuth in a **partial Chrome Custom Tab** (~80% bottom sheet) via local module `kupa-partial-auth-browser`. Google account UI renders inside Chrome (not WebView — `403 disallowed_useragent`). Web client ID in Supabase + `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`; Android OAuth client = package + SHA-1 in Google Cloud only. After native module changes: `npx expo prebuild --clean` && rebuild. See `docs/PLAY_STORE_ANDROID.md` §3.4.
+**Android Google sign-in:** OAuth in a **partial Chrome Custom Tab** (~80% bottom sheet) via local module `copay-partial-auth-browser`. Google account UI renders inside Chrome (not WebView — `403 disallowed_useragent`). Web client ID in Supabase + `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`; Android OAuth client = package + SHA-1 in Google Cloud only. After native module changes: `npx expo prebuild --clean` && rebuild. See `docs/PLAY_STORE_ANDROID.md` §3.4.
 
 ## Expo
 

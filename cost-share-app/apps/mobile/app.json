@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "CoPay",
-    "slug": "kupay",
-    "scheme": "com.kupay.mobile",
+    "slug": "copay",
+    "scheme": "com.copay.mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kupay.mobile",
+      "bundleIdentifier": "com.copay.mobile",
       "associatedDomains": [
         "applinks:kupa.pro"
       ],
@@ -33,7 +33,7 @@
       }
     },
     "android": {
-      "package": "com.kupay.mobile",
+      "package": "com.copay.mobile",
       "label": "CoPay",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -125,8 +125,8 @@
       [
         "@sentry/react-native/expo",
         {
-          "organization": "kupay-hb",
-          "project": "kupa-mobile-prod"
+          "organization": "copay-hb",
+          "project": "copay-mobile-prod"
         }
       ]
     ],

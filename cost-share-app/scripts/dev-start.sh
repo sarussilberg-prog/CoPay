@@ -340,7 +340,7 @@ open_web_browser() {
 
 ios_dev_build_installed() {
   xcrun simctl list devices booted 2>/dev/null | grep -q Booted \
-    && xcrun simctl get_app_container booted com.kupay.mobile data 2>/dev/null
+    && xcrun simctl get_app_container booted com.copay.mobile data 2>/dev/null
 }
 
 warn_missing_mobile_builds() {

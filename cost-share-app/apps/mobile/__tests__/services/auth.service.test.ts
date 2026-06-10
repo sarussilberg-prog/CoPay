@@ -93,7 +93,7 @@ describe('auth.service', () => {
     beforeEach(async () => {
         jest.clearAllMocks();
         setPlatformOs('ios');
-        mockMakeRedirectUri.mockReturnValue('com.kupay.mobile://auth/callback');
+        mockMakeRedirectUri.mockReturnValue('com.copay.mobile://auth/callback');
         mockExchangeCodeForSession.mockResolvedValue({ error: null });
         mockSignOut.mockResolvedValue({ error: null });
         mockClearStaleAuthSession.mockResolvedValue(undefined);
@@ -116,7 +116,7 @@ describe('auth.service', () => {
         });
 
         it('uses native scheme redirect on dev/production builds', () => {
-            expect(getAuthRedirectUri()).toBe('com.kupay.mobile://auth/callback');
+            expect(getAuthRedirectUri()).toBe('com.copay.mobile://auth/callback');
             expect(mockMakeRedirectUri).not.toHaveBeenCalled();
         });
 
@@ -146,16 +146,16 @@ describe('auth.service', () => {
 
     describe('isAuthCallbackUrl', () => {
         it('detects OAuth callback URLs', () => {
-            expect(isAuthCallbackUrl('com.kupay.mobile://auth/callback?code=abc')).toBe(true);
+            expect(isAuthCallbackUrl('com.copay.mobile://auth/callback?code=abc')).toBe(true);
             expect(isAuthCallbackUrl('https://kupa.pro/?code=abc')).toBe(true);
             expect(isAuthCallbackUrl('https://kupa.pro/auth/callback?code=abc')).toBe(true);
-            expect(isAuthCallbackUrl('com.kupay.mobile://invite/i/token')).toBe(false);
+            expect(isAuthCallbackUrl('com.copay.mobile://invite/i/token')).toBe(false);
         });
     });
 
     describe('handleAuthRedirectUrl', () => {
         it('exchanges auth code even when a session already exists', async () => {
-            const result = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=new-code');
+            const result = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=new-code');
 
             expect(mockExchangeCodeForSession).toHaveBeenCalledWith('new-code');
             expect(result.error).toBeNull();
@@ -166,8 +166,8 @@ describe('auth.service', () => {
                 () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
             );
 
-            const first = handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=same');
-            const second = handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=same');
+            const first = handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=same');
+            const second = handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=same');
 
             await Promise.all([first, second]);
             expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
@@ -176,10 +176,10 @@ describe('auth.service', () => {
         it('returns the cached result on later calls with the same code', async () => {
             mockExchangeCodeForSession.mockResolvedValueOnce({ error: null });
 
-            const first = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=cached');
+            const first = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=cached');
             // Even after the original promise settles, a delayed deep-link
             // delivery hits the cache instead of re-exchanging the code.
-            const second = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=cached');
+            const second = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=cached');
 
             expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
             expect(first.error).toBeNull();
@@ -189,7 +189,7 @@ describe('auth.service', () => {
         it('returns account_deleted when the profile is deactivated after OAuth exchange', async () => {
             mockIsAuthSessionAllowed.mockResolvedValueOnce(false);
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=deleted-user');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=deleted-user');
 
             expect(error?.code).toBe('account_deleted');
             expect(mockIsAuthSessionAllowed).toHaveBeenCalled();
@@ -202,7 +202,7 @@ describe('auth.service', () => {
                 error: { message: 'AuthApiError: email_was_deleted' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=abc');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=abc');
 
             expect(error).not.toBeNull();
             expect(error!.code).toBe('account_deleted');
@@ -214,7 +214,7 @@ describe('auth.service', () => {
                 error: { message: 'User is banned' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=banned');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=banned');
 
             expect(error?.code).toBe('account_deleted');
         });
@@ -224,7 +224,7 @@ describe('auth.service', () => {
                 error: { message: 'invalid_grant' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=xyz');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=xyz');
 
             expect(error?.code).toBe('generic');
             expect(error?.message).toContain('invalid_grant');
@@ -240,14 +240,14 @@ describe('auth.service', () => {
             });
             mockOpenOAuthSession.mockResolvedValue({
                 type: 'success',
-                url: 'com.kupay.mobile://auth/callback?code=abc',
+                url: 'com.copay.mobile://auth/callback?code=abc',
             });
 
             const result = await signInWithGoogle();
 
             expect(mockOpenOAuthSession).toHaveBeenCalledWith(
                 'https://accounts.google.com/o/oauth2/auth',
-                'com.kupay.mobile://auth/callback',
+                'com.copay.mobile://auth/callback',
             );
             expect(mockOpenAuthSessionAsync).not.toHaveBeenCalled();
             expect(result.error).toBeNull();
@@ -261,14 +261,14 @@ describe('auth.service', () => {
             });
             mockOpenOAuthSession.mockResolvedValue({
                 type: 'success',
-                url: 'com.kupay.mobile://auth/callback?code=abc',
+                url: 'com.copay.mobile://auth/callback?code=abc',
             });
 
             const result = await signInWithGoogle();
 
             expect(mockOpenOAuthSession).toHaveBeenCalledWith(
                 'https://accounts.google.com/o/oauth2/auth',
-                'com.kupay.mobile://auth/callback',
+                'com.copay.mobile://auth/callback',
             );
             expect(result.error).toBeNull();
         });
@@ -287,7 +287,7 @@ describe('auth.service', () => {
             const result = await signInWithGoogle();
 
             expect(result.error?.code).toBe('generic');
-            expect(result.error?.message).toContain('com.kupay.mobile://auth/callback');
+            expect(result.error?.message).toContain('com.copay.mobile://auth/callback');
             expect(result.error?.message).toContain('Redirect URLs');
             expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
         });

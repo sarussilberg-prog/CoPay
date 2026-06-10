@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Open Kupay dev client on a connected physical iPhone with the LAN Metro URL.
+# Open CoPay dev client on a connected physical iPhone with the LAN Metro URL.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PORT="${EXPO_METRO_PORT:-8081}"
 METRO_URL="$("$SCRIPT_DIR/get-metro-lan-url.sh")"
 METRO_STATUS="http://127.0.0.1:${PORT}/status"
-SCHEME="com.kupay.mobile"
+SCHEME="com.copay.mobile"
 ENCODED_METRO_URL="$(python3 -c "import urllib.parse; print(urllib.parse.quote('${METRO_URL}', safe=''))")"
 DEV_CLIENT_URL="${SCHEME}://expo-development-client/?url=${ENCODED_METRO_URL}"
 
@@ -30,7 +30,7 @@ if [[ -z "$DEVICE_LINE" ]]; then
 fi
 UDID="$(echo "$DEVICE_LINE" | sed -n 's/.*(\([0-9A-Fa-f-]*\)).*/\1/p')"
 
-echo "Opening Kupay on device with Metro at: ${METRO_URL}"
+echo "Opening CoPay on device with Metro at: ${METRO_URL}"
 echo "Or on iPhone: tap Enter URL manually → ${METRO_URL}"
 
 if xcrun devicectl device process launch --device "$UDID" --payload-url "$DEV_CLIENT_URL" 2>/dev/null; then
@@ -39,5 +39,5 @@ fi
 
 # Fallback: show URL for manual entry in dev client
 echo ""
-echo "Could not auto-open. On iPhone in Kupay dev client:"
+echo "Could not auto-open. On iPhone in CoPay dev client:"
 echo "  Enter URL manually → ${METRO_URL}"
