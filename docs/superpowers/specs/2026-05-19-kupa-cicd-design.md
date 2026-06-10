@@ -1,10 +1,10 @@
-# Kupay CI/CD Design Spec
+# CoPay CI/CD Design Spec
 
 **Status:** Approved for implementation planning  
 **Date:** 2026-05-19  
-**Repo:** `sarussilberg-prog/Kupay-MVP-0.1`  
+**Repo:** `sarussilberg-prog/CoPay-MVP-0.1`  
 **Monorepo root:** `cost-share-app/`  
-**Git root:** `Kupay-MVP-0.1/` (workflows live at `.github/workflows/`)
+**Git root:** `CoPay-MVP-0.1/` (workflows live at `.github/workflows/`)
 
 ## Summary
 
@@ -234,7 +234,7 @@ Per-profile env: `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_SUPABASE_*`
 
 ### Supabase
 
-- Two projects: **kupa-staging**, **kupa-prod**
+- Two projects: **copay-staging**, **copay-prod**
 - CD order: **migrations → API → clients**
 - GHA secrets per GitHub Environment (`staging`, `production`)
 - No service role in fork PR workflows

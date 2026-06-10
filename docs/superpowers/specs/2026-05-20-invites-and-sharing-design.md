@@ -8,7 +8,7 @@ Status: **approved by user, not yet implemented**
 
 Add a link-based invitation layer on top of the existing friends system so users can:
 
-1. **Invite anyone to Kupay as a friend** via a shareable link (WhatsApp/SMS/Telegram/etc.) — even people who don't have the app yet. Sign-up through the link auto-creates the friendship.
+1. **Invite anyone to CoPay as a friend** via a shareable link (WhatsApp/SMS/Telegram/etc.) — even people who don't have the app yet. Sign-up through the link auto-creates the friendship.
 2. **Invite anyone to a specific group** via a shareable link. Sign-up or sign-in through the link auto-adds the user to `group_members` (and the existing auto-friend trigger handles friendships).
 3. **Surface the "send link" affordance everywhere people search for or pick friends**, so the product feels social-app smooth.
 
@@ -75,7 +75,7 @@ Three layers:
 User taps https://kupa.pro/g/A7XzB2K9 in WhatsApp
    │
    ├─ App installed + iOS/Android recognize domain as Universal Link
-   │     → Kupay opens; token passed to deepLinks handler
+   │     → CoPay opens; token passed to deepLinks handler
    │       → calls RPC redeem_group_invite(token)
    │       → navigates to GroupDetailScreen for joined group
    │
@@ -215,8 +215,8 @@ Uses `expo-sharing` (already a project dependency).
 
 Pre-filled share-sheet copy (from i18n; placeholders):
 
-- Friend: `"היי! בוא נחלק הוצאות יחד דרך Kupay. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {url}"`
-- Group: `"הוספתי אותך לקבוצת '{groupName}' ב-Kupay. הצטרף דרך הקישור: {url}"`
+- Friend: `"היי! בוא נחלק הוצאות יחד דרך CoPay. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {url}"`
+- Group: `"הוספתי אותך לקבוצת '{groupName}' ב-CoPay. הצטרף דרך הקישור: {url}"`
 
 ### Hook: `useInviteLink`
 
@@ -257,7 +257,7 @@ Renders:
 
 New "Invite a friend" block at the top of the screen:
 
-- Row "👥 Invite a friend to Kupay" → directly opens the share sheet.
+- Row "👥 Invite a friend to CoPay" → directly opens the share sheet.
 - `<InviteLinkBlock mode="expanded" kind="friend" />` underneath — shows the URL, Copy, Share, Rotate.
 
 #### `EditProfileScreen`
@@ -279,7 +279,7 @@ Tap → directly opens share sheet (no intermediate screen).
 
 Two affordances:
 
-- **Empty results state** (no matches after search): show a prominent "Invite {query} to Kupay" button. If the query parses as a name, embed the name; otherwise generic "Invite a new friend".
+- **Empty results state** (no matches after search): show a prominent "Invite {query} to CoPay" button. If the query parses as a name, embed the name; otherwise generic "Invite a new friend".
 - **Persistent footer** (any search state): subtle bottom-of-list row "Didn't find who you're looking for? — Invite a new friend by link".
 
 Both call `shareFriendInvite()`.
@@ -389,16 +389,16 @@ GET /g/B8YcK3M2
   └─ Return HTML with:
        • OG tags (rich preview in WhatsApp)
        • Body content (inviter / group preview)
-       • JS that attempts `com.kupay.mobile://invite/g/<token>` as fallback
+       • JS that attempts `com.copay.mobile://invite/g/<token>` as fallback
        • Platform-specific CTA (App Store / Play / "mobile only")
 ```
 
 ### HTML content — friend invite
 
 - Inviter's avatar (if available).
-- Heading: "{inviterName} wants to share expenses with you on Kupay".
-- Short subheading explaining what Kupay is.
-- Primary CTA: "Open Kupay" (deep-link try).
+- Heading: "{inviterName} wants to share expenses with you on CoPay".
+- Short subheading explaining what CoPay is.
+- Primary CTA: "Open CoPay" (deep-link try).
 - Platform CTA: "Download from App Store" or "Download from Google Play".
 - Footer: "After installing, return to this link".
 
@@ -429,7 +429,7 @@ Static images only in v1 (dynamic OG image generation is technical debt).
   "applinks": {
     "apps": [],
     "details": [{
-      "appID": "<TEAM_ID>.com.kupay.mobile",
+      "appID": "<TEAM_ID>.com.copay.mobile",
       "paths": ["/i/*", "/g/*"]
     }]
   }
@@ -445,7 +445,7 @@ Served with `Content-Type: application/json`, no file extension.
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "com.kupay.mobile",
+    "package_name": "com.copay.mobile",
     "sha256_cert_fingerprints": ["<SHA256_OF_RELEASE_KEY>"]
   }
 }]
@@ -487,13 +487,13 @@ Edge Function uses `createClient` with the anon key. The preview RPC is `SECURIT
 ```json
 {
   "expo": {
-    "scheme": "com.kupay.mobile",
+    "scheme": "com.copay.mobile",
     "ios": {
-      "bundleIdentifier": "com.kupay.mobile",
+      "bundleIdentifier": "com.copay.mobile",
       "associatedDomains": ["applinks:kupa.pro"]
     },
     "android": {
-      "package": "com.kupay.mobile",
+      "package": "com.copay.mobile",
       "intentFilters": [{
         "action": "VIEW",
         "autoVerify": true,
@@ -530,8 +530,8 @@ async function handleInviteLink(
 `parseIncomingUrl` matches:
 - `https://kupa.pro/i/<token>` → `friend`
 - `https://kupa.pro/g/<token>` → `group`
-- `com.kupay.mobile://invite/i/<token>` → `friend` (custom-scheme fallback)
-- `com.kupay.mobile://invite/g/<token>` → `group`
+- `com.copay.mobile://invite/i/<token>` → `friend` (custom-scheme fallback)
+- `com.copay.mobile://invite/g/<token>` → `group`
 - Matches `isAuthCallbackUrl` → `auth`
 - Otherwise → `unknown`
 

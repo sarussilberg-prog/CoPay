@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupay · ActivityScreen — chronological feed across groups (expense, message, settlement).
+// CoPay · ActivityScreen — chronological feed across groups (expense, message, settlement).
 
 function ActivityScreen({ activity, members, groups }) {
   const memberById = React.useMemo(() => Object.fromEntries(members.map(m => [m.id, m])), [members]);

@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppState, type AppStateStatus, LogBox, View, Platform } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
+import * as SplashScreen from 'expo-splash-screen';
 import * as Sentry from '@sentry/react-native';
 import { applySentryUser, applySentryLanguage } from './lib/sentryIdentity';
 import Toast from 'react-native-toast-message';
@@ -42,6 +43,9 @@ import './global.css';
 
 // Benign when a persisted session was revoked server-side (global sign-out, token rotation, etc.).
 LogBox.ignoreLogs([/Invalid Refresh Token/i, /Refresh Token Not Found/i]);
+
+// Keep splash visible until init finishes; we hide it explicitly below.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // On web, frame the app in a phone-shaped column so mobile screens don't stretch across the browser.
 function WebFrame({ children }: { children: React.ReactNode }) {
@@ -221,6 +225,10 @@ function App() {
       authSubscription?.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (isReady) SplashScreen.hideAsync().catch(() => {});
+  }, [isReady]);
 
   useEffect(() => {
     const unsubscribe = wireNetworkStatusToOnlineManager();

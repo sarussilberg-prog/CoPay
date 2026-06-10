@@ -1,5 +1,5 @@
 /* =====================================================================
-   Kupay — Colors & Type tokens
+   CoPay — Colors & Type tokens
    Source of truth: cost-share-app/apps/mobile/theme/* + tailwind.config.js
    ===================================================================== */
 
@@ -7,8 +7,8 @@
 
 :root {
     /* ---------- BRAND -------------------------------------------------- */
-    /* "kupa" wordmark renders in --primary-dark; logo art is deep navy. */
-    --brand-name: "kupa";
+    /* "copay" wordmark renders in --primary-dark; logo art is deep navy. */
+    --brand-name: "copay";
     --brand-wordmark-color: #3B82F6; /* primary-dark — see AppBrandTitle.tsx */
     --brand-logo-navy: #1E3A8A;      /* deep navy used in logo.png */
 
@@ -157,7 +157,7 @@
 /* =====================================================================
    Semantic role styles — apply to plain HTML inside previews / kits.
    These mirror the most common NativeWind class combinations used in
-   the Kupay codebase (Text className="text-2xl font-bold …" → h2, etc.).
+   the CoPay codebase (Text className="text-2xl font-bold …" → h2, etc.).
    ===================================================================== */
 
 html {
@@ -170,7 +170,7 @@ html {
     text-rendering: optimizeLegibility;
 }
 
-/* Display — used for the Kupay wordmark only. */
+/* Display — used for the CoPay wordmark only. */
 .brand-wordmark,
 .text-brand {
     font-family: var(--font-sans);

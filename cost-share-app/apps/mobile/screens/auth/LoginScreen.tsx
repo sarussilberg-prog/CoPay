@@ -6,7 +6,7 @@
 
 import { Text } from '../../components/AppText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { platformAlert } from '../../lib/platformAlert';
 import { AppIcon } from '../../components/AppIcon';
@@ -15,11 +15,12 @@ import { AppBrandTitle } from '../../components/AppBrandTitle';
 import { DeletedAccountNoticeDialog } from '../../components/DeletedAccountNoticeDialog';
 import { LoginFeatureChips } from '../../components/auth/LoginFeatureChips';
 import { LoginGoogleButton } from '../../components/auth/LoginGoogleButton';
+import { LoginAppleButton } from '../../components/auth/LoginAppleButton';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useLoading } from '../../hooks/useLoading';
-import { signInWithGoogle } from '../../services/auth.service';
+import { signInWithApple, signInWithGoogle } from '../../services/auth.service';
 import { showAppToast } from '../../lib/appToast';
 import { handleError } from '../../lib/handleError';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
@@ -31,6 +32,7 @@ import {
     consumeDeactivationNoticePending,
 } from '../../lib/deactivationNoticeStorage';
 import { getSupportEmail, openSupportContact } from '../../lib/openMailto';
+import appVersion from '../../version.json';
 
 export function LoginScreen() {
     const { t } = useTranslation();
@@ -107,6 +109,31 @@ export function LoginScreen() {
         }
     };
 
+    const handleAppleSignIn = async () => {
+        startLoading();
+        try {
+            const { error } = await signInWithApple();
+            if (error) {
+                if (error.code === 'account_deleted') {
+                    showDeletedAccountNotice();
+                    return;
+                }
+                handleError(error, {
+                    toast: { titleKey: 'auth.signInError', message: error.message },
+                    tags: { service: 'auth', op: 'signInWithApple' },
+                    extra: { errorCode: error.code },
+                });
+            }
+        } catch (error) {
+            handleError(error, {
+                toast: { titleKey: 'auth.signInError' },
+                tags: { service: 'auth', op: 'signInWithApple' },
+            });
+        } finally {
+            stopLoading();
+        }
+    };
+
     return (
         <View style={styles.root} testID="login-screen">
             <LinearGradient
@@ -143,23 +170,42 @@ export function LoginScreen() {
                         >
                             {t('auth.tagline')}
                         </Text>
-                        <Text
-                            className="text-[15px] leading-relaxed text-gray-500 text-center mt-3 px-1"
-                            style={centeredTextStyle}
-                        >
-                            {t('auth.description')}
-                        </Text>
                         <LoginFeatureChips />
                     </View>
                 </View>
 
                 <View className="px-7 pb-2">
-                    <LoginGoogleButton
-                        title={t('auth.signInWithGoogle')}
-                        onPress={handleSignIn}
-                        loading={isLoading}
-                        disabled={isLoading}
-                    />
+                    {Platform.OS === 'ios' ? (
+                        <>
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                disabled={isLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isLoading}
+                                disabled={isLoading}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isLoading}
+                                disabled={isLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                disabled={isLoading}
+                            />
+                        </>
+                    )}
                     {isLoading ? (
                         <Text
                             className="text-sm text-gray-400 mt-3 text-center"
@@ -168,6 +214,9 @@ export function LoginScreen() {
                             {t('auth.signingIn')}
                         </Text>
                     ) : null}
+                    <Text className="text-[11px] text-gray-300 text-center mt-4">
+                        v{appVersion.version}
+                    </Text>
                 </View>
             </SafeAreaView>
 

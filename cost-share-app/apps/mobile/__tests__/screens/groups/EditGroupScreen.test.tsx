@@ -102,10 +102,10 @@ describe('EditGroupScreen', () => {
     it('calls updateGroup with the new values', async () => {
         mockGetGroup.mockResolvedValueOnce(existingGroup);
         mockUpdateGroup.mockResolvedValue({ ...existingGroup, name: 'New' });
-        const { findByDisplayValue, findByText } = render(<EditGroupScreen />);
+        const { findByDisplayValue, findByTestId } = render(<EditGroupScreen />);
         const nameInput = await findByDisplayValue('Old Name');
         fireEvent.changeText(nameInput, 'New');
-        fireEvent.press(await findByText('common.save'));
+        fireEvent.press(await findByTestId('create-group-submit'));
         await waitFor(() =>
             expect(mockUpdateGroup).toHaveBeenCalledWith(
                 'g1',
@@ -125,9 +125,9 @@ describe('EditGroupScreen', () => {
             assets: [{ uri: 'file:///picked.jpg' }],
         });
 
-        const { findByText, findByTestId } = render(<EditGroupScreen />);
+        const { findByTestId } = render(<EditGroupScreen />);
         fireEvent.press(await findByTestId('group-form-cover'));
-        fireEvent.press(await findByText('common.save'));
+        fireEvent.press(await findByTestId('create-group-submit'));
 
         await waitFor(() => expect(mockUploadGroupImage).toHaveBeenCalledWith('g1', 'file:///picked.jpg'));
         expect(mockUpdateGroup).toHaveBeenNthCalledWith(
@@ -155,10 +155,10 @@ describe('EditGroupScreen', () => {
             assets: [{ uri: 'file:///picked.jpg' }],
         });
 
-        const { findByDisplayValue, findByText, findByTestId } = render(<EditGroupScreen />);
+        const { findByDisplayValue, findByTestId } = render(<EditGroupScreen />);
         fireEvent.press(await findByTestId('group-form-cover'));
         fireEvent.changeText(await findByDisplayValue('Old Name'), 'New Name');
-        fireEvent.press(await findByText('common.save'));
+        fireEvent.press(await findByTestId('create-group-submit'));
 
         await waitFor(() => expect(mockUploadGroupImage).toHaveBeenCalled());
         expect(mockUpdateGroup).not.toHaveBeenCalled();

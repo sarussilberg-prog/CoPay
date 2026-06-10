@@ -1,4 +1,4 @@
-# Kupay — instructions for AI agents
+# CoPay — instructions for AI agents
 
 ## Supabase (read first)
 

@@ -9,8 +9,8 @@
 
 | Environment | Git branch | Supabase project name | Project ref | API URL |
 |-------------|------------|----------------------|-------------|---------|
-| **Development** | `dev` (and feature branches → `dev`) | Kupay - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
-| **Production** | `main` | Kupay - production | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
+| **Development** | `dev` (and feature branches → `dev`) | CoPay - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
+| **Production** | `main` | CoPay - production | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
 
 **Rule:** If your current git branch is `main`, you are on **production**. Any other branch used for integration is **development**.
 
@@ -57,8 +57,8 @@
 
 | Vercel project | Branch | Supabase | URL |
 |----------------|--------|----------|-----|
-| **kupa-dev** | `dev` (Preview only; Ignored Build Step skips other branches) | `drxfbicunusmipdgbgdk` | `kupa-s1lb.vercel.app` |
-| **kupa-prod** | `main` (Production only) | `jfqxjjjbpxbwwvoygahu` | `kupa.pro` |
+| **copay-dev** | `dev` (Preview only; Ignored Build Step skips other branches) | `drxfbicunusmipdgbgdk` | `kupa-s1lb.vercel.app` |
+| **copay-prod** | `main` (Production only) | `jfqxjjjbpxbwwvoygahu` | `kupa.pro` |
 
 Legacy single-project mapping (if ever merged back to one Vercel project):
 
@@ -72,8 +72,8 @@ Legacy single-project mapping (if ever merged back to one Vercel project):
 
 Web build script (`apps/web/scripts/build-app-web.sh`) selects defaults from:
 
-- **kupa-dev** project id → always `supabase-public.development.defaults`
-- **kupa-prod** / `VERCEL_ENV=production` → `supabase-public.production.defaults`
+- **copay-dev** project id → always `supabase-public.development.defaults`
+- **copay-prod** / `VERCEL_ENV=production` → `supabase-public.production.defaults`
 - otherwise → `supabase-public.development.defaults`
 
 ---
@@ -156,6 +156,16 @@ Do **not** use dated names like `2026-05-26-my-change.sql` — they are skipped 
 - `npm run supabase:fix` (loose `.sql` patches under `supabase/`) — run manually when needed; not part of `db push`
 
 Only files in `supabase/migrations/` are applied. Historical schema applied via MCP without a committed migration file is **not** replayed on production; add a matching migration file or bootstrap prod once.
+
+### 2026-06-10 — production drift incident & reconciliation
+
+Production (`jfqxjjjbpxbwwvoygahu`) had silently desynced: its migration history listed everything through `20260602163000` as applied, but several objects were missing (group archive, admin metrics, optimized `get_user_dashboard`), and the never-migrated one-off files `invite-links.sql` / `settle-up-v1.sql` had never run there at all. Net effect: group + friend invite links, Settle Up, and group archive were broken in prod.
+
+Root cause: `scripts/supabase-ci-db-push.sh` had a `mark_local_applied` step that ran `migration repair --status applied` for **every** local migration before `db push`, marking migrations "applied" without executing their SQL. That step was removed on 2026-06-10.
+
+Fix: `migrations/20260610120000_reconcile_prod_drift.sql` re-applies all drifted DDL idempotently (folds in `invite-links.sql` + `settle-up-v1.sql` + the bodies of `20260602135000/140000/163000`). It is a no-op on dev (already applied + verified there) and a clean install on prod via the next `dev → main` merge.
+
+**Lesson:** trust actual objects, not `migration list`. Verify with `pg_proc` / `information_schema.columns`, not the history table. All migrations must be idempotent so `db push` is safe.
 
 ---
 

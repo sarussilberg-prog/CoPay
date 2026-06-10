@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.copay.mobile",
+      "usesAppleSignIn": true,
       "associatedDomains": [
         "applinks:kupa.pro"
       ],
@@ -29,14 +30,15 @@
           "bit",
           "paybox",
           "PayBox"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.copay.mobile",
       "label": "CoPay",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -122,18 +124,18 @@
       ],
       "expo-localization",
       "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       [
         "@sentry/react-native/expo",
         {
           "organization": "copay-hb",
           "project": "copay-mobile-prod"
         }
-      ]
+      ],
+      "./plugins/withFastStackTransitions"
     ],
     "extra": {
-      "eas": {
-        "projectId": "eb2614a0-ce69-402b-9cbb-668108a9ef27"
-      }
+      "eas": {}
     },
     "owner": "saussilberg"
   }

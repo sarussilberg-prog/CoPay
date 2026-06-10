@@ -1,4 +1,4 @@
-# Kupay
+# CoPay
 
 Cost-sharing app monorepo (mobile, web, Supabase).
 

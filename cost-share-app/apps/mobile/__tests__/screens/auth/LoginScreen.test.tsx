@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 
 jest.mock('../../../services/auth.service', () => ({
     signInWithGoogle: jest.fn(),
+    signInWithApple: jest.fn(),
 }));
 
 jest.mock('../../../hooks/useChangeAppLanguage', () => ({
@@ -58,7 +59,6 @@ describe('LoginScreen', () => {
         expect(getByTestId('app-logo')).toBeTruthy();
         expect(getByText('CoPay')).toBeTruthy();
         expect(getByText('auth.tagline')).toBeTruthy();
-        expect(getByText('auth.description')).toBeTruthy();
         expect(getByTestId('login-feature-chips')).toBeTruthy();
     });
 

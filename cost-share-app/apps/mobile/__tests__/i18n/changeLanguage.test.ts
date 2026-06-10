@@ -16,6 +16,9 @@ jest.mock('react-native', () => ({
         forceRTL: jest.fn(),
         isRTL: false,
     },
+    DevSettings: {
+        reload: jest.fn(),
+    },
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

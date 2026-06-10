@@ -14,7 +14,7 @@ Replace the current minimal, hard-coded Terms of Service and Privacy Policy stri
 - **Server-driven** — content lives in Supabase, so the partnership can update legal language without shipping a new mobile release.
 - **Presented natively** inside the app with a modern bottom-sheet UI, Markdown rendering, offline cache, and full RTL support.
 
-This is required before Kupay's first public release.
+This is required before CoPay's first public release.
 
 ### Legal Disclaimer
 
@@ -24,7 +24,7 @@ The documents drafted as part of this work are professional templates based on c
 
 ## 2. Context
 
-- **App:** Kupay — mobile expense-sharing app (React Native + Expo SDK 54). The app **tracks balances** between users; it does **not** process real payments.
+- **App:** CoPay — mobile expense-sharing app (React Native + Expo SDK 54). The app **tracks balances** between users; it does **not** process real payments.
 - **Backend:** Supabase only (Postgres + Auth + Storage + RLS).
 - **Authentication:** Google OAuth via Supabase. No email/password, no magic link.
 - **Audience:** Global, all locales. UI strings localized in English + Hebrew. Minimum user age: **16**.
@@ -222,7 +222,7 @@ The component fetches the document itself via `useLegalDocument(slug)` — no ne
 
 - **Sheet container:** matches the existing `DeleteAccountWarningSheet` pattern for visual consistency. Height: 92% of screen, rounded-top, slide-up animation with spring.
 - **Header (sticky):** title from doc, meta line `Updated: {effectiveDate} · v{version}`, close (X) button.
-- **Body:** `ScrollView` rendering Markdown via `react-native-markdown-display` (new dependency). Custom styles wired to the Kupay palette (NativeWind tokens).
+- **Body:** `ScrollView` rendering Markdown via `react-native-markdown-display` (new dependency). Custom styles wired to the CoPay palette (NativeWind tokens).
 - **Read progress:** thin bar above CTA that fills with scroll position.
 - **CTA (sticky bottom):** primary button "I understand" / "הבנתי" that calls `onClose`.
 - **Loading state:** three skeleton shimmer rows (no spinner).
@@ -272,14 +272,14 @@ In `i18n/locales/{en,he}.json`:
 1. Acceptance of Terms (incl. minimum age 16)
 2. Description of the Service (balance tracking only; not a financial institution; does not process payments)
 3. Your Account (Google OAuth; accuracy of info; account responsibility; no transfer)
-4. User-Generated Content (groups, expenses, receipts; limited license to Kupay to operate the service)
+4. User-Generated Content (groups, expenses, receipts; limited license to CoPay to operate the service)
 5. Acceptable Use (no fraud, scraping, harassment, spam, reverse engineering, etc.)
 6. Invite Links & Groups (sharing implications; rotating invites; user responsibility)
 7. Third-Party Services (Google Sign-In, app stores, Supabase — subject to their terms)
 8. Intellectual Property (all rights reserved by the Partnership; limited revocable license to users)
 9. Future Paid Features (premium subscriptions via Apple/Google IAP; auto-renewal disclosures; cancellation per store rules)
 10. Future Advertising (placeholder; details added in Privacy Policy when launched)
-11. Termination & Account Closure (user-initiated and Kupay-initiated; consequences; soft-delete behaviour cross-referenced)
+11. Termination & Account Closure (user-initiated and CoPay-initiated; consequences; soft-delete behaviour cross-referenced)
 12. Disclaimers (AS-IS; no warranty of calculation accuracy; not a party to monetary transactions between users)
 13. Limitation of Liability (capped at the minimum allowed by law)
 14. Indemnification

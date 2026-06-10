@@ -13,7 +13,7 @@ import { rtlTextClassName, useRtlLayout } from '../../hooks/useRtlLayout';
 const SUGGESTION_KEYS = [
     'onboarding.create.suggestions.trip',
     'onboarding.create.suggestions.flat',
-    'onboarding.create.suggestions.games',
+    'onboarding.create.suggestions.bbq',
     'onboarding.create.suggestions.friday',
 ] as const;
 

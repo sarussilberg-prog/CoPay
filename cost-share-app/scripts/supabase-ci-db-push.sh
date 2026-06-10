@@ -7,22 +7,15 @@ cd "$ROOT_DIR"
 
 DB_URL="$(bash scripts/supabase-migration-db-url.sh)"
 
-local_versions() {
-  local f base
-  for f in supabase/migrations/*.sql; do
-    [[ -f "$f" ]] || continue
-    base="$(basename "$f" .sql)"
-    echo "${base%%_*}"
-  done
-}
-
-mark_local_applied() {
-  local v
-  for v in $(local_versions); do
-    echo "▶ Marking migration $v as applied (if needed) ..."
-    supabase migration repair --status applied "$v" --db-url "$DB_URL" --yes 2>/dev/null || true
-  done
-}
+# NOTE (2026-06-10): a previous `mark_local_applied` step ran
+# `supabase migration repair --status applied` for EVERY local migration BEFORE
+# pushing. That marked migrations as "applied" in the remote history WITHOUT
+# running their SQL, so `db push` then had nothing to apply. Result: production
+# silently desynced — objects (group archive, admin metrics, optimized dashboard)
+# were missing while `migration list` claimed they were applied. It was removed.
+# Migrations MUST be idempotent (CREATE OR REPLACE / IF NOT EXISTS / DROP IF
+# EXISTS) so `db push` can run them safely even if some objects already exist.
+# See migrations/20260610120000_reconcile_prod_drift.sql.
 
 revert_remote_only() {
   local out
@@ -43,7 +36,6 @@ revert_remote_only() {
 }
 
 revert_remote_only || true
-mark_local_applied
 
 echo "▶ Pushing pending migrations ..."
 supabase db push --db-url "$DB_URL" --yes

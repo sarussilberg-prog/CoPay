@@ -36,6 +36,7 @@
     "auth": {
         "appName": "CoPay",
         "signInWithGoogle": "Continue with Google",
+        "signInWithApple": "Continue with Apple",
         "subtitle": "Split expenses with friends",
         "tagline": "Your shared kitty with friends",
         "description": "Groups, expenses, and settle-up — no spreadsheets, no WhatsApp math.",
@@ -52,6 +53,7 @@
     "onboarding": {
         "skip": "Skip",
         "next": "Next",
+        "back": "Back",
         "welcome": {
             "brand": "CoPay",
             "tagline": "Split expenses with your crew.\nNo spreadsheets, no group-chat math.",
@@ -66,25 +68,21 @@
         },
         "feature1": {
             "eyebrow": "Split with who matters",
-            "title": "Pick who pays — not the whole group",
-            "body": "On every expense, choose who's in the split: gas for three, dinner without the friend who bailed. Anyone not selected doesn't pay and isn't charged for it."
+            "title": "Pick who pays — not the whole group"
         },
         "feature2": {
             "eyebrow": "Invite your crew",
-            "title": "Send a link — they're in",
-            "body": "Contacts, iMessage, or a group link. No need to explain the app — they tap and join the group."
+            "title": "Send a link — they're in"
         },
         "feature3": {
             "eyebrow": "No guesswork",
             "title": "See who owes whom — no mental math",
-            "body": "Balances update on their own. No more \"hang on, I'll Venmo you after I do the math\" — everyone in the group sees the same numbers.",
             "balanceLabel": "In your favor",
             "balanceAmount": "+ $38"
         },
         "feature4": {
             "eyebrow": "Settle up",
-            "title": "One payment — done",
-            "body": "Instead of a ping-pong of Venmo requests, we find the minimum: who pays whom and how much. One tap — and you're square."
+            "title": "One payment — done"
         },
         "mockup": {
             "groupName": "Beach weekend",
@@ -112,21 +110,16 @@
             "header": "Your first group",
             "hero": {
                 "eyebrow": "Last step",
-                "title": "Create your first group and start splitting expenses with friends",
-                "subtitle": "Name, type, and currency. Friends can join after you open it.",
-                "checkName": "Group name",
-                "checkDefaults": "Type & currency (defaults)",
-                "checkMembers": "Invite members",
-                "optional": "Optional",
-                "win1": "Splits calculate for you",
-                "win2": "Type & currency — editable",
-                "win3": "Invite via link or text"
+                "titleTodo": "Name it and you're off",
+                "subtitleTodo": "Type & currency are ready — change anything later.",
+                "titleReady": "Nice, your kupa's ready!",
+                "subtitleReady": "Open it now, or add a photo and friends."
             },
             "suggestions": {
                 "label": "Name ideas",
                 "trip": "Beach weekend",
                 "flat": "Roommates",
-                "games": "Game night",
+                "bbq": "BBQ",
                 "friday": "Friendsgiving"
             },
             "membersHint": "Invite now — or after the group is open.",
@@ -135,7 +128,15 @@
             "skipTitle": "Skip creating a group?",
             "skipMessage": "No group means no expenses. You can open one anytime from Groups.",
             "skipConfirm": "Skip",
-            "findFriendsAfterCreate": "After opening the group — link, text, or contacts."
+            "findFriendsAfterCreate": "After opening the group — link, text, or contacts.",
+            "steps": {
+                "optional": "Optional",
+                "name": { "title": "Kupa name", "helper": "Pick a name everyone recognizes (e.g. \"Beach trip\" or \"Apt 2025\")." },
+                "category": { "title": "Category", "helper": "The type sets the colors — you can change it later." },
+                "currency": { "title": "Currency" },
+                "image": { "title": "Cover image", "summaryDefault": "Default", "summarySet": "Image selected" },
+                "members": { "title": "Invite members", "summarySuffix": "members" }
+            }
         }
     },
     "groups": {
@@ -890,7 +891,6 @@
         "closedGroups": "Settled groups",
         "activeGroups": "Unsettled groups",
         "friends": "Friends",
-        "friendsCount": "{{count}} friends",
         "loadError": "Failed to load dashboard",
         "settled": "Settled up",
         "owesYou": "owes you",

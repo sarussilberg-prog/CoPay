@@ -6,7 +6,7 @@ Status: **brainstormed; pending implementation plan**
 
 ## Goal
 
-Build an end-to-end mobile push + in-app notifications system for Kupay, so users:
+Build an end-to-end mobile push + in-app notifications system for CoPay, so users:
 
 1. Receive a high-quality push notification on iOS/Android when something relevant happens in a group they belong to (a friend added an expense, settled up, joined or left the group).
 2. See a persistent inbox inside the app with the full notification history, even for events that arrived while the device was offline or the user was inside the app.
@@ -99,7 +99,7 @@ Web and email channels are out of scope; mobile only.
 | RPCs wrapping business writes | DB | Atomic INSERT/UPDATE/DELETE + fanout call | fanout_* |
 | `send-push` Edge Function | Edge | Token lookup, content render, Expo Push call, status update | notifications, device_tokens, shared content lib |
 | `retry-push` Edge Function (cron) | Edge | Retry failed pushes (up to 3 attempts within 24h) | notifications |
-| `@kupa/shared/notifications/content` | shared/ | i18n template rendering (used by Edge + Mobile) | i18n locale data |
+| `@copay/shared/notifications/content` | shared/ | i18n template rendering (used by Edge + Mobile) | i18n locale data |
 | `notifications.service` (mobile) | Mobile | Token registration, foreground handler, deep link extraction | expo-notifications |
 | Inbox screen | Mobile | List view, mark-read, pagination, swipe-delete | Realtime hook |
 | Settings section | Mobile | Preference toggles, OS permission status | RPCs |
@@ -338,7 +338,7 @@ Flow:
 3. `SELECT * FROM device_tokens WHERE user_id = recipient_user_id AND disabled_at IS NULL`.
 4. If no tokens → UPDATE `push_status = 'unsubscribed'`, return 200.
 5. Resolve locale: `profiles.locale` → `device_tokens.locale` → `'en'`.
-6. Render title + body via `@kupa/shared/notifications/content`.
+6. Render title + body via `@copay/shared/notifications/content`.
 7. Compute current unread badge count for recipient.
 8. POST batched payload to `https://exp.host/--/api/v2/push/send` with `Authorization: Bearer EXPO_ACCESS_TOKEN`.
 9. Inspect response:

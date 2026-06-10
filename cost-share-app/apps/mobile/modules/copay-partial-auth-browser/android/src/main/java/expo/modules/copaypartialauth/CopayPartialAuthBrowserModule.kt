@@ -3,6 +3,8 @@ package expo.modules.copaypartialauth
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.os.Bundle
+import androidx.browser.customtabs.CustomTabsCallback
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.browser.customtabs.CustomTabsServiceConnection
@@ -17,6 +19,9 @@ private const val DUMMY_URL = "https://expo.dev"
 class CopayPartialAuthBrowserModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CopayPartialAuthBrowser")
+
+    // Emitted when the Custom Tab is hidden/closed (user dismiss or a redirect closing it).
+    Events("onPartialTabDismiss")
 
     AsyncFunction("openPartialCustomTabAsync") { url: String, initialHeightPx: Int, promise: Promise ->
       val activity = appContext.throwingActivity
@@ -67,7 +72,16 @@ class CopayPartialAuthBrowserModule : Module() {
     url: String,
     initialHeightPx: Int,
   ) {
-    val session = client?.newSession(null)
+    // A callback bound to the session lets Chrome report navigation events — notably
+    // TAB_HIDDEN when the user closes the partial tab without completing sign-in.
+    val dismissCallback = object : CustomTabsCallback() {
+      override fun onNavigationEvent(navigationEvent: Int, extras: Bundle?) {
+        if (navigationEvent == CustomTabsCallback.TAB_HIDDEN) {
+          this@CopayPartialAuthBrowserModule.sendEvent("onPartialTabDismiss", emptyMap<String, Any?>())
+        }
+      }
+    }
+    val session = client?.newSession(dismissCallback)
     val builder = if (session != null) {
       CustomTabsIntent.Builder(session)
     } else {

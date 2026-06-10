@@ -23,7 +23,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
@@ -154,6 +154,7 @@ export function AddExpenseScreen() {
     const { t } = useTranslation();
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
+    const insets = useSafeAreaInsets();
     const routeParams = route.params ?? {};
     const expenseId: string | undefined = routeParams.expenseId;
     const isEditMode = Boolean(expenseId);
@@ -724,7 +725,10 @@ export function AddExpenseScreen() {
             {/* Hero */}
             <ScrollView
                 style={styles.hero}
-                contentContainerStyle={styles.heroContent}
+                contentContainerStyle={[
+                    styles.heroContent,
+                    { paddingBottom: 140 + insets.bottom },
+                ]}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
                 showsVerticalScrollIndicator={false}
@@ -824,7 +828,7 @@ export function AddExpenseScreen() {
 
             </ScrollView>
 
-            <View style={styles.footer}>
+            <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
                 <LinearGradient
                     pointerEvents="none"
                     colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']}

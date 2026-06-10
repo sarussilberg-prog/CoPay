@@ -1,6 +1,7 @@
 import { Text } from '../../components/AppText';
 import React, { useCallback, useState } from 'react';
 import { View, ScrollView, Linking, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
 import * as StoreReview from 'expo-store-review';
@@ -37,6 +38,7 @@ export function SettingsScreen() {
     const language = useAppLanguage();
     const changeAppLanguage = useChangeAppLanguage();
     const currentUser = useAppStore((s) => s.currentUser);
+    const insets = useSafeAreaInsets();
 
     const [showLogout, setShowLogout] = useState(false);
     const [showLanguage, setShowLanguage] = useState(false);
@@ -112,7 +114,10 @@ export function SettingsScreen() {
     }, [t]);
 
     return (
-        <ScrollView className="flex-1 bg-slate-50">
+        <ScrollView
+            className="flex-1 bg-slate-50"
+            contentContainerStyle={{ paddingBottom: insets.bottom }}
+        >
             <View className="pt-4">
                 <View className="px-4 mb-4">
                     <InviteLinkBlock kind="friend" mode="expanded" />

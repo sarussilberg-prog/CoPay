@@ -20,9 +20,17 @@ export const onboardingMotion = {
     fadeOut: FadeOut.duration(180).easing(easeIn),
     fadeDown: (delayMs = 0) => FadeInDown.delay(delayMs).duration(300).easing(easeOut),
     fadeUp: (delayMs = 0) => FadeInUp.delay(delayMs).duration(300).easing(easeOut),
-    screenEnter: (isRtl: boolean) =>
-        (isRtl ? SlideInLeft : SlideInRight).duration(260).easing(easeOut),
-    screenExit: (isRtl: boolean) =>
-        (isRtl ? SlideOutRight : SlideOutLeft).duration(200).easing(easeIn),
+    screenEnter: (isRtl: boolean, back = false) => {
+        const Slide = back
+            ? (isRtl ? SlideInRight : SlideInLeft)
+            : (isRtl ? SlideInLeft : SlideInRight);
+        return Slide.duration(260).easing(easeOut);
+    },
+    screenExit: (isRtl: boolean, back = false) => {
+        const Slide = back
+            ? (isRtl ? SlideOutLeft : SlideOutRight)
+            : (isRtl ? SlideOutRight : SlideOutLeft);
+        return Slide.duration(200).easing(easeIn);
+    },
     dotTiming: { duration: 200, easing: easeInOut },
 } as const;
