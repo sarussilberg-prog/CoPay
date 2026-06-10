@@ -33,7 +33,7 @@ In `expo.ios`, add `"usesAppleSignIn": true`:
 ```json
 "ios": {
   "supportsTablet": true,
-  "bundleIdentifier": "com.kupay.mobile",
+  "bundleIdentifier": "com.copay.mobile",
   "usesAppleSignIn": true,
   "associatedDomains": ["applinks:kupa.pro"],
 ```
@@ -384,7 +384,7 @@ Leave a comment in the handoff (Task 5) to fill this from App Store Connect → 
 
 - [ ] **Step 2: Write `docs/APP_STORE_IOS.md`**
 
-Mirror `docs/PLAY_STORE_ANDROID.md`: document the EAS account (`@saussilberg/kupay`), Apple ID (`sarussilberg@gmail.com`), Sign in with Apple setup (Supabase Apple provider + Authorized Client ID `com.kupay.mobile`; Apple Developer capability), the first interactive build, `eas submit` to TestFlight, and the `KUPAY_IOS_TEAM_ID` / AASA follow-up.
+Mirror `docs/PLAY_STORE_ANDROID.md`: document the EAS account (`@saussilberg/copay`), Apple ID (`sarussilberg@gmail.com`), Sign in with Apple setup (Supabase Apple provider + Authorized Client ID `com.copay.mobile`; Apple Developer capability), the first interactive build, `eas submit` to TestFlight, and the `COPAY_IOS_TEAM_ID` / AASA follow-up.
 
 - [ ] **Step 3: Commit**
 
@@ -401,7 +401,7 @@ These are not code edits; track them explicitly.
 
 - [ ] **Claude — enable Supabase Apple provider (prod `jfqxjjjbpxbwwvoygahu` + dev `drxfbicunusmipdgbgdk`)**
 
-Enable the Apple provider and add `com.kupay.mobile` to Authorized Client IDs (no secret key needed for native). Do via Supabase MCP or hand the user the exact dashboard path. **Confirm with the user before changing prod auth config.**
+Enable the Apple provider and add `com.copay.mobile` to Authorized Client IDs (no secret key needed for native). Do via Supabase MCP or hand the user the exact dashboard path. **Confirm with the user before changing prod auth config.**
 
 - [ ] **User — first interactive iOS build**
 
@@ -419,7 +419,7 @@ Install via TestFlight; verify Google sign-in, Apple sign-in (incl. first-run na
 
 - [ ] **Claude — Universal Links follow-up**
 
-After the build, read the Apple **Team ID**, set `KUPAY_IOS_TEAM_ID` on prod, and redeploy the `invite-landing` Edge Function. Verify the AASA at `https://kupa.pro/.well-known/apple-app-site-association` serves the correct `appID`.
+After the build, read the Apple **Team ID**, set `COPAY_IOS_TEAM_ID` on prod, and redeploy the `invite-landing` Edge Function. Verify the AASA at `https://kupa.pro/.well-known/apple-app-site-association` serves the correct `appID`.
 
 ---
 
@@ -427,5 +427,5 @@ After the build, read the Apple **Team ID**, set `KUPAY_IOS_TEAM_ID` on prod, an
 
 - **Spec coverage:** §A (code) → Tasks 1–3; §B (Supabase/Apple Dev) → Task 5; §C (credentials/build/TestFlight) → Task 5; §D (Team ID/AASA) → Task 5; §E (SSOT doc) → Task 4. Covered.
 - **Type consistency:** `signInWithApple` returns `{ error: AuthError | null }` (matches `signInWithGoogle`); `updateUser(id, { name })` matches `users.service.ts:118`; `AuthError`/`toAuthError`/`isAuthSessionAllowed` already exist in `auth.service.ts`.
-- **Placeholders:** `ascAppId` and `KUPAY_IOS_TEAM_ID` are genuine runtime values obtained during Task 5, not unfilled plan content.
+- **Placeholders:** `ascAppId` and `COPAY_IOS_TEAM_ID` are genuine runtime values obtained during Task 5, not unfilled plan content.
 - **Verification gates:** jest green (Task 2/3), typecheck clean (Task 3), successful interactive build + device test (Task 5).

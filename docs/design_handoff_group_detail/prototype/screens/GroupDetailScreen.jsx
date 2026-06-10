@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupay · GroupDetailScreen
+// CoPay · GroupDetailScreen
 //
 // Layout (top → bottom):
 //   1. App bar (back · "Group" · share · menu)

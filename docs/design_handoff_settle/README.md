@@ -1,4 +1,4 @@
-# Handoff: Kupay · Settle-up popup
+# Handoff: CoPay · Settle-up popup
 
 ## Overview
 
@@ -119,7 +119,7 @@ The amount lives inside a tappable button with a translucent white background �
 Inside the button:
 - **`USD ⌄`** — currency label + chevron-down (10 px). 11 px / 700, `rgba(255,255,255,0.78)`, letter-spacing `0.04em`. Both label and chevron are part of the same tap target, but conceptually the *currency picker* opens on tap.
 - **`18.00`** — 26 px / 700, white, `font-variant-numeric: tabular-nums`, letter-spacing `-0.02em`, `text-shadow: 0 1px 3px rgba(0,0,0,0.35)`.
-- **Blinking caret** — `2 × 22 px` white bar, `border-radius: 1px`, animated `kupa-caret 1s steps(2) infinite` (`0–49% opacity 1, 50–100% opacity 0`).
+- **Blinking caret** — `2 × 22 px` white bar, `border-radius: 1px`, animated `copay-caret 1s steps(2) infinite` (`0–49% opacity 1, 50–100% opacity 0`).
 
 Tapping anywhere on the amount button opens the numeric editor (system numeric keyboard or in-sheet keypad — pick what fits the platform conventions). Tapping the `USD ⌄` substring opens the currency picker.
 

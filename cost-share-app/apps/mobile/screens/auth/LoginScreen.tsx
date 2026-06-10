@@ -6,7 +6,7 @@
 
 import { Text } from '../../components/AppText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { platformAlert } from '../../lib/platformAlert';
 import { AppIcon } from '../../components/AppIcon';
@@ -170,29 +170,42 @@ export function LoginScreen() {
                         >
                             {t('auth.tagline')}
                         </Text>
-                        <Text
-                            className="text-[15px] leading-relaxed text-gray-500 text-center mt-3 px-1"
-                            style={centeredTextStyle}
-                        >
-                            {t('auth.description')}
-                        </Text>
                         <LoginFeatureChips />
                     </View>
                 </View>
 
                 <View className="px-7 pb-2">
-                    <LoginGoogleButton
-                        title={t('auth.signInWithGoogle')}
-                        onPress={handleSignIn}
-                        loading={isLoading}
-                        disabled={isLoading}
-                    />
-                    <View className="h-3" />
-                    <LoginAppleButton
-                        title={t('auth.signInWithApple')}
-                        onPress={handleAppleSignIn}
-                        disabled={isLoading}
-                    />
+                    {Platform.OS === 'ios' ? (
+                        <>
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                disabled={isLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isLoading}
+                                disabled={isLoading}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isLoading}
+                                disabled={isLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                disabled={isLoading}
+                            />
+                        </>
+                    )}
                     {isLoading ? (
                         <Text
                             className="text-sm text-gray-400 mt-3 text-center"

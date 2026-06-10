@@ -1,10 +1,10 @@
-# App Store — iOS release runbook (CoPay / Kupay)
+# App Store — iOS release runbook (CoPay)
 
-Operational guide for shipping `com.kupay.mobile` (display name **CoPay**) to **TestFlight**, then App Store review. Covers Sign in with Apple, the EAS iOS pipeline, credentials, Universal Links, and on-device smoke tests.
+Operational guide for shipping `com.copay.mobile` (display name **CoPay**) to **TestFlight**, then App Store review. Covers Sign in with Apple, the EAS iOS pipeline, credentials, Universal Links, and on-device smoke tests.
 
 > Production Supabase project: `jfqxjjjbpxbwwvoygahu` (kupa.pro). Dev: `drxfbicunusmipdgbgdk`.
 > Mobile root: `cost-share-app/apps/mobile`.
-> EAS project: `@saussilberg/kupay` (`eb2614a0-ce69-402b-9cbb-668108a9ef27`), owner `saussilberg`.
+> EAS project: `@saussilberg/copay` (`eb2614a0-ce69-402b-9cbb-668108a9ef27`), owner `saussilberg`.
 > Apple ID for builds/submit: `sarussilberg@gmail.com`.
 > See also `docs/PLAY_STORE_ANDROID.md` and `cost-share-app/docs/SSOT/SUPABASE_ENVIRONMENTS.md`.
 
@@ -38,15 +38,15 @@ Apple (Guideline 5.1.1(v)) requires in-app account deletion for apps with accoun
 | # | Item | Where |
 |---|------|-------|
 | 1 | Apple Developer Program membership ($99/yr, active) | https://developer.apple.com |
-| 2 | App `com.kupay.mobile` created in App Store Connect ("CoPay") | https://appstoreconnect.apple.com |
-| 3 | Expo account with access to `@saussilberg/kupay` | https://expo.dev |
+| 2 | App `com.copay.mobile` created in App Store Connect ("CoPay") | https://appstoreconnect.apple.com |
+| 3 | Expo account with access to `@saussilberg/copay` | https://expo.dev |
 | 4 | EAS CLI logged in as `saussilberg` (`eas whoami`) | local terminal |
 
 ### 1.1 app.json (already committed)
 
 ```jsonc
 "ios": {
-  "bundleIdentifier": "com.kupay.mobile",
+  "bundleIdentifier": "com.copay.mobile",
   "usesAppleSignIn": true,            // adds the Sign in with Apple entitlement
   "associatedDomains": ["applinks:kupa.pro"]
 },
@@ -62,28 +62,28 @@ Apple (Guideline 5.1.1(v)) requires in-app account deletion for apps with accoun
 Dashboard → **Authentication → Providers → Apple** (do this on **prod** `jfqxjjjbpxbwwvoygahu`, and on dev `drxfbicunusmipdgbgdk` for local testing):
 
 - Toggle the provider **ON**.
-- **Authorized Client IDs**: add `com.kupay.mobile`.
+- **Authorized Client IDs**: add `com.copay.mobile`.
 - Native iOS sign-in validates the identity token against the bundle ID — **no Services ID / Secret Key is required** (those are only for the web OAuth flow, which we do not use on iOS).
 
 ### 1.4 Apple Developer — Sign in with Apple capability
 
-The capability must be enabled on App ID `com.kupay.mobile`. With EAS **managed credentials** this is registered automatically during the first build (§2). If the build does not enable it, do it manually: Apple Developer → **Certificates, Identifiers & Profiles → Identifiers → com.kupay.mobile → Sign In with Apple → Enable**, then re-run the build so EAS regenerates the provisioning profile.
+The capability must be enabled on App ID `com.copay.mobile`. With EAS **managed credentials** this is registered automatically during the first build (§2). If the build does not enable it, do it manually: Apple Developer → **Certificates, Identifiers & Profiles → Identifiers → com.copay.mobile → Sign In with Apple → Enable**, then re-run the build so EAS regenerates the provisioning profile.
 
 ### 1.5 Sign in with Apple on Android (web OAuth flow)
 
 iOS uses the native Apple SDK; Android (and web) have none, so they sign in with Apple through Supabase's **web OAuth flow** — the same browser redirect Google uses. Code: `services/auth.service.ts → signInWithApple()` routes non-iOS to `signInWithProviderBrowser('apple')`; `components/auth/LoginAppleButton.tsx` renders an HIG-styled black button on Android. This needs extra Apple-side credentials the native flow did not.
 
 **Apple Developer — one-time:**
-1. **Identifiers → + → Services IDs** → create e.g. `com.kupay.web` (description "CoPay Web"), enable **Sign in with Apple**.
-2. Configure it → Primary App ID `com.kupay.mobile`; **Domains and Subdomains** = the Supabase project domains `jfqxjjjbpxbwwvoygahu.supabase.co` (prod) + `drxfbicunusmipdgbgdk.supabase.co` (dev) — NOT kupa.pro (the OAuth round-trip goes through Supabase's callback); **Return URLs**:
+1. **Identifiers → + → Services IDs** → create e.g. `com.copay.web` (description "CoPay Web"), enable **Sign in with Apple**.
+2. Configure it → Primary App ID `com.copay.mobile`; **Domains and Subdomains** = the Supabase project domains `jfqxjjjbpxbwwvoygahu.supabase.co` (prod) + `drxfbicunusmipdgbgdk.supabase.co` (dev) — NOT kupa.pro (the OAuth round-trip goes through Supabase's callback); **Return URLs**:
    - `https://jfqxjjjbpxbwwvoygahu.supabase.co/auth/v1/callback` (prod)
    - `https://drxfbicunusmipdgbgdk.supabase.co/auth/v1/callback` (dev)
-3. **Keys → +** → enable **Sign in with Apple**, configure (Primary App ID `com.kupay.mobile`), **download the `.p8`** (one-time download). Note the **Key ID** and your **Team ID** (Membership page).
+3. **Keys → +** → enable **Sign in with Apple**, configure (Primary App ID `com.copay.mobile`), **download the `.p8`** (one-time download). Note the **Key ID** and your **Team ID** (Membership page).
 
 **Supabase — Authentication → Providers → Apple (do on prod `jfqxjjjbpxbwwvoygahu` and dev `drxfbicunusmipdgbgdk`):**
-- **Client IDs** (⚠️ order matters — **Services ID FIRST**): `com.kupay.web,com.kupay.mobile`. Supabase sends the *first* entry as the web OAuth `client_id`; it MUST be the Services ID. Putting the bundle ID first makes Apple reject the web/Android flow with `invalid_request: Invalid client id or web redirect url`. The bundle ID stays in the list so native iOS `signInWithIdToken` validation still passes.
-- **Secret Key (for OAuth)**: provide Services ID (`com.kupay.web`), Team ID, Key ID, and paste the `.p8`. Supabase builds the client secret.
-- The app redirect `com.kupay.mobile://auth/callback` is already in **URL Configuration → Redirect URLs** (Google uses it).
+- **Client IDs** (⚠️ order matters — **Services ID FIRST**): `com.copay.web,com.copay.mobile`. Supabase sends the *first* entry as the web OAuth `client_id`; it MUST be the Services ID. Putting the bundle ID first makes Apple reject the web/Android flow with `invalid_request: Invalid client id or web redirect url`. The bundle ID stays in the list so native iOS `signInWithIdToken` validation still passes.
+- **Secret Key (for OAuth)**: provide Services ID (`com.copay.web`), Team ID, Key ID, and paste the `.p8`. Supabase builds the client secret.
+- The app redirect `com.copay.mobile://auth/callback` is already in **URL Configuration → Redirect URLs** (Google uses it).
 
 **Verify on Android:** tap Sign in with Apple → Chrome custom tab → Apple login → redirects back authenticated. First Android sign-in may show the email as the display name — Apple's web flow does not return the full name client-side (known limitation; the user can edit their name in-app).
 
@@ -91,7 +91,7 @@ iOS uses the native Apple SDK; Android (and web) have none, so they sign in with
 
 ## 2. iOS credentials + build (first time is interactive)
 
-iOS signing credentials have **never** been generated on the `@saussilberg/kupay` account. The first build MUST run **interactively in a real terminal** — EAS performs an Apple Developer login + 2FA and then auto-generates the Distribution Certificate + Provisioning Profile (including Sign in with Apple + associated domains). An agent cannot complete the 2FA from a non-interactive shell.
+iOS signing credentials have **never** been generated on the `@saussilberg/copay` account. The first build MUST run **interactively in a real terminal** — EAS performs an Apple Developer login + 2FA and then auto-generates the Distribution Certificate + Provisioning Profile (including Sign in with Apple + associated domains). An agent cannot complete the 2FA from a non-interactive shell.
 
 ```bash
 cd cost-share-app/apps/mobile
@@ -124,7 +124,7 @@ eas submit -p ios --profile production --latest
 `app.json` declares `applinks:kupa.pro`, but deep links resolve only once the AASA file served by the `invite-landing` Edge Function contains the Team ID.
 
 1. After the first build, read the **Team ID**: Apple Developer → **Membership**, or `eas credentials -p ios` (printed with the provisioning profile).
-2. Supabase Dashboard (`jfqxjjjbpxbwwvoygahu`) → **Edge Function Secrets** → set `KUPAY_IOS_TEAM_ID`.
+2. Supabase Dashboard (`jfqxjjjbpxbwwvoygahu`) → **Edge Function Secrets** → set `COPAY_IOS_TEAM_ID`.
 3. Redeploy:
    ```bash
    npx supabase functions deploy invite-landing --project-ref jfqxjjjbpxbwwvoygahu
@@ -132,7 +132,7 @@ eas submit -p ios --profile production --latest
 4. Verify:
    ```bash
    curl -sS https://kupa.pro/.well-known/apple-app-site-association | jq
-   # expect appID "<TEAM_ID>.com.kupay.mobile" under applinks
+   # expect appID "<TEAM_ID>.com.copay.mobile" under applinks
    ```
 
 ---
@@ -184,12 +184,12 @@ From the repo root, equivalents exist: `npm run mobile:eas:build:ios`, `npm run 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `eas build -p ios` fails: "Distribution Certificate is not validated / Credentials are not set up" | First iOS build run non-interactively | Re-run interactively in a real terminal so EAS can do Apple login + 2FA. |
-| Apple sign-in errors "invalid_client" / "Unacceptable audience" | Supabase Apple provider not enabled, or bundle ID missing from **Authorized Client IDs** | §1.3 — enable provider, add `com.kupay.mobile`. |
+| Apple sign-in errors "invalid_client" / "Unacceptable audience" | Supabase Apple provider not enabled, or bundle ID missing from **Authorized Client IDs** | §1.3 — enable provider, add `com.copay.mobile`. |
 | Apple button not visible | iOS: build predates the `usesAppleSignIn` entitlement. (On Android the button now renders via the web flow — §1.5) | iOS — rebuild with the entitlement. |
 | Apple sign-in on Android opens browser then errors | Web OAuth provider not configured | Complete §1.5 — create the Services ID + key and fill the Supabase Apple OAuth secret. |
 | Apple user shows email/relay as their name | First-run name capture failed or was a re-auth (Apple returns the name only once) | Remove the app from the Apple ID (Settings → Sign in with Apple) to re-trigger the first-run name, or have the user set their name in-app. |
-| Universal Link opens Safari | `KUPAY_IOS_TEAM_ID` unset or AASA stale | §4 — set the secret, redeploy `invite-landing`, reinstall the app. |
-| `eas submit` can't find the app | bundle ID mismatch or app not yet created in App Store Connect | Confirm the ASC app exists for `com.kupay.mobile`; optionally pin `ascAppId` in `eas.json`. |
+| Universal Link opens Safari | `COPAY_IOS_TEAM_ID` unset or AASA stale | §4 — set the secret, redeploy `invite-landing`, reinstall the app. |
+| `eas submit` can't find the app | bundle ID mismatch or app not yet created in App Store Connect | Confirm the ASC app exists for `com.copay.mobile`; optionally pin `ascAppId` in `eas.json`. |
 
 ---
 
@@ -202,5 +202,5 @@ From the repo root, equivalents exist: `npm run mobile:eas:build:ios`, `npm run 
 - [ ] Supabase Apple provider enabled (prod + dev) — §1.3
 - [ ] First interactive iOS build (credentials generated) — §2
 - [ ] TestFlight upload + on-device validation — §3, §7
-- [ ] `KUPAY_IOS_TEAM_ID` set + `invite-landing` redeployed — §4
+- [ ] `COPAY_IOS_TEAM_ID` set + `invite-landing` redeployed — §4
 - [ ] Phase 2: App Privacy, screenshots, description, Submit for Review — §5

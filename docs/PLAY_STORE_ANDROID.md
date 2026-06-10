@@ -1,6 +1,6 @@
-# Google Play — Android release runbook (Kupay)
+# Google Play — Android release runbook (CoPay)
 
-Operational guide for shipping `com.kupay.mobile` to Google Play **Internal testing**, then closed/open testing, and eventually production. Covers the EAS pipeline, Supabase secrets, Data safety form answers, and on-device smoke tests.
+Operational guide for shipping `com.copay.mobile` to Google Play **Internal testing**, then closed/open testing, and eventually production. Covers the EAS pipeline, Supabase secrets, Data safety form answers, and on-device smoke tests.
 
 > Production Supabase project: `jfqxjjjbpxbwwvoygahu` (kupa.pro).
 > Mobile root: `cost-share-app/apps/mobile`.
@@ -32,7 +32,7 @@ Then replace the `[Partnership Name]` placeholder in each row (Supabase Studio i
 
 ### 0.2 Android permissions — sensitive ones must be blocked
 
-`app.json` now declares only the permissions Kupay actually uses (camera + image gallery + vibrate). `RECORD_AUDIO`, `SYSTEM_ALERT_WINDOW`, and the legacy `READ/WRITE_EXTERNAL_STORAGE` are explicitly **blocked**.
+`app.json` now declares only the permissions CoPay actually uses (camera + image gallery + vibrate). `RECORD_AUDIO`, `SYSTEM_ALERT_WINDOW`, and the legacy `READ/WRITE_EXTERNAL_STORAGE` are explicitly **blocked**.
 
 This change takes effect on the next `eas build` (EAS runs `expo prebuild` from scratch — the local `/android` folder is gitignored and irrelevant). Verify after the build:
 - Download the `.aab` from EAS.
@@ -52,7 +52,7 @@ Internal Testing requires the same account-deletion flow as production. Already 
 | # | Item | Where |
 |---|------|-------|
 | 1 | Google Play Console developer account ($25 once) | https://play.google.com/console |
-| 2 | App `com.kupay.mobile` created in Play Console (Internal testing track) | Play Console |
+| 2 | App `com.copay.mobile` created in Play Console (Internal testing track) | Play Console |
 | 3 | Google Cloud project for OAuth Android client | https://console.cloud.google.com |
 | 4 | Expo account with access to project `ecf771fd-38ce-480e-afc6-b443606f6cef` | https://expo.dev |
 | 5 | Service account JSON for `eas submit` (Play Console → API access → Service accounts) | downloaded as `google-play-service-account.json` next to `eas.json` |
@@ -84,10 +84,10 @@ Required in `https://supabase.com/dashboard/project/jfqxjjjbpxbwwvoygahu/setting
 
 | Secret | Source | Used by |
 |--------|--------|---------|
-| `KUPAY_ANDROID_RELEASE_SHA256` | Play Console → Setup → App signing → **App signing key** SHA-256 (uppercase hex with colons) | `invite-landing/.well-known/assetlinks.json` |
-| `KUPAY_ANDROID_DEBUG_SHA256` (optional) | EAS credentials → Android keystore SHA-256 (only if you want the in-house dev APK to verify App Links too) | same |
-| `KUPAY_IOS_TEAM_ID` | Apple Developer → Membership → Team ID | `invite-landing/.well-known/apple-app-site-association` |
-| `KUPAY_SUPPORT_EMAIL` (optional) | defaults to `sarussilberg@gmail.com` | `legal.ts` and `account-deletion` page |
+| `COPAY_ANDROID_RELEASE_SHA256` | Play Console → Setup → App signing → **App signing key** SHA-256 (uppercase hex with colons) | `invite-landing/.well-known/assetlinks.json` |
+| `COPAY_ANDROID_DEBUG_SHA256` (optional) | EAS credentials → Android keystore SHA-256 (only if you want the in-house dev APK to verify App Links too) | same |
+| `COPAY_IOS_TEAM_ID` | Apple Developer → Membership → Team ID | `invite-landing/.well-known/apple-app-site-association` |
+| `COPAY_SUPPORT_EMAIL` (optional) | defaults to `sarussilberg@gmail.com` | `legal.ts` and `account-deletion` page |
 
 After updating secrets, redeploy:
 ```bash
@@ -131,9 +131,9 @@ Requires `google-play-service-account.json` in place.
 ### 3.3 After first upload — wire SHA-256 to OAuth + App Links
 
 1. Play Console → **Setup → App signing** → copy **SHA-1** and **SHA-256** of the *App signing key*.
-2. Google Cloud Console → **APIs & Services → Credentials** → OAuth 2.0 Android client → add package `com.kupay.mobile` + the **SHA-1**.
+2. Google Cloud Console → **APIs & Services → Credentials** → OAuth 2.0 Android client → add package `com.copay.mobile` + the **SHA-1**.
 3. Supabase Dashboard → **Authentication → Providers → Google** → Android section → add the same **SHA-1** (and Web Client ID if not already set).
-4. Supabase Dashboard → **Edge Function Secrets** → set `KUPAY_ANDROID_RELEASE_SHA256` to the **SHA-256** (uppercase, colon-separated). Then redeploy `invite-landing`.
+4. Supabase Dashboard → **Edge Function Secrets** → set `COPAY_ANDROID_RELEASE_SHA256` to the **SHA-256** (uppercase, colon-separated). Then redeploy `invite-landing`.
 
 ### 3.4 Native Google Sign-In (Android)
 
@@ -142,7 +142,7 @@ The mobile app uses `@react-native-google-signin/google-signin` + `signInWithIdT
 | Credential (Google Cloud) | Purpose |
 |---------------------------|---------|
 | **Web application** | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` + Supabase Google provider Client ID |
-| **Android** | Package `com.kupay.mobile` + SHA-1 (debug keystore for local builds; Play **App signing** SHA-1 for store builds) |
+| **Android** | Package `com.copay.mobile` + SHA-1 (debug keystore for local builds; Play **App signing** SHA-1 for store builds) |
 
 Do **not** use an **Installed** (desktop) OAuth client in the app. Local debug SHA-1:
 
@@ -187,12 +187,12 @@ curl -sS https://kupa.pro/legal/privacy | head -40
 | **App content → Privacy policy** | `https://kupa.pro/legal/privacy` |
 | **App content → App access** | Choose "All functionality is available without special access" if testers can sign in with their own Google. Otherwise add a test Google account. |
 | **App content → Ads** | No |
-| **App content → Content rating** | Run the IARC questionnaire — Kupay is a productivity/utility app with no user-generated public content; rating typically ends up "Everyone". |
+| **App content → Content rating** | Run the IARC questionnaire — CoPay is a productivity/utility app with no user-generated public content; rating typically ends up "Everyone". |
 | **App content → Target audience** | 18+ (financial tool). |
 | **App content → News app** | No. |
 | **App content → Government app** | No. |
 | **App content → Data safety** | See §6 below. |
-| **Store listing → App name** | Kupay |
+| **Store listing → App name** | CoPay |
 | **Store listing → Short description (≤80)** | (Hebrew) חלקו הוצאות עם חברים, שותפים ובני זוג — בלי לעשות חשבון. |
 | **Store listing → Full description** | Draft — see §7. |
 | **Store listing → Graphics** | Icon 512×512 PNG (no alpha, no rounded corners — Play adds them), Feature graphic 1024×500, at least 2 phone screenshots (1080×1920+). |
@@ -204,7 +204,7 @@ curl -sS https://kupa.pro/legal/privacy | head -40
 
 > Source of truth: code paths in `cost-share-app/apps/mobile` + Supabase tables. Re-verify before each major change.
 
-**Data collection**: YES — collected by us (Kupay).
+**Data collection**: YES — collected by us (CoPay).
 
 | Data type | Collected | Shared with 3rd parties | Optional | Purpose | Why |
 |-----------|-----------|-------------------------|----------|---------|-----|
@@ -231,9 +231,9 @@ If you add Sentry, PostHog, or any analytics SDK later, this section MUST be upd
 ## 7. Store listing — full description draft (Hebrew)
 
 ```
-Kupay — חלקו הוצאות בלי כאב ראש.
+CoPay — חלקו הוצאות בלי כאב ראש.
 
-Kupay היא אפליקציה לחלוקת הוצאות לקבוצות: שותפים לדירה, חברים בטיול, זוגות, וקבוצות חברים. רשמו הוצאות, ראו מי חייב למי כמה, וסגרו חשבונות בקלות.
+CoPay היא אפליקציה לחלוקת הוצאות לקבוצות: שותפים לדירה, חברים בטיול, זוגות, וקבוצות חברים. רשמו הוצאות, ראו מי חייב למי כמה, וסגרו חשבונות בקלות.
 
 תכונות עיקריות:
 • יצירת קבוצה והוספת חברים בקליק
@@ -268,12 +268,12 @@ Run on a real Android device after accepting the tester invite + installing from
 6. **Settle up** — select target, confirm, balances zero out.
 7. **Settings → Privacy & Account → Delete account** — confirm dialog, sign-out follows, login screen returns.
 8. **Hebrew RTL** — verify alignment, numerals, dates render correctly on a Hebrew-locale device.
-9. **App Link** — paste `https://kupa.pro/i/<test-token>` into another app (e.g. WhatsApp), tap → opens Kupay directly (not browser). Requires Play App Signing SHA-256 to be wired in §3.3.
+9. **App Link** — paste `https://kupa.pro/i/<test-token>` into another app (e.g. WhatsApp), tap → opens CoPay directly (not browser). Requires Play App Signing SHA-256 to be wired in §3.3.
 10. **Background → foreground** — leave app for 5 min, return — session persists.
 
-If step 9 falls back to the browser, App Links verification has not propagated yet — re-check `KUPAY_ANDROID_RELEASE_SHA256` matches Play App Signing **App signing key** SHA-256 (uppercase, colon-separated), then:
+If step 9 falls back to the browser, App Links verification has not propagated yet — re-check `COPAY_ANDROID_RELEASE_SHA256` matches Play App Signing **App signing key** SHA-256 (uppercase, colon-separated), then:
 ```bash
-adb shell pm get-app-links com.kupay.mobile
+adb shell pm get-app-links com.copay.mobile
 # look for: kupa.pro: verified
 ```
 
@@ -284,7 +284,7 @@ adb shell pm get-app-links com.kupay.mobile
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | `curl https://kupa.pro/.well-known/assetlinks.json` returns the SPA HTML | Vercel rewrites not deployed, or order wrong (SPA catch-all is before specific rewrite) | Confirm `vercel.json` change is in `main`, redeploy. Specific routes MUST appear above the catch-all. |
-| `assetlinks.json` returns `[]` empty target | `KUPAY_ANDROID_RELEASE_SHA256` env var not set on production Supabase | Set secret, redeploy edge function. |
+| `assetlinks.json` returns `[]` empty target | `COPAY_ANDROID_RELEASE_SHA256` env var not set on production Supabase | Set secret, redeploy edge function. |
 | Google sign-in shows "Developer error" | SHA-1 mismatch in Google Cloud OAuth Android client | Re-copy SHA-1 from Play App Signing (not upload key) into the OAuth client. |
 | `eas submit` fails with "service account does not have permission" | Service account not invited to Play Console as admin/release manager | Play Console → Users and permissions → invite the SA email with Release manager role. |
 | App Link opens browser instead of app | `autoVerify` blocked because `assetlinks.json` does not match the package signature | See step 9 of smoke test. |

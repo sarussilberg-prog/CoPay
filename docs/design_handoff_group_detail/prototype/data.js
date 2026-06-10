@@ -1,7 +1,7 @@
-// Kupay mobile · fake data (groups, members, expenses, activity)
+// CoPay mobile · fake data (groups, members, expenses, activity)
 // All amounts in 2-decimal money; currency codes are prefixes.
 
-window.KUPAY_DATA = {
+window.COPAY_DATA = {
   currentUser: {
     id: 'u1',
     name: 'You',

@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupay · GroupsListScreen — wordmark header, search row, list of GroupCards.
+// CoPay · GroupsListScreen — wordmark header, search row, list of GroupCards.
 
 function GroupsListScreen({ groups, onOpenGroup, onCreateGroup, onSearch }) {
   const [query, setQuery] = React.useState('');
@@ -13,7 +13,7 @@ function GroupsListScreen({ groups, onOpenGroup, onCreateGroup, onSearch }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', height: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 4px 16px', background: '#fff' }}>
-        <div className="brand-wordmark" style={{ fontSize: 26 }}>kupa</div>
+        <div className="brand-wordmark" style={{ fontSize: 26 }}>CoPay</div>
         <IconButton name="search-outline" color="var(--gray-600)" />
       </div>
 

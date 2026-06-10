@@ -38,7 +38,7 @@ Prod = `jfqxjjjbpxbwwvoygahu` (matches `apps/mobile/.env.production` `EXPO_PUBLI
 
 ### CRITICAL (block the emphasized features in prod)
 1. **Invite links — group AND friend/profile sharing — entirely non-functional in prod.** All `rotate_*`/`redeem_*`/`generate_invite_token` RPCs and the `invite_token` columns are missing on prod. Generating a share link and redeeming a tapped link both fail.
-2. **iOS Universal Links dead.** Live `https://kupa.pro/.well-known/apple-app-site-association` returns `appID: ".com.kupay.mobile"` — missing the Team-ID prefix because `KUPAY_IOS_TEAM_ID` is unset on the `invite-landing` Edge Function. Source: `supabase/functions/invite-landing/well-known.ts:18`. Every iOS tap on a `kupa.pro/i/*` or `/g/*` link opens Safari, not the app — so even after #1 is fixed, iOS deep links won't route into the app.
+2. **iOS Universal Links dead.** Live `https://kupa.pro/.well-known/apple-app-site-association` returns `appID: ".com.copay.mobile"` — missing the Team-ID prefix because `COPAY_IOS_TEAM_ID` is unset on the `invite-landing` Edge Function. Source: `supabase/functions/invite-landing/well-known.ts:18`. Every iOS tap on a `kupa.pro/i/*` or `/g/*` link opens Safari, not the app — so even after #1 is fixed, iOS deep links won't route into the app.
 3. **Settle Up broken in prod.** `get_group_pairwise_debts` missing → the Settle Up / pairwise-balances screen returns empty/errors.
 
 ### HIGH
@@ -96,9 +96,9 @@ select
 - [ ] **A7. SSOT sweep** (per project rule): fold the now-missing standalone SQL into the migration story; update `schema.sql` if it is meant to be a faithful bootstrap (it currently lacks invites/settle-up/archive); reconcile `DATABASE_ARCHITECTURE.md`.
 
 #### Task B: Fix iOS Universal Links (PROD config — needs OK)
-- [ ] **B1.** Set `KUPAY_IOS_TEAM_ID` (Apple Developer Team ID) as a secret/env on the prod `invite-landing` Edge Function; confirm `KUPAY_ANDROID_RELEASE_SHA256` / `KUPAY_ANDROID_DEBUG_SHA256` are also set (assetlinks already serves 2 fingerprints, so they appear set).
+- [ ] **B1.** Set `COPAY_IOS_TEAM_ID` (Apple Developer Team ID) as a secret/env on the prod `invite-landing` Edge Function; confirm `COPAY_ANDROID_RELEASE_SHA256` / `COPAY_ANDROID_DEBUG_SHA256` are also set (assetlinks already serves 2 fingerprints, so they appear set).
 - [ ] **B2.** Redeploy `invite-landing` (`supabase-prod__deploy_edge_function` or `supabase functions deploy invite-landing`).
-- [ ] **B3. Verify:** `curl -s https://kupa.pro/.well-known/apple-app-site-association` → `appID` must be `<TEAMID>.com.kupay.mobile` (no leading dot).
+- [ ] **B3. Verify:** `curl -s https://kupa.pro/.well-known/apple-app-site-association` → `appID` must be `<TEAMID>.com.copay.mobile` (no leading dot).
 
 ### P1 — do with the build
 

@@ -9,8 +9,8 @@
 
 | Environment | Git branch | Supabase project name | Project ref | API URL |
 |-------------|------------|----------------------|-------------|---------|
-| **Development** | `dev` (and feature branches → `dev`) | Kupay - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
-| **Production** | `main` | Kupay - production | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
+| **Development** | `dev` (and feature branches → `dev`) | CoPay - dev | `drxfbicunusmipdgbgdk` | `https://drxfbicunusmipdgbgdk.supabase.co` |
+| **Production** | `main` | CoPay - production | `jfqxjjjbpxbwwvoygahu` | `https://jfqxjjjbpxbwwvoygahu.supabase.co` |
 
 **Rule:** If your current git branch is `main`, you are on **production**. Any other branch used for integration is **development**.
 
@@ -57,8 +57,8 @@
 
 | Vercel project | Branch | Supabase | URL |
 |----------------|--------|----------|-----|
-| **kupa-dev** | `dev` (Preview only; Ignored Build Step skips other branches) | `drxfbicunusmipdgbgdk` | `kupa-s1lb.vercel.app` |
-| **kupa-prod** | `main` (Production only) | `jfqxjjjbpxbwwvoygahu` | `kupa.pro` |
+| **copay-dev** | `dev` (Preview only; Ignored Build Step skips other branches) | `drxfbicunusmipdgbgdk` | `kupa-s1lb.vercel.app` |
+| **copay-prod** | `main` (Production only) | `jfqxjjjbpxbwwvoygahu` | `kupa.pro` |
 
 Legacy single-project mapping (if ever merged back to one Vercel project):
 
@@ -72,8 +72,8 @@ Legacy single-project mapping (if ever merged back to one Vercel project):
 
 Web build script (`apps/web/scripts/build-app-web.sh`) selects defaults from:
 
-- **kupa-dev** project id → always `supabase-public.development.defaults`
-- **kupa-prod** / `VERCEL_ENV=production` → `supabase-public.production.defaults`
+- **copay-dev** project id → always `supabase-public.development.defaults`
+- **copay-prod** / `VERCEL_ENV=production` → `supabase-public.production.defaults`
 - otherwise → `supabase-public.development.defaults`
 
 ---

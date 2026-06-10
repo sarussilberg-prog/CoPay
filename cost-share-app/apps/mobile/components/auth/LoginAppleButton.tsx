@@ -1,8 +1,8 @@
 import React from 'react';
-import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
-import * as AppleAuthentication from 'expo-apple-authentication';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../AppText';
 import { AppIcon } from '../AppIcon';
+import { colors } from '../../theme';
 
 type Props = {
     onPress: () => void;
@@ -11,27 +11,12 @@ type Props = {
     testID?: string;
 };
 
-// iOS: Apple's HIG requires the official native button (it localizes its own label).
-// Android/web: there is no native Apple button, so render an HIG-styled black button
-// that drives the same Apple sign-in handler (web OAuth under the hood).
 export function LoginAppleButton({
     onPress,
-    title,
+    title = '',
     disabled = false,
     testID = 'login-apple-button',
 }: Props) {
-    if (Platform.OS === 'ios') {
-        return (
-            <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={27}
-                style={[styles.nativeButton, disabled && styles.disabled]}
-                onPress={disabled ? noop : onPress}
-            />
-        );
-    }
-
     return (
         <TouchableOpacity
             onPress={disabled ? noop : onPress}
@@ -40,11 +25,15 @@ export function LoginAppleButton({
             testID={testID}
             accessibilityRole="button"
             accessibilityState={{ disabled }}
-            style={[styles.androidButton, disabled && styles.disabled]}
+            style={[styles.button, disabled && styles.disabled]}
         >
             <View style={styles.content}>
-                <AppIcon name="logo-apple" size={22} color="#FFFFFF" />
-                <Text className="text-base font-bold text-white">{title}</Text>
+                <AppIcon name="logo-apple" size={26} color="#000000" />
+                <View style={styles.titleSlot}>
+                    <Text className="text-base font-bold text-gray-900">
+                        {title}
+                    </Text>
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -53,21 +42,28 @@ export function LoginAppleButton({
 function noop() {}
 
 const styles = StyleSheet.create({
-    nativeButton: {
-        height: 54,
-        width: '100%',
-    },
-    androidButton: {
+    button: {
         height: 54,
         borderRadius: 999,
-        backgroundColor: '#000000',
+        backgroundColor: colors.white,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: colors.border.card,
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+        elevation: 4,
     },
     content: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+    },
+    titleSlot: {
+        width: 180,
+        alignItems: 'flex-start',
     },
     disabled: {
         opacity: 0.7,

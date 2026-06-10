@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** End-to-end mobile notifications (Expo push + in-app inbox + per-category preferences + mute-group) for Kupay, with full test coverage.
+**Goal:** End-to-end mobile notifications (Expo push + in-app inbox + per-category preferences + mute-group) for CoPay, with full test coverage.
 
 **Architecture:** AFTER INSERT/UPDATE/DELETE triggers on business tables (`expenses`, `expense_splits`, `settlements`, `group_members`) call `SECURITY DEFINER` fanout functions that INSERT into `notifications` (single source of truth). Triggers extract the actor via `auth.uid()` (or `created_by` as fallback). A Database Webhook on `notifications INSERT` fires the `send-push` Edge Function asynchronously. Mobile uses `expo-notifications` for tokens + foreground/background handlers, Supabase Realtime for live inbox, and shared i18n templates so push text matches inbox text exactly.
 
@@ -24,7 +24,7 @@ This plan was reviewed by a 5-agent council (DB, Edge Functions, Mobile, Securit
 
 - **B1. EAS projectId.** Run `npx eas init` in `apps/mobile` and verify `expo.extra.eas.projectId` in `app.json`. Without it, `getExpoPushTokenAsync` cannot fire. Phase 1 cannot smoke-test push otherwise.
 - **B2. Verify `pg_cron` + `pg_net` availability.** Both are present in `pg_available_extensions` on this Supabase project but `installed_version` is null. Decide whether to enable them now (Phase 1) or defer Task 20. If deferred, mark Phase 3 as gated on Supabase plan tier.
-- **B3. Shared package name is `@cost-share/shared`, NOT `@kupa/shared`.** Every code block in the plan that says `@kupa/shared/notifications` must be `@cost-share/shared` (and the new module re-exported from `packages/shared/src/index.ts`). This affects Tasks 1, 4, 14, 15, 16, 17.
+- **B3. Shared package name is `@cost-share/shared`, NOT `@copay/shared`.** Every code block in the plan that says `@copay/shared/notifications` must be `@cost-share/shared` (and the new module re-exported from `packages/shared/src/index.ts`). This affects Tasks 1, 4, 14, 15, 16, 17.
 - **B4. Realtime publication is required.** Add `ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;` to Task 2's migration. Without it, the inbox is dead.
 - **B5. Kill switch FIRST, not last.** Move the `notifications_enabled` feature flag (originally Task 23) into Task 2: a row in a `feature_flags` table OR a Postgres GUC (`current_setting('app.notifications_enabled', true)`) that every `fanout_*` function checks at the top and early-returns on `false`. Triggers fire on every expense/settlement/membership write in prod — without a kill switch, rollback is messy.
 
@@ -205,7 +205,7 @@ This plan was reviewed by a 5-agent council (DB, Edge Functions, Mobile, Securit
 
 ### Task 1: Add shared notification types and i18n content lib
 
-> **Council revisions:** B3 (package name `@cost-share/shared`, not `@kupa/shared` — re-export from existing barrel). S3 (replace 18 snapshot tests with 4 targeted assertions).
+> **Council revisions:** B3 (package name `@cost-share/shared`, not `@copay/shared` — re-export from existing barrel). S3 (replace 18 snapshot tests with 4 targeted assertions).
 
 **Files:**
 - Create: `cost-share-app/packages/shared/src/notifications/types.ts`
@@ -829,7 +829,7 @@ git commit -m "feat(db): fanout_expense_added + trigger on expense_splits insert
 
 ### Task 4: Edge Function `send-push` (skeleton + happy path)
 
-> **Council revisions:** C2 (webhook auth — `WEBHOOK_SHARED_SECRET`). C4 (CAS claim step before Expo POST, `push_attempts + 1` not constant `1`). C5 (extract `handle()` into `send-push/handler.ts` so `retry-push` can call via fetch — no cross-function import). B3 (`@cost-share/shared` not `@kupa/shared`; vendor-copy or import-map). M5 (Zod payload validation). Add `requireEnv()` helper.
+> **Council revisions:** C2 (webhook auth — `WEBHOOK_SHARED_SECRET`). C4 (CAS claim step before Expo POST, `push_attempts + 1` not constant `1`). C5 (extract `handle()` into `send-push/handler.ts` so `retry-push` can call via fetch — no cross-function import). B3 (`@cost-share/shared` not `@copay/shared`; vendor-copy or import-map). M5 (Zod payload validation). Add `requireEnv()` helper.
 
 **Files:**
 - Create: `cost-share-app/supabase/functions/send-push/deno.json`
@@ -949,11 +949,11 @@ type WebhookPayload = z.infer<typeof WebhookPayloadSchema>;
 
 function buildDeepLink(row: NotificationRow): string {
   if (row.entity_type === 'expense' && row.group_id && row.entity_id)
-    return `kupa://groups/${row.group_id}/expenses/${row.entity_id}`;
+    return `copay://groups/${row.group_id}/expenses/${row.entity_id}`;
   if (row.entity_type === 'settlement' && row.group_id)
-    return `kupa://groups/${row.group_id}/settlements`;
-  if (row.group_id) return `kupa://groups/${row.group_id}`;
-  return 'kupa://notifications';
+    return `copay://groups/${row.group_id}/settlements`;
+  if (row.group_id) return `copay://groups/${row.group_id}`;
+  return 'copay://notifications';
 }
 
 export async function handle(payload: WebhookPayload, sb: SupabaseClient): Promise<{ status: number }> {
@@ -1512,7 +1512,7 @@ import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPermissionStatus, requestPermission, registerCurrentDevice } from '../services/notifications.service';
 
-const KEY = 'kupa:notif:softPromptDeclinedAt';
+const KEY = 'copay:notif:softPromptDeclinedAt';
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function useSoftPushPrompt(groupCount: number) {
@@ -2471,7 +2471,7 @@ export function showInAppToast(payload: InAppToastPayload) {
   if (alreadyShown(payload.notification_id)) return;
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   Toast.show({
-    type: 'kupa',
+    type: 'copay',
     visibilityTime: 4000,
     autoHide: true,
     onPress: () => payload.onPress?.(payload.notification_id),
@@ -2479,7 +2479,7 @@ export function showInAppToast(payload: InAppToastPayload) {
   });
 }
 
-const KupayToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ props }) => {
+const CoPayToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ props }) => {
   const { isRTL } = useRtlLayout(); // M9
   const locale = (i18n.language as 'en' | 'he') ?? 'en';
   const { title, body } = renderNotification(props.event_type, props.params, locale);
@@ -2496,7 +2496,7 @@ const KupayToast: React.FC<BaseToastProps & { props: InAppToastPayload }> = ({ p
   );
 };
 
-export const toastConfig = { kupa: KupayToast };
+export const toastConfig = { copay: CoPayToast };
 
 const styles = StyleSheet.create({
   card: { backgroundColor: 'white', marginHorizontal: 12, marginTop: 8, padding: 12, borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 4 },
@@ -2522,7 +2522,7 @@ import { toastConfig } from '../../components/notifications/InAppToast';
 jest.mock('../../i18n', () => ({ __esModule: true, default: { language: 'en' } }));
 
 it('renders title from renderNotification', () => {
-  const Toast = (toastConfig as any).kupa;
+  const Toast = (toastConfig as any).copay;
   const onPress = jest.fn();
   const { getByText } = render(
     <Toast props={{
@@ -2536,7 +2536,7 @@ it('renders title from renderNotification', () => {
 });
 
 it('invokes onPress', () => {
-  const Toast = (toastConfig as any).kupa;
+  const Toast = (toastConfig as any).copay;
   const onPress = jest.fn();
   const { getByTestId } = render(
     <Toast props={{ notification_id: 'n1', event_type: 'member_joined', params: { actor_name: 'A', group_name: 'G' }, onPress }} />
@@ -2752,8 +2752,8 @@ he.json: counterparts.
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, I18nManager } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { renderNotification } from '@kupa/shared/notifications';
-import type { NotificationRow as Row } from '@kupa/shared/notifications';
+import { renderNotification } from '@copay/shared/notifications';
+import type { NotificationRow as Row } from '@copay/shared/notifications';
 
 export interface NotificationRowProps {
   row: Row;
@@ -3259,7 +3259,7 @@ export function enqueueToast(payload: InAppToastPayload) {
     else {
       // collapse
       Toast.show({
-        type: 'kupa',
+        type: 'copay',
         visibilityTime: 4000,
         props: { ...queue[queue.length - 1], _count: queue.length },
       });
@@ -3300,7 +3300,7 @@ git commit -m "feat(mobile): stacked toasts for bursty notifications"
 - [ ] **Step 1: Onboarding flow**
 
 ```yaml
-appId: com.kupay.mobile
+appId: com.copay.mobile
 ---
 - launchApp
 - runFlow: ../login.yaml

@@ -3,11 +3,11 @@ plugins {
   id 'expo-module-gradle-plugin'
 }
 
-group = 'expo.modules.kupapartialauth'
+group = 'expo.modules.copaypartialauth'
 version = '1.0.0'
 
 android {
-  namespace "expo.modules.kupapartialauth"
+  namespace "expo.modules.copaypartialauth"
   defaultConfig {
     versionCode 1
     versionName '1.0.0'

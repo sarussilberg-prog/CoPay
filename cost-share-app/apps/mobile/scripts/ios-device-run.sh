@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Kupay dev build on a connected iPhone (Personal Team OK while Apple enrolls).
+# Install CoPay dev build on a connected iPhone (Personal Team OK while Apple enrolls).
 # 1. iPhone: Settings → Privacy & Security → Developer Mode ON (iOS 16+)
 # 2. Connect USB, unlock phone, tap Trust
 # 3. Xcode → Settings → Apple Accounts → Personal Team → Manage Certificates (if prompted)

@@ -6,7 +6,7 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { I18nManager } from 'react-native';
+import { DevSettings, I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import * as Updates from 'expo-updates';
@@ -89,7 +89,12 @@ async function syncNativeRtl(language: SupportedLanguage): Promise<void> {
 
     I18nManager.forceRTL(desiredRTL);
     await AsyncStorage.setItem(RTL_NATIVE_APPLIED_KEY, language);
-    await Updates.reloadAsync();
+    if (__DEV__) {
+        // Updates.reloadAsync() in a dev client can leave the splash stuck.
+        DevSettings.reload();
+    } else {
+        await Updates.reloadAsync();
+    }
     // Execution stops here — the app reloads.
 }
 

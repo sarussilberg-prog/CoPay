@@ -3,7 +3,7 @@
 **Date:** 2026-06-09
 **Status:** Approved design — ready for implementation plan
 **Owner:** navesarussi
-**App:** CoPay (`com.kupay.mobile`), Expo SDK 55, `cost-share-app/apps/mobile`
+**App:** CoPay (`com.copay.mobile`), Expo SDK 55, `cost-share-app/apps/mobile`
 
 ## Goal
 
@@ -19,11 +19,11 @@ Store-listing metadata and "submit for review" are **Phase 2** and out of scope 
 - Login screen offers **Google sign-in only** (`signInWithOAuth` → `exchangeCodeForSession`).
   No email/password, no Apple. This triggers App Store Guideline 4.8.
 - `expo-apple-authentication` is **not** installed; Supabase **Apple provider is not configured**.
-- iOS signing credentials are **not** set up on the `@saussilberg/kupay` EAS account; no iOS
+- iOS signing credentials are **not** set up on the `@saussilberg/copay` EAS account; no iOS
   build has ever run there. The first iOS build must run **interactively** for Apple login + 2FA.
 - App Store Connect record "CoPay v0" exists (version 1.0, "Prepare for Submission"); all
   metadata is empty.
-- `app.json` declares `ios.associatedDomains: ["applinks:kupa.pro"]`, but `KUPAY_IOS_TEAM_ID`
+- `app.json` declares `ios.associatedDomains: ["applinks:kupa.pro"]`, but `COPAY_IOS_TEAM_ID`
   is unset on prod, so Universal Links won't resolve yet.
 - Apple Developer Program membership is **active** (confirmed by user).
 - Working branch: `claude/interesting-rosalind-56ed5a` (worktree), merged up to `origin/dev`
@@ -76,12 +76,12 @@ Store-listing metadata and "submit for review" are **Phase 2** and out of scope 
 
 **Supabase** (prod project `jfqxjjjbpxbwwvoygahu`; also dev `drxfbicunusmipdgbgdk` for local testing)
 - Enable the **Apple** auth provider.
-- Add bundle ID `com.kupay.mobile` to **Authorized Client IDs**. Native token validation does
+- Add bundle ID `com.copay.mobile` to **Authorized Client IDs**. Native token validation does
   **not** require the Services ID / secret key (those are only for the web OAuth flow).
 - Can be done via the Supabase MCP or the dashboard (user's choice).
 
 **Apple Developer**
-- Enable the **Sign in with Apple** capability on App ID `com.kupay.mobile`. EAS managed
+- Enable the **Sign in with Apple** capability on App ID `com.copay.mobile`. EAS managed
   credentials typically register this automatically during the first build; confirm in the
   Developer portal.
 
@@ -98,7 +98,7 @@ Store-listing metadata and "submit for review" are **Phase 2** and out of scope 
 
 ### D. Universal Links / Team ID (same round, non-blocking)
 
-After the build reveals the Apple **Team ID**, set `KUPAY_IOS_TEAM_ID` on prod and redeploy
+After the build reveals the Apple **Team ID**, set `COPAY_IOS_TEAM_ID` on prod and redeploy
 the `invite-landing` Edge Function so the AASA file serves a valid `appID`, enabling
 `applinks:kupa.pro` deep links on iOS.
 
@@ -111,7 +111,7 @@ convention, reconcile changes against SSOT docs.
 ## Division of labor
 
 **Claude:** all code in §A; `eas.json` `ascAppId`; Supabase provider via MCP (if approved);
-`KUPAY_IOS_TEAM_ID` + Edge Function redeploy; `docs/APP_STORE_IOS.md`.
+`COPAY_IOS_TEAM_ID` + Edge Function redeploy; `docs/APP_STORE_IOS.md`.
 
 **User (interactive / account-bound):** run the first interactive `eas build` (2FA); confirm
 the Sign in with Apple capability in Apple Developer if EAS prompts; install from TestFlight

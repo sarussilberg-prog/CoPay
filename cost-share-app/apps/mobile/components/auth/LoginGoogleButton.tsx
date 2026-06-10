@@ -6,8 +6,8 @@ import {
     View,
 } from 'react-native';
 import { Text } from '../AppText';
-import { AppIcon } from '../AppIcon';
 import { colors } from '../../theme';
+import { GoogleGLogo } from './GoogleGLogo';
 
 type Props = {
     title: string;
@@ -40,8 +40,12 @@ export function LoginGoogleButton({
                 <ActivityIndicator color={colors.primaryDark} />
             ) : (
                 <View style={styles.content}>
-                    <AppIcon name="logo-google" size={22} color="#4285F4" />
-                    <Text className="text-base font-bold text-gray-900">{title}</Text>
+                    <GoogleGLogo size={26} />
+                    <View style={styles.titleSlot}>
+                        <Text className="text-base font-bold text-gray-900">
+                            {title}
+                        </Text>
+                    </View>
                 </View>
             )}
         </TouchableOpacity>
@@ -70,5 +74,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+    },
+    titleSlot: {
+        width: 180,
+        alignItems: 'flex-start',
     },
 });

@@ -1,4 +1,4 @@
-# Handoff: Kupay · Settlement Detail Popup
+# Handoff: CoPay · Settlement Detail Popup
 
 ## Overview
 

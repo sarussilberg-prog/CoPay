@@ -1,4 +1,4 @@
-# Code Quality & Architecture — Kupay
+# Code Quality & Architecture — CoPay
 
 **Status:** Living document (v0.2 — Supabase-only backend).  
 **Pairs with:** [SRS.md](./SRS.md) (requirements), [README.md](./README.md) (routing).

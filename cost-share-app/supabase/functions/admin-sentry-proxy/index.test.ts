@@ -9,9 +9,9 @@ const baseEnv: ProxyEnv = {
     SUPABASE_URL: 'https://example.supabase.co',
     SUPABASE_ANON_KEY: 'anon-key',
     SENTRY_API_TOKEN: 'sentry-token',
-    SENTRY_ORG: 'kupa-org',
-    SENTRY_PROJECT_DEV: 'kupa-mobile-dev',
-    SENTRY_PROJECT_PROD: 'kupa-mobile-prod',
+    SENTRY_ORG: 'copay-hb',
+    SENTRY_PROJECT_DEV: 'copay-mobile-dev',
+    SENTRY_PROJECT_PROD: 'copay-mobile-prod',
 };
 
 // Wraps a test body with a patched globalThis.fetch that answers Supabase's
@@ -95,7 +95,7 @@ Deno.test(
                     JSON.stringify([
                         {
                             id: '99',
-                            shortId: 'KUPA-1',
+                            shortId: 'COPAY-1',
                             title: 'Boom',
                             level: 'error',
                             status: 'unresolved',
@@ -121,14 +121,14 @@ Deno.test(
         assertEquals(calls.length, 1);
         assertStringIncludes(
             calls[0].url,
-            'sentry.io/api/0/projects/kupa-org/kupa-mobile-dev/issues/',
+            'sentry.io/api/0/projects/copay-hb/copay-mobile-dev/issues/',
         );
         assertStringIncludes(calls[0].url, 'environment=development');
         assertStringIncludes(calls[0].url, 'limit=10');
         assertEquals(calls[0].auth, 'Bearer sentry-token');
         const json = await res.json();
         assertEquals(json.ok, true);
-        assertEquals(json.data[0].shortId, 'KUPA-1');
+        assertEquals(json.data[0].shortId, 'COPAY-1');
     }),
 );
 
@@ -148,7 +148,7 @@ Deno.test(
             body: JSON.stringify({ action: 'list_issues', environment: 'prod' }),
         });
         await handleRequest(req, baseEnv, sentryFetch);
-        assertStringIncludes(captured[0], '/projects/kupa-org/kupa-mobile-prod/issues/');
+        assertStringIncludes(captured[0], '/projects/copay-hb/copay-mobile-prod/issues/');
         assertStringIncludes(captured[0], 'environment=production');
     }),
 );

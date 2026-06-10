@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOBILE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PORT="${EXPO_METRO_PORT:-8081}"
-LOG="${TMPDIR:-/tmp}/kupay-expo-$$.log"
+LOG="${TMPDIR:-/tmp}/copay-expo-$$.log"
 IOS_OPEN="$SCRIPT_DIR/ios-open.sh"
 OPEN_MOBILE="$SCRIPT_DIR/open-mobile-dev.sh"
 AUTO_OPEN_MOBILE="${EXPO_AUTO_OPEN_MOBILE:-0}"
