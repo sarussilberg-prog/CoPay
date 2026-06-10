@@ -1,0 +1,30 @@
+name: Bump patch version (dev)
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - 'cost-share-app/apps/mobile/version.json'
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump patch version
+        run: |
+          VERSION_FILE="cost-share-app/apps/mobile/version.json"
+          current=$(jq -r '.version' "$VERSION_FILE")
+          IFS='.' read -r major minor patch <<< "$current"
+          new_version="${major}.${minor}.$((patch + 1))"
+          jq --arg v "$new_version" '.version = $v' "$VERSION_FILE" > tmp.json && mv tmp.json "$VERSION_FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$VERSION_FILE"
+          git commit -m "chore: bump version to ${new_version}"
+          git push
