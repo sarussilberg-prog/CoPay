@@ -32,7 +32,8 @@
           "PayBox"
         ],
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "K3M6R85KA6"
     },
     "android": {
       "package": "com.copay.mobile",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../AppText';
 import { AppIcon } from '../AppIcon';
 import { colors } from '../../theme';
@@ -7,6 +7,7 @@ import { colors } from '../../theme';
 type Props = {
     onPress: () => void;
     title?: string;
+    loading?: boolean;
     disabled?: boolean;
     testID?: string;
 };
@@ -14,32 +15,37 @@ type Props = {
 export function LoginAppleButton({
     onPress,
     title = '',
+    loading = false,
     disabled = false,
     testID = 'login-apple-button',
 }: Props) {
+    const isDisabled = disabled || loading;
+
     return (
         <TouchableOpacity
-            onPress={disabled ? noop : onPress}
+            onPress={onPress}
             activeOpacity={0.82}
-            disabled={disabled}
+            disabled={isDisabled}
             testID={testID}
             accessibilityRole="button"
-            accessibilityState={{ disabled }}
-            style={[styles.button, disabled && styles.disabled]}
+            accessibilityState={{ disabled: isDisabled, busy: loading }}
+            style={[styles.button, isDisabled && styles.disabled]}
         >
-            <View style={styles.content}>
-                <AppIcon name="logo-apple" size={26} color="#000000" />
-                <View style={styles.titleSlot}>
-                    <Text className="text-base font-bold text-gray-900">
-                        {title}
-                    </Text>
+            {loading ? (
+                <ActivityIndicator color={colors.primaryDark} />
+            ) : (
+                <View style={styles.content}>
+                    <AppIcon name="logo-apple" size={26} color="#000000" />
+                    <View style={styles.titleSlot}>
+                        <Text className="text-base font-bold text-gray-900">
+                            {title}
+                        </Text>
+                    </View>
                 </View>
-            </View>
+            )}
         </TouchableOpacity>
     );
 }
-
-function noop() {}
 
 const styles = StyleSheet.create({
     button: {
