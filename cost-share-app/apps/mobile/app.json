@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CoPay",
+    "name": "KupaPay",
     "slug": "copay",
     "scheme": "com.copay.mobile",
     "version": "1.0.0",
@@ -24,8 +24,8 @@
       ],
       "icon": "./assets/icon.png",
       "infoPlist": {
-        "CFBundleDisplayName": "CoPay",
-        "CFBundleName": "CoPay",
+        "CFBundleDisplayName": "KupaPay",
+        "CFBundleName": "KupaPay",
         "LSApplicationQueriesSchemes": [
           "bit",
           "paybox",
@@ -37,7 +37,7 @@
     },
     "android": {
       "package": "com.copay.mobile",
-      "label": "CoPay",
+      "label": "KupaPay",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -81,8 +81,8 @@
       ]
     },
     "web": {
-      "name": "CoPay",
-      "shortName": "CoPay",
+      "name": "KupaPay",
+      "shortName": "KupaPay",
       "description": "Split expenses with friends",
       "themeColor": "#3B82F6",
       "backgroundColor": "#ffffff",

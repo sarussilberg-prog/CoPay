@@ -34,7 +34,7 @@
         "profile": "פרופיל"
     },
     "auth": {
-        "appName": "CoPay",
+        "appName": "KupaPay",
         "signInWithGoogle": "המשך עם Google",
         "signInWithApple": "המשך עם Apple",
         "subtitle": "חלוקת הוצאות עם חברים",
@@ -54,7 +54,7 @@
         "next": "הבא",
         "back": "חזרה",
         "welcome": {
-            "brand": "CoPay",
+            "brand": "KupaPay",
             "tagline": "הקופה עם החבר'ה.\nבלי אקסל, בלי חישובים בוואטסאפ.",
             "start": "יאללה, נתחיל",
             "existingAccount": "כבר יש לי חשבון",
@@ -341,7 +341,7 @@
             "typeExpense": "הוצאה",
             "typeMessage": "הודעה",
             "typeSettlement": "סגירת חשבון",
-            "footer": "נוצר על ידי CoPay"
+            "footer": "נוצר על ידי KupaPay"
         },
         "expense": {
             "youLent": "הלוויתָ {{amount}}",
@@ -850,21 +850,21 @@
     },
     "invite": {
         "friend": {
-            "title": "הזמן חבר ל-CoPay",
+            "title": "הזמן חבר ל-KupaPay",
             "subtitle": "שלח קישור דרך וואצאפ ועוד",
             "cta": "שתף קישור חברות",
-            "shareMessage": "היי! בוא נחלק הוצאות יחד דרך CoPay. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {{url}}",
+            "shareMessage": "היי! בוא נחלק הוצאות יחד דרך KupaPay. אם תרשם דרך הקישור הזה — נהיה אוטומטית חברים: {{url}}",
             "rotate": "שנה קישור",
             "rotateConfirmTitle": "לשנות את קישור ההזמנה?",
             "rotateConfirmBody": "הקישור הקודם יפסיק לעבוד. כל מי שיש לו את הקישור הישן לא יוכל להפוך לחבר שלך עד שתשלח לו את החדש.",
             "rotated": "קישור ההזמנה עודכן",
             "findEmpty": "לא מצאת את מי שחיפשת?",
             "findEmptyCta": "הזמן חבר חדש דרך קישור",
-            "findInviteName": "הזמן את {{name}} ל-CoPay"
+            "findInviteName": "הזמן את {{name}} ל-KupaPay"
         },
         "group": {
             "title": "שתף קישור לקופה",
-            "shareMessage": "הוספתי אותך לקופת '{{groupName}}' ב-CoPay. הצטרף דרך הקישור: {{url}}",
+            "shareMessage": "הוספתי אותך לקופת '{{groupName}}' ב-KupaPay. הצטרף דרך הקישור: {{url}}",
             "rotate": "שנה קישור",
             "rotateConfirmTitle": "לשנות את קישור הקופה?",
             "rotateConfirmBody": "כל מי שיש לו את הקישור הנוכחי לא יוכל להצטרף עד שתשלח לו את החדש. חברים שכבר בקופה לא מושפעים.",
@@ -884,7 +884,7 @@
         }
     },
     "dashboard": {
-        "appTitle": "CoPay",
+        "appTitle": "KupaPay",
         "youOwe": "אתה חייב",
         "youAreOwed": "חייבים לך",
         "balanceOverview": "סיכום יתרות",

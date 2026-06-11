@@ -42,7 +42,7 @@ function legalShell({ title, locale, body }: { title: string; locale: Locale; bo
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>${t} · CoPay</title>
+<title>${t} · KupaPay</title>
 <meta name="robots" content="index,follow" />
 <style>
   :root{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
@@ -68,7 +68,7 @@ function legalShell({ title, locale, body }: { title: string; locale: Locale; bo
 </head>
 <body>
 <div class="wrap">
-  <header><a href="https://kupa.pro/">CoPay</a></header>
+  <header><a href="https://kupa.pro/">KupaPay</a></header>
   ${body}
   <footer>
     <a href="https://kupa.pro/legal/privacy">${locale === 'he' ? 'מדיניות פרטיות' : 'Privacy'}</a>
@@ -158,15 +158,15 @@ export function handleAccountDeletion(req: Request, path: string): Response | nu
     if (path !== '/account-deletion' && path !== '/account-deletion/') return null;
     const locale = pickLocale(req);
     const he = locale === 'he';
-    const title = he ? 'מחיקת חשבון CoPay' : 'Delete your CoPay account';
+    const title = he ? 'מחיקת חשבון KupaPay' : 'Delete your KupaPay account';
     const body = he
         ? `
             <h1>${escapeHtml(title)}</h1>
             <article>
-                <p>אפשר למחוק את חשבון CoPay שלך ישירות מתוך האפליקציה. המחיקה היא קבועה ומוחקת את הנתונים האישיים שלך מהמערכת.</p>
+                <p>אפשר למחוק את חשבון KupaPay שלך ישירות מתוך האפליקציה. המחיקה היא קבועה ומוחקת את הנתונים האישיים שלך מהמערכת.</p>
                 <h2>איך מוחקים</h2>
                 <ol>
-                    <li>פתח את אפליקציית CoPay והתחבר לחשבונך.</li>
+                    <li>פתח את אפליקציית KupaPay והתחבר לחשבונך.</li>
                     <li>עבור ל-<strong>הגדרות</strong> (אייקון גלגל שיניים).</li>
                     <li>גלול אל החלק <strong>פרטיות וחשבון</strong>.</li>
                     <li>בחר <strong>מחק חשבון</strong> ואשר את הפעולה.</li>
@@ -188,10 +188,10 @@ export function handleAccountDeletion(req: Request, path: string): Response | nu
         : `
             <h1>${escapeHtml(title)}</h1>
             <article>
-                <p>You can delete your CoPay account directly from the app. Deletion is permanent and removes your personal data from our systems.</p>
+                <p>You can delete your KupaPay account directly from the app. Deletion is permanent and removes your personal data from our systems.</p>
                 <h2>How to delete</h2>
                 <ol>
-                    <li>Open the CoPay app and sign in.</li>
+                    <li>Open the KupaPay app and sign in.</li>
                     <li>Go to <strong>Settings</strong> (gear icon).</li>
                     <li>Scroll to <strong>Privacy &amp; Account</strong>.</li>
                     <li>Tap <strong>Delete account</strong> and confirm.</li>

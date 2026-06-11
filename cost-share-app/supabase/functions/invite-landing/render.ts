@@ -77,7 +77,7 @@ function shell({
 </body></html>`;
 }
 
-const APP_BRAND_TITLE = 'CoPay';
+const APP_BRAND_TITLE = 'KupaPay';
 
 function brandName(): string {
     return `<span class="brand-name">${APP_BRAND_TITLE}</span>`;
@@ -106,8 +106,8 @@ export function renderFriendInvite(
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
     return shell({
-        title: `${preview.inviter.name} הזמין אותך ל-CoPay`,
-        description: 'הצטרף ל-CoPay וחלוק הוצאות בקלות.',
+        title: `${preview.inviter.name} הזמין אותך ל-KupaPay`,
+        description: 'הצטרף ל-KupaPay וחלוק הוצאות בקלות.',
         canonical: `https://kupa.pro/i/${token}`,
         body,
     });
@@ -144,7 +144,7 @@ export function renderGroupInvite(
         <p class="footnote">אחרי ההורדה — חזור לקישור הזה.</p>
     `;
     return shell({
-        title: `הוזמנת לקופת '${g.name}' ב-CoPay`,
+        title: `הוזמנת לקופת '${g.name}' ב-KupaPay`,
         description: `${g.member_count} חברים · מטבע ${g.currency} · הצטרף בקלות`,
         canonical: `https://kupa.pro/g/${token}`,
         body,
