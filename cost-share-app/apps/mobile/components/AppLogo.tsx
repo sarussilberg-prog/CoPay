@@ -9,14 +9,14 @@ interface AppLogoProps {
     testID?: string;
 }
 
-/** CoPay brand mark — use on auth and marketing surfaces. */
+/** KupaPay brand mark — use on auth and marketing surfaces. */
 export function AppLogo({ size = 120, style, testID = 'app-logo' }: AppLogoProps) {
     return (
         <Image
             source={logoSource}
             style={[{ width: size, height: size }, style]}
             resizeMode="contain"
-            accessibilityLabel="CoPay"
+            accessibilityLabel="KupaPay"
             testID={testID}
         />
     );

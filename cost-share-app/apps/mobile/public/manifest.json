@@ -1,6 +1,6 @@
 {
-  "name": "CoPay",
-  "short_name": "CoPay",
+  "name": "KupaPay",
+  "short_name": "KupaPay",
   "description": "Split expenses with friends",
   "start_url": "/",
   "scope": "/",

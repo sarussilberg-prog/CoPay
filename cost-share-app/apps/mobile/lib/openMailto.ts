@@ -8,7 +8,7 @@ export function getSupportEmail(): string {
 }
 
 function buildMailtoUrl(email: string): string {
-    return `mailto:${email}?subject=${encodeURIComponent('CoPay Support')}`;
+    return `mailto:${email}?subject=${encodeURIComponent('KupaPay Support')}`;
 }
 
 export function getSupportMailtoUrl(email: string = getSupportEmail()): string {
@@ -35,7 +35,7 @@ export async function openSupportContact(): Promise<void> {
         const result = await Share.share(
             Platform.OS === 'ios'
                 ? { url }
-                : { message: email, title: 'CoPay Support' },
+                : { message: email, title: 'KupaPay Support' },
         );
         if (result.action === 'sharedAction') return;
     } catch {

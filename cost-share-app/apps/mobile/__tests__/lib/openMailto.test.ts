@@ -29,7 +29,7 @@ describe('openMailto', () => {
         const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
 
         await expect(openSupportContact()).resolves.toBeUndefined();
-        expect(openURL).toHaveBeenCalledWith(`mailto:${DEFAULT_SUPPORT_EMAIL}?subject=CoPay%20Support`);
+        expect(openURL).toHaveBeenCalledWith(`mailto:${DEFAULT_SUPPORT_EMAIL}?subject=KupaPay%20Support`);
         expect(share).not.toHaveBeenCalled();
     });
 
@@ -40,7 +40,7 @@ describe('openMailto', () => {
 
         await expect(openSupportContact()).resolves.toBeUndefined();
         expect(share).toHaveBeenCalledWith({
-            url: `mailto:${DEFAULT_SUPPORT_EMAIL}?subject=CoPay%20Support`,
+            url: `mailto:${DEFAULT_SUPPORT_EMAIL}?subject=KupaPay%20Support`,
         });
     });
 

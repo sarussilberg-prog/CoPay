@@ -28,7 +28,7 @@ jest.mock('expo-clipboard', () => ({
 }));
 jest.mock('../../../lib/openMailto', () => ({
     getSupportEmail: jest.fn(() => 'sarussilberg@gmail.com'),
-    getSupportMailtoUrl: jest.fn(() => 'mailto:sarussilberg@gmail.com?subject=CoPay%20Support'),
+    getSupportMailtoUrl: jest.fn(() => 'mailto:sarussilberg@gmail.com?subject=KupaPay%20Support'),
     openSupportContact: jest.fn().mockResolvedValue(undefined),
     DEFAULT_SUPPORT_EMAIL: 'sarussilberg@gmail.com',
 }));
