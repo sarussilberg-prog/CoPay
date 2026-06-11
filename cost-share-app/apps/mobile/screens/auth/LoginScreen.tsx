@@ -6,7 +6,7 @@
 
 import { Text } from '../../components/AppText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { platformAlert } from '../../lib/platformAlert';
 import { AppIcon } from '../../components/AppIcon';
@@ -15,11 +15,11 @@ import { AppBrandTitle } from '../../components/AppBrandTitle';
 import { DeletedAccountNoticeDialog } from '../../components/DeletedAccountNoticeDialog';
 import { LoginFeatureChips } from '../../components/auth/LoginFeatureChips';
 import { LoginGoogleButton } from '../../components/auth/LoginGoogleButton';
+import { LoginAppleButton } from '../../components/auth/LoginAppleButton';
 import { colors } from '../../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useLoading } from '../../hooks/useLoading';
-import { signInWithGoogle } from '../../services/auth.service';
+import { signInWithApple, signInWithGoogle } from '../../services/auth.service';
 import { showAppToast } from '../../lib/appToast';
 import { handleError } from '../../lib/handleError';
 import { LanguageSheet } from '../../components/settings/LanguageSheet';
@@ -31,6 +31,7 @@ import {
     consumeDeactivationNoticePending,
 } from '../../lib/deactivationNoticeStorage';
 import { getSupportEmail, openSupportContact } from '../../lib/openMailto';
+import appVersion from '../../version.json';
 
 export function LoginScreen() {
     const { t } = useTranslation();
@@ -38,7 +39,10 @@ export function LoginScreen() {
     const changeAppLanguage = useChangeAppLanguage();
     const pendingDeactivationNotice = useAppStore((state) => state.pendingDeactivationNotice);
     const setPendingDeactivationNotice = useAppStore((state) => state.setPendingDeactivationNotice);
-    const { isLoading, startLoading, stopLoading } = useLoading();
+    const [loadingProvider, setLoadingProvider] = useState<'apple' | 'google' | null>(null);
+    const isAppleLoading = loadingProvider === 'apple';
+    const isGoogleLoading = loadingProvider === 'google';
+    const isAnyLoading = loadingProvider !== null;
     const [languagePickerVisible, setLanguagePickerVisible] = useState(false);
     const [deletedNoticeVisible, setDeletedNoticeVisible] = useState(false);
 
@@ -81,7 +85,7 @@ export function LoginScreen() {
     );
 
     const handleSignIn = async () => {
-        startLoading();
+        setLoadingProvider('google');
         try {
             const { error } = await signInWithGoogle();
             if (error) {
@@ -103,7 +107,32 @@ export function LoginScreen() {
                 tags: { service: 'auth', op: 'signInWithGoogle' },
             });
         } finally {
-            stopLoading();
+            setLoadingProvider(null);
+        }
+    };
+
+    const handleAppleSignIn = async () => {
+        setLoadingProvider('apple');
+        try {
+            const { error } = await signInWithApple();
+            if (error) {
+                if (error.code === 'account_deleted') {
+                    showDeletedAccountNotice();
+                    return;
+                }
+                handleError(error, {
+                    toast: { titleKey: 'auth.signInError', message: error.message },
+                    tags: { service: 'auth', op: 'signInWithApple' },
+                    extra: { errorCode: error.code },
+                });
+            }
+        } catch (error) {
+            handleError(error, {
+                toast: { titleKey: 'auth.signInError' },
+                tags: { service: 'auth', op: 'signInWithApple' },
+            });
+        } finally {
+            setLoadingProvider(null);
         }
     };
 
@@ -143,31 +172,47 @@ export function LoginScreen() {
                         >
                             {t('auth.tagline')}
                         </Text>
-                        <Text
-                            className="text-[15px] leading-relaxed text-gray-500 text-center mt-3 px-1"
-                            style={centeredTextStyle}
-                        >
-                            {t('auth.description')}
-                        </Text>
                         <LoginFeatureChips />
                     </View>
                 </View>
 
                 <View className="px-7 pb-2">
-                    <LoginGoogleButton
-                        title={t('auth.signInWithGoogle')}
-                        onPress={handleSignIn}
-                        loading={isLoading}
-                        disabled={isLoading}
-                    />
-                    {isLoading ? (
-                        <Text
-                            className="text-sm text-gray-400 mt-3 text-center"
-                            style={[centeredTextStyle, styles.signingHint]}
-                        >
-                            {t('auth.signingIn')}
-                        </Text>
-                    ) : null}
+                    {Platform.OS === 'ios' ? (
+                        <>
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                loading={isAppleLoading}
+                                disabled={isAnyLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isGoogleLoading}
+                                disabled={isAnyLoading}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <LoginGoogleButton
+                                title={t('auth.signInWithGoogle')}
+                                onPress={handleSignIn}
+                                loading={isGoogleLoading}
+                                disabled={isAnyLoading}
+                            />
+                            <View className="h-3" />
+                            <LoginAppleButton
+                                title={t('auth.signInWithApple')}
+                                onPress={handleAppleSignIn}
+                                loading={isAppleLoading}
+                                disabled={isAnyLoading}
+                            />
+                        </>
+                    )}
+                    <Text className="text-[11px] text-gray-300 text-center mt-4">
+                        v{appVersion.version}
+                    </Text>
                 </View>
             </SafeAreaView>
 
@@ -246,8 +291,5 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 100,
         backgroundColor: 'rgba(96,165,250,0.18)',
-    },
-    signingHint: {
-        alignSelf: 'stretch',
     },
 });

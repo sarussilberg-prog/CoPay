@@ -7,6 +7,10 @@ const mockOpenAuthSessionAsync = jest.fn();
 const mockOpenOAuthSession = jest.fn();
 let mockPlatformOs: 'ios' | 'android' | 'web' = 'ios';
 const mockMakeRedirectUri = jest.fn();
+const mockAppleSignInAsync = jest.fn();
+const mockProfilesEq = jest.fn((..._args: unknown[]) => Promise.resolve({ data: null, error: null }));
+const mockProfilesUpdate = jest.fn((..._args: unknown[]) => ({ eq: mockProfilesEq }));
+const mockProfilesFrom = jest.fn((..._args: unknown[]) => ({ update: mockProfilesUpdate }));
 
 jest.mock('expo-constants', () => ({
     __esModule: true,
@@ -22,6 +26,7 @@ jest.mock('../../lib/supabase', () => ({
             signInWithOAuth: (...args: unknown[]) => mockSignInWithOAuth(...args),
             signOut: (...args: unknown[]) => mockSignOut(...args),
         },
+        from: (...args: unknown[]) => mockProfilesFrom(...args),
     },
 }));
 
@@ -67,12 +72,24 @@ jest.mock('expo-web-browser', () => ({
     openAuthSessionAsync: (...args: unknown[]) => mockOpenAuthSessionAsync(...args),
 }));
 
+jest.mock('expo-apple-authentication', () => ({
+    signInAsync: (...args: unknown[]) => mockAppleSignInAsync(...args),
+    AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+}));
+
+jest.mock('expo-crypto', () => ({
+    CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+    digestStringAsync: jest.fn(async (_algo: string, value: string) => `hashed:${value}`),
+    randomUUID: jest.fn(() => 'uuid-1234'),
+}));
+
 import { Platform } from 'react-native';
 import { queryClient } from '../../lib/queryClient';
 import {
     getAuthRedirectUri,
     handleAuthRedirectUrl,
     isAuthCallbackUrl,
+    signInWithApple,
     signInWithGoogle,
     signOut,
 } from '../../services/auth.service';
@@ -93,7 +110,7 @@ describe('auth.service', () => {
     beforeEach(async () => {
         jest.clearAllMocks();
         setPlatformOs('ios');
-        mockMakeRedirectUri.mockReturnValue('com.kupay.mobile://auth/callback');
+        mockMakeRedirectUri.mockReturnValue('com.copay.mobile://auth/callback');
         mockExchangeCodeForSession.mockResolvedValue({ error: null });
         mockSignOut.mockResolvedValue({ error: null });
         mockClearStaleAuthSession.mockResolvedValue(undefined);
@@ -116,7 +133,7 @@ describe('auth.service', () => {
         });
 
         it('uses native scheme redirect on dev/production builds', () => {
-            expect(getAuthRedirectUri()).toBe('com.kupay.mobile://auth/callback');
+            expect(getAuthRedirectUri()).toBe('com.copay.mobile://auth/callback');
             expect(mockMakeRedirectUri).not.toHaveBeenCalled();
         });
 
@@ -146,16 +163,16 @@ describe('auth.service', () => {
 
     describe('isAuthCallbackUrl', () => {
         it('detects OAuth callback URLs', () => {
-            expect(isAuthCallbackUrl('com.kupay.mobile://auth/callback?code=abc')).toBe(true);
+            expect(isAuthCallbackUrl('com.copay.mobile://auth/callback?code=abc')).toBe(true);
             expect(isAuthCallbackUrl('https://kupa.pro/?code=abc')).toBe(true);
             expect(isAuthCallbackUrl('https://kupa.pro/auth/callback?code=abc')).toBe(true);
-            expect(isAuthCallbackUrl('com.kupay.mobile://invite/i/token')).toBe(false);
+            expect(isAuthCallbackUrl('com.copay.mobile://invite/i/token')).toBe(false);
         });
     });
 
     describe('handleAuthRedirectUrl', () => {
         it('exchanges auth code even when a session already exists', async () => {
-            const result = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=new-code');
+            const result = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=new-code');
 
             expect(mockExchangeCodeForSession).toHaveBeenCalledWith('new-code');
             expect(result.error).toBeNull();
@@ -166,8 +183,8 @@ describe('auth.service', () => {
                 () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 20)),
             );
 
-            const first = handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=same');
-            const second = handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=same');
+            const first = handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=same');
+            const second = handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=same');
 
             await Promise.all([first, second]);
             expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
@@ -176,10 +193,10 @@ describe('auth.service', () => {
         it('returns the cached result on later calls with the same code', async () => {
             mockExchangeCodeForSession.mockResolvedValueOnce({ error: null });
 
-            const first = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=cached');
+            const first = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=cached');
             // Even after the original promise settles, a delayed deep-link
             // delivery hits the cache instead of re-exchanging the code.
-            const second = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=cached');
+            const second = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=cached');
 
             expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
             expect(first.error).toBeNull();
@@ -189,7 +206,7 @@ describe('auth.service', () => {
         it('returns account_deleted when the profile is deactivated after OAuth exchange', async () => {
             mockIsAuthSessionAllowed.mockResolvedValueOnce(false);
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=deleted-user');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=deleted-user');
 
             expect(error?.code).toBe('account_deleted');
             expect(mockIsAuthSessionAllowed).toHaveBeenCalled();
@@ -202,7 +219,7 @@ describe('auth.service', () => {
                 error: { message: 'AuthApiError: email_was_deleted' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=abc');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=abc');
 
             expect(error).not.toBeNull();
             expect(error!.code).toBe('account_deleted');
@@ -214,7 +231,7 @@ describe('auth.service', () => {
                 error: { message: 'User is banned' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=banned');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=banned');
 
             expect(error?.code).toBe('account_deleted');
         });
@@ -224,7 +241,7 @@ describe('auth.service', () => {
                 error: { message: 'invalid_grant' },
             });
 
-            const { error } = await handleAuthRedirectUrl('com.kupay.mobile://auth/callback?code=xyz');
+            const { error } = await handleAuthRedirectUrl('com.copay.mobile://auth/callback?code=xyz');
 
             expect(error?.code).toBe('generic');
             expect(error?.message).toContain('invalid_grant');
@@ -240,14 +257,14 @@ describe('auth.service', () => {
             });
             mockOpenOAuthSession.mockResolvedValue({
                 type: 'success',
-                url: 'com.kupay.mobile://auth/callback?code=abc',
+                url: 'com.copay.mobile://auth/callback?code=abc',
             });
 
             const result = await signInWithGoogle();
 
             expect(mockOpenOAuthSession).toHaveBeenCalledWith(
                 'https://accounts.google.com/o/oauth2/auth',
-                'com.kupay.mobile://auth/callback',
+                'com.copay.mobile://auth/callback',
             );
             expect(mockOpenAuthSessionAsync).not.toHaveBeenCalled();
             expect(result.error).toBeNull();
@@ -261,14 +278,14 @@ describe('auth.service', () => {
             });
             mockOpenOAuthSession.mockResolvedValue({
                 type: 'success',
-                url: 'com.kupay.mobile://auth/callback?code=abc',
+                url: 'com.copay.mobile://auth/callback?code=abc',
             });
 
             const result = await signInWithGoogle();
 
             expect(mockOpenOAuthSession).toHaveBeenCalledWith(
                 'https://accounts.google.com/o/oauth2/auth',
-                'com.kupay.mobile://auth/callback',
+                'com.copay.mobile://auth/callback',
             );
             expect(result.error).toBeNull();
         });
@@ -287,9 +304,114 @@ describe('auth.service', () => {
             const result = await signInWithGoogle();
 
             expect(result.error?.code).toBe('generic');
-            expect(result.error?.message).toContain('com.kupay.mobile://auth/callback');
+            expect(result.error?.message).toContain('com.copay.mobile://auth/callback');
             expect(result.error?.message).toContain('Redirect URLs');
             expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('signInWithApple', () => {
+        beforeEach(() => {
+            setPlatformOs('ios');
+            mockSignInWithIdToken.mockResolvedValue({
+                data: { user: { id: 'user-1' } },
+                error: null,
+            });
+        });
+
+        it('exchanges the Apple identity token with the raw nonce', async () => {
+            mockAppleSignInAsync.mockResolvedValue({
+                identityToken: 'apple-id-token',
+                fullName: null,
+            });
+
+            const result = await signInWithApple();
+
+            expect(mockAppleSignInAsync).toHaveBeenCalledWith(
+                expect.objectContaining({ nonce: 'hashed:uuid-1234' }),
+            );
+            expect(mockSignInWithIdToken).toHaveBeenCalledWith({
+                provider: 'apple',
+                token: 'apple-id-token',
+                nonce: 'uuid-1234',
+            });
+            expect(result.error).toBeNull();
+        });
+
+        it('captures the full name on first sign-in', async () => {
+            mockAppleSignInAsync.mockResolvedValue({
+                identityToken: 'apple-id-token',
+                fullName: { givenName: 'Dana', familyName: 'Cohen' },
+            });
+
+            await signInWithApple();
+
+            expect(mockProfilesFrom).toHaveBeenCalledWith('profiles');
+            expect(mockProfilesUpdate).toHaveBeenCalledWith({ name: 'Dana Cohen' });
+            expect(mockProfilesEq).toHaveBeenCalledWith('id', 'user-1');
+        });
+
+        it('does not update the profile when Apple returns no name', async () => {
+            mockAppleSignInAsync.mockResolvedValue({ identityToken: 'apple-id-token', fullName: null });
+
+            await signInWithApple();
+
+            expect(mockProfilesUpdate).not.toHaveBeenCalled();
+        });
+
+        it('returns no error (silent) when the user cancels', async () => {
+            mockAppleSignInAsync.mockRejectedValue({ code: 'ERR_REQUEST_CANCELED' });
+
+            const result = await signInWithApple();
+
+            expect(result.error).toBeNull();
+            expect(mockSignInWithIdToken).not.toHaveBeenCalled();
+        });
+
+        it('returns account_deleted when the profile is deactivated', async () => {
+            mockAppleSignInAsync.mockResolvedValue({ identityToken: 'apple-id-token', fullName: null });
+            mockIsAuthSessionAllowed.mockResolvedValueOnce(false);
+
+            const result = await signInWithApple();
+
+            expect(result.error?.code).toBe('account_deleted');
+        });
+
+        it('returns a generic error when there is no identity token', async () => {
+            mockAppleSignInAsync.mockResolvedValue({ identityToken: null, fullName: null });
+
+            const result = await signInWithApple();
+
+            expect(result.error?.code).toBe('generic');
+            expect(mockSignInWithIdToken).not.toHaveBeenCalled();
+        });
+
+        it('uses the browser OAuth flow on Android (no native Apple SDK)', async () => {
+            setPlatformOs('android');
+            mockSignInWithOAuth.mockResolvedValue({
+                data: { url: 'https://appleid.apple.com/auth/authorize' },
+                error: null,
+            });
+            mockOpenOAuthSession.mockResolvedValue({
+                type: 'success',
+                url: 'com.copay.mobile://auth/callback?code=apple-code',
+            });
+
+            const result = await signInWithApple();
+
+            expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    provider: 'apple',
+                    options: expect.objectContaining({ scopes: 'name email', skipBrowserRedirect: true }),
+                }),
+            );
+            expect(mockOpenOAuthSession).toHaveBeenCalledWith(
+                'https://appleid.apple.com/auth/authorize',
+                'com.copay.mobile://auth/callback',
+            );
+            expect(mockAppleSignInAsync).not.toHaveBeenCalled();
+            expect(mockExchangeCodeForSession).toHaveBeenCalledWith('apple-code');
+            expect(result.error).toBeNull();
         });
     });
 

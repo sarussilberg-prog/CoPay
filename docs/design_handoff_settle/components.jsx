@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Kupay · shared UI primitives (Icon, Button, Input, Avatar, Chip, Card, FAB)
+// CoPay · shared UI primitives (Icon, Button, Input, Avatar, Chip, Card, FAB)
 // Visual rules pulled from tailwind.config.js + theme/* + components/* in the
 // navesarussi/kupa repo. All colors flow from CSS vars in colors_and_type.css.
 
@@ -57,7 +57,7 @@ function Icon({ name, size = 24, color, style }) {
   const url = `https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/svg/${slug}.svg`;
   const [svg, setSvg] = React.useState(null);
   React.useEffect(() => {
-    const cache = window.__kupaIconCache = window.__kupaIconCache || {};
+    const cache = window.__copayIconCache = window.__copayIconCache || {};
     if (cache[slug]) { setSvg(cache[slug]); return; }
     let live = true;
     fetch(url).then(r => r.text()).then(t => {
@@ -134,7 +134,7 @@ function Spinner({ size = 16, color = '#fff' }) {
     <span style={{
       display: 'inline-block', width: size, height: size, borderRadius: '50%',
       border: `2px solid ${color}`, borderTopColor: 'transparent',
-      animation: 'kupa-spin .8s linear infinite',
+      animation: 'copay-spin .8s linear infinite',
     }} />
   );
 }

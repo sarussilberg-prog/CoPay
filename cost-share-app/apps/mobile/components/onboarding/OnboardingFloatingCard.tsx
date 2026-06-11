@@ -38,40 +38,45 @@ export function OnboardingFloatingCard({
     return (
         <Animated.View
             entering={onboardingMotion.fadeDown(delayMs)}
-            style={[
-                styles.card,
-                style,
-                { transform: [{ rotate: `${rotateDeg}deg` }] },
-            ]}
+            style={[styles.cardOuter, style]}
         >
-            <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
-                <AppIcon name={icon} size={16} color={iconColor} />
-            </View>
-            <View style={styles.textCol}>
-                <Text
-                    className={rtlTextClassName(isRtl, 'text-[11px] font-bold')}
-                    style={{ color: onboardingColors.ink }}
-                >
-                    {title}
-                </Text>
-                <Text
-                    className={rtlTextClassName(isRtl, 'text-[10px] mt-px')}
-                    style={{
-                        color: subtitleColor,
-                        fontWeight: subtitleBold ? '700' : '400',
-                    }}
-                >
-                    {subtitle}
-                </Text>
+            <View
+                style={[
+                    styles.card,
+                    { transform: [{ rotate: `${rotateDeg}deg` }] },
+                ]}
+            >
+                <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+                    <AppIcon name={icon} size={16} color={iconColor} />
+                </View>
+                <View style={styles.textCol}>
+                    <Text
+                        className={rtlTextClassName(isRtl, 'text-[11px] font-bold')}
+                        style={{ color: onboardingColors.ink }}
+                    >
+                        {title}
+                    </Text>
+                    <Text
+                        className={rtlTextClassName(isRtl, 'text-[10px] mt-px')}
+                        style={{
+                            color: subtitleColor,
+                            fontWeight: subtitleBold ? '700' : '400',
+                        }}
+                    >
+                        {subtitle}
+                    </Text>
+                </View>
             </View>
         </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    cardOuter: {
         position: 'absolute',
         zIndex: 2,
+    },
+    card: {
         backgroundColor: onboardingColors.white,
         borderRadius: 14,
         paddingVertical: 10,

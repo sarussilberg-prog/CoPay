@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Re-open the Kupay dev client on the booted iOS simulator with the current Metro URL.
+# Re-open the CoPay dev client on the booted iOS simulator with the current Metro URL.
 # Requires a local dev build: npm run ios:run (once) before using ios:open.
 
 set -euo pipefail
 
 PORT="${EXPO_METRO_PORT:-8081}"
 METRO_STATUS="http://127.0.0.1:${PORT}/status"
-BUNDLE_ID="com.kupay.mobile"
-SCHEME="com.kupay.mobile"
+BUNDLE_ID="com.copay.mobile"
+SCHEME="com.copay.mobile"
 METRO_URL="http://127.0.0.1:${PORT}"
 ENCODED_METRO_URL="$(python3 -c "import urllib.parse; print(urllib.parse.quote('${METRO_URL}', safe=''))")"
 DEV_CLIENT_URL="${SCHEME}://expo-development-client/?url=${ENCODED_METRO_URL}"
@@ -31,7 +31,7 @@ if [[ $tries -eq 0 ]]; then
   exit 1
 fi
 
-echo "Opening Kupay dev client (Metro :${PORT})..."
+echo "Opening CoPay dev client (Metro :${PORT})..."
 xcrun simctl terminate booted "$BUNDLE_ID" 2>/dev/null || true
 sleep 0.5
 

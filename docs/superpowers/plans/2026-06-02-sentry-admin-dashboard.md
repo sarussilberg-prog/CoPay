@@ -639,9 +639,9 @@ const baseEnv: ProxyEnv = {
     SUPABASE_URL: 'https://example.supabase.co',
     SUPABASE_ANON_KEY: 'anon-key',
     SENTRY_API_TOKEN: 'sentry-token',
-    SENTRY_ORG: 'kupa-org',
-    SENTRY_PROJECT_DEV: 'kupa-mobile-dev',
-    SENTRY_PROJECT_PROD: 'kupa-mobile-prod',
+    SENTRY_ORG: 'copay-hb',
+    SENTRY_PROJECT_DEV: 'copay-mobile-dev',
+    SENTRY_PROJECT_PROD: 'copay-mobile-prod',
 };
 
 // Patches the global `fetch` Supabase RPC call uses, scoped to the test body.
@@ -723,7 +723,7 @@ Deno.test(
             calls.push({ url, auth });
             return Promise.resolve(
                 new Response(JSON.stringify([
-                    { id: '99', shortId: 'KUPA-1', title: 'Boom', level: 'error', status: 'unresolved', count: '7', userCount: 3, firstSeen: '2026-06-01', lastSeen: '2026-06-02', culprit: 'foo.ts:42', metadata: {} },
+                    { id: '99', shortId: 'COPAY-1', title: 'Boom', level: 'error', status: 'unresolved', count: '7', userCount: 3, firstSeen: '2026-06-01', lastSeen: '2026-06-02', culprit: 'foo.ts:42', metadata: {} },
                 ]), { status: 200, headers: { 'Content-Type': 'application/json' } }),
             );
         };
@@ -735,13 +735,13 @@ Deno.test(
         const res = await handleRequest(req, baseEnv, sentryFetch);
         assertEquals(res.status, 200);
         assertEquals(calls.length, 1);
-        assertStringIncludes(calls[0].url, 'sentry.io/api/0/projects/kupa-org/kupa-mobile-dev/issues/');
+        assertStringIncludes(calls[0].url, 'sentry.io/api/0/projects/copay-hb/copay-mobile-dev/issues/');
         assertStringIncludes(calls[0].url, 'environment=development');
         assertStringIncludes(calls[0].url, 'limit=10');
         assertEquals(calls[0].auth, 'Bearer sentry-token');
         const json = await res.json();
         assertEquals(json.ok, true);
-        assertEquals(json.data[0].shortId, 'KUPA-1');
+        assertEquals(json.data[0].shortId, 'COPAY-1');
     }),
 );
 
@@ -759,7 +759,7 @@ Deno.test(
             body: JSON.stringify({ action: 'list_issues', environment: 'prod' }),
         });
         await handleRequest(req, baseEnv, sentryFetch);
-        assertStringIncludes(captured[0], '/projects/kupa-org/kupa-mobile-prod/issues/');
+        assertStringIncludes(captured[0], '/projects/copay-hb/copay-mobile-prod/issues/');
         assertStringIncludes(captured[0], 'environment=production');
     }),
 );
@@ -1868,7 +1868,7 @@ function renderWithQuery(ui: React.ReactElement) {
 
 const sampleIssue = {
     id: 'iss-1',
-    shortId: 'KUPA-1',
+    shortId: 'COPAY-1',
     title: 'TypeError: x is undefined',
     level: 'error',
     status: 'unresolved',
@@ -2056,8 +2056,8 @@ gh pr create --base dev --title "Admin Sentry error dashboard + Sentry test cove
    supabase secrets set \\
      SENTRY_API_TOKEN=<the same token from PR #33> \\
      SENTRY_ORG=<your org slug> \\
-     SENTRY_PROJECT_DEV=kupa-mobile-dev \\
-     SENTRY_PROJECT_PROD=kupa-mobile-prod
+     SENTRY_PROJECT_DEV=copay-mobile-dev \\
+     SENTRY_PROJECT_PROD=copay-mobile-prod
    \`\`\`
 
 2. **Deploy the function:**

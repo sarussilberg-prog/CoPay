@@ -21,10 +21,13 @@ jest.mock('react-native', () => ({
         forceRTL: jest.fn(),
         isRTL: false,
     },
+    DevSettings: {
+        reload: jest.fn(),
+    },
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { I18nManager } from 'react-native';
+import { DevSettings, I18nManager } from 'react-native';
 import * as Localization from 'expo-localization';
 import * as Updates from 'expo-updates';
 import i18n, { initializeLanguage } from '../../i18n';
@@ -37,12 +40,15 @@ const i18nMgr = I18nManager as unknown as {
 };
 const getLocalesMock = Localization.getLocales as jest.Mock;
 const reloadAsyncMock = Updates.reloadAsync as jest.Mock;
+// In jest, __DEV__ === true, so syncNativeRtl uses DevSettings.reload(), not Updates.reloadAsync().
+const devReloadMock = DevSettings.reload as jest.Mock;
 
 describe('initializeLanguage', () => {
     beforeEach(async () => {
         await AsyncStorage.clear();
         getLocalesMock.mockReset();
         reloadAsyncMock.mockReset();
+        devReloadMock.mockReset();
         i18nMgr.forceRTL.mockReset();
         i18nMgr.isRTL = false;
         useAppStore.setState({ language: 'en' });
@@ -62,6 +68,7 @@ describe('initializeLanguage', () => {
             expect(useAppStore.getState().language).toBe('he');
             expect(getLocalesMock).not.toHaveBeenCalled();
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('uses saved he, forces RTL, and reloads when native is still LTR', async () => {
@@ -73,7 +80,8 @@ describe('initializeLanguage', () => {
             expect(useAppStore.getState().language).toBe('he');
             expect(getLocalesMock).not.toHaveBeenCalled();
             expect(i18nMgr.forceRTL).toHaveBeenCalledWith(true);
-            expect(reloadAsyncMock).toHaveBeenCalledTimes(1);
+            expect(devReloadMock).toHaveBeenCalledTimes(1);
+            expect(reloadAsyncMock).not.toHaveBeenCalled();
             expect(await AsyncStorage.getItem('@rtl_native_applied')).toBe('he');
         });
 
@@ -88,6 +96,7 @@ describe('initializeLanguage', () => {
             expect(i18n.language).toBe('he');
             expect(i18nMgr.forceRTL).not.toHaveBeenCalled();
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('uses saved en without reading device locale when native is already LTR', async () => {
@@ -99,6 +108,7 @@ describe('initializeLanguage', () => {
             expect(useAppStore.getState().language).toBe('en');
             expect(getLocalesMock).not.toHaveBeenCalled();
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('uses saved en, forces LTR, and reloads when native still has RTL', async () => {
@@ -111,7 +121,8 @@ describe('initializeLanguage', () => {
             expect(useAppStore.getState().language).toBe('en');
             expect(getLocalesMock).not.toHaveBeenCalled();
             expect(i18nMgr.forceRTL).toHaveBeenCalledWith(false);
-            expect(reloadAsyncMock).toHaveBeenCalledTimes(1);
+            expect(devReloadMock).toHaveBeenCalledTimes(1);
+            expect(reloadAsyncMock).not.toHaveBeenCalled();
         });
     });
 
@@ -125,7 +136,8 @@ describe('initializeLanguage', () => {
             expect(i18n.language).toBe('he');
             expect(useAppStore.getState().language).toBe('he');
             expect(i18nMgr.forceRTL).toHaveBeenCalledWith(true);
-            expect(reloadAsyncMock).toHaveBeenCalledTimes(1);
+            expect(devReloadMock).toHaveBeenCalledTimes(1);
+            expect(reloadAsyncMock).not.toHaveBeenCalled();
         });
 
         it('seeds en when device locale is en — no RTL flip, no reload', async () => {
@@ -137,6 +149,7 @@ describe('initializeLanguage', () => {
             expect(i18n.language).toBe('en');
             expect(i18nMgr.forceRTL).not.toHaveBeenCalled();
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('falls back to en for an unsupported language', async () => {
@@ -147,6 +160,7 @@ describe('initializeLanguage', () => {
             expect(await AsyncStorage.getItem('@app_language')).toBe('en');
             expect(i18n.language).toBe('en');
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('falls back to en when getLocales returns an empty array', async () => {
@@ -157,6 +171,7 @@ describe('initializeLanguage', () => {
             expect(await AsyncStorage.getItem('@app_language')).toBe('en');
             expect(i18n.language).toBe('en');
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('seeds he but skips reload when native is already RTL', async () => {
@@ -168,6 +183,7 @@ describe('initializeLanguage', () => {
             expect(i18n.language).toBe('he');
             expect(i18nMgr.forceRTL).not.toHaveBeenCalled();
             expect(reloadAsyncMock).not.toHaveBeenCalled();
+            expect(devReloadMock).not.toHaveBeenCalled();
         });
 
         it('seeds en and force-LTR + reloads when native still has RTL from a prior install', async () => {
@@ -178,7 +194,8 @@ describe('initializeLanguage', () => {
 
             expect(await AsyncStorage.getItem('@app_language')).toBe('en');
             expect(i18nMgr.forceRTL).toHaveBeenCalledWith(false);
-            expect(reloadAsyncMock).toHaveBeenCalledTimes(1);
+            expect(devReloadMock).toHaveBeenCalledTimes(1);
+            expect(reloadAsyncMock).not.toHaveBeenCalled();
         });
     });
 });

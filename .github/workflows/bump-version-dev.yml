@@ -1,0 +1,90 @@
+name: Bump patch version (dev)
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - 'cost-share-app/apps/mobile/version.json'
+
+concurrency:
+  group: version-bump-dev
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Open version bump PR → merge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use branch name (not trigger SHA) so that if this run was queued behind
+          # another bump, we read the already-incremented version from dev HEAD.
+          ref: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute new version
+        id: version
+        run: |
+          VERSION_FILE="cost-share-app/apps/mobile/version.json"
+          current=$(jq -r '.version' "$VERSION_FILE")
+          IFS='.' read -r major minor patch <<< "$current"
+          new_version="${major}.${minor}.$((patch + 1))"
+          echo "current=${current}"   >> "$GITHUB_OUTPUT"
+          echo "new=${new_version}"   >> "$GITHUB_OUTPUT"
+          echo "branch=chore/version-bump/${new_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump on new branch
+        run: |
+          VERSION_FILE="cost-share-app/apps/mobile/version.json"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${{ steps.version.outputs.branch }}"
+          jq -c --arg v "${{ steps.version.outputs.new }}" '.version = $v' \
+            "$VERSION_FILE" > tmp.json && mv tmp.json "$VERSION_FILE"
+          git add "$VERSION_FILE"
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new }}"
+          git push origin "${{ steps.version.outputs.branch }}"
+
+      - name: Open PR and merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREV: ${{ steps.version.outputs.current }}
+          NEXT: ${{ steps.version.outputs.new }}
+          BUMP_BRANCH: ${{ steps.version.outputs.branch }}
+        run: |
+          cat > /tmp/pr-body.md << EOF
+## 🔖 Version Bump
+
+| | |
+|---|---|
+| **Previous** | \`${PREV}\` |
+| **New** | \`${NEXT}\` |
+| **Bump type** | **Patch** — push to \`dev\` |
+| **File** | \`cost-share-app/apps/mobile/version.json\` |
+
+### What happened
+A push reached \`dev\`, triggering an automated **patch** version increment.
+The last number increases with every dev push; resets to \`0\` on a \`main\` merge.
+
+\`\`\`
+${PREV}  →  ${NEXT}
+                ^
+             patch++
+\`\`\`
+
+---
+_🤖 Automated by [bump-version-dev](../../actions/workflows/bump-version-dev.yml)_
+EOF
+
+          PR_URL=$(gh pr create \
+            --base dev \
+            --head "${BUMP_BRANCH}" \
+            --title "chore: bump version ${PREV} → ${NEXT}" \
+            --body-file /tmp/pr-body.md)
+
+          echo "PR created: ${PR_URL}"
+          gh pr merge "${PR_URL}" --squash --delete-branch

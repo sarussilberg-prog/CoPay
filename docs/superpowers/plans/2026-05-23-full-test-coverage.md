@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the highest-risk test gaps in the Kupay mobile app and shared calculations layer so every critical user flow (auth, expenses, settlements, groups, invites, balances, realtime sync) has unit/integration tests with deterministic mocks.
+**Goal:** Close the highest-risk test gaps in the CoPay mobile app and shared calculations layer so every critical user flow (auth, expenses, settlements, groups, invites, balances, realtime sync) has unit/integration tests with deterministic mocks.
 
 **Architecture:** Follow existing patterns in `cost-share-app/apps/mobile/__tests__/`: mock `lib/supabase`, `lib/auth`, `react-native-toast-message`, and `i18n`; test pure logic under `__tests__/shared/`; test hooks with a new `renderHookWithQuery` helper. No production refactors unless a function is untestable without extraction. Each phase is an independent PR.
 
@@ -1100,7 +1100,7 @@ describe('useInviteRedemption', () => {
     });
 
     it('parks invite when user is logged out', () => {
-        (Linking.useURL as jest.Mock).mockReturnValue('com.kupay.mobile://invite/i/abc1234567');
+        (Linking.useURL as jest.Mock).mockReturnValue('com.copay.mobile://invite/i/abc1234567');
         (parseIncomingUrl as jest.Mock).mockReturnValue({
             kind: 'friend',
             token: 'abc1234567',
@@ -1154,7 +1154,7 @@ Test:
 it('sets session from access_token and refresh_token query params', async () => {
     mockSetSession.mockResolvedValue({ error: null });
     const url =
-        'com.kupay.mobile://auth/callback#access_token=at&refresh_token=rt&token_type=bearer';
+        'com.copay.mobile://auth/callback#access_token=at&refresh_token=rt&token_type=bearer';
     const result = await handleAuthRedirectUrl(url);
     expect(mockSetSession).toHaveBeenCalledWith({
         access_token: 'at',

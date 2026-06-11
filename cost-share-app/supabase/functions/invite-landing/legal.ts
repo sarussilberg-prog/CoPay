@@ -8,7 +8,7 @@ type Locale = 'he' | 'en';
 type Slug = 'privacy' | 'terms';
 
 const SUPPORT_EMAIL =
-    Deno.env.get('KUPAY_SUPPORT_EMAIL') ?? Deno.env.get('KUPA_SUPPORT_EMAIL') ?? 'sarussilberg@gmail.com';
+    Deno.env.get('COPAY_SUPPORT_EMAIL') ?? Deno.env.get('KUPAY_SUPPORT_EMAIL') ?? Deno.env.get('KUPA_SUPPORT_EMAIL') ?? 'sarussilberg@gmail.com';
 
 interface LegalRow {
     slug: Slug;

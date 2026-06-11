@@ -121,7 +121,7 @@ Three layers; everything new lives behind feature-flag-style env vars (`EXPO_PUB
 
 1. **Sentry account prerequisites (one-time, by user):**
    - Org created at sentry.io. Org slug captured.
-   - Two projects created (`kupa-mobile-dev`, `kupa-mobile-prod`) under platform "React Native". Project slugs + DSNs captured.
+   - Two projects created (`copay-mobile-dev`, `copay-mobile-prod`) under platform "React Native". Project slugs + DSNs captured.
    - One auth token created with scopes `org:read`, `project:read`, `project:write`, `project:admin`, `project:releases`, `event:read`, `event:write`. Token captured.
 
 2. **Local config (committed):**
@@ -147,8 +147,8 @@ Three layers; everything new lives behind feature-flag-style env vars (`EXPO_PUB
    supabase secrets set \
      SENTRY_API_TOKEN=<token> \
      SENTRY_ORG=<org-slug> \
-     SENTRY_PROJECT_DEV=kupa-mobile-dev \
-     SENTRY_PROJECT_PROD=kupa-mobile-prod
+     SENTRY_PROJECT_DEV=copay-mobile-dev \
+     SENTRY_PROJECT_PROD=copay-mobile-prod
    ```
 
 6. **Branch and PRs:**

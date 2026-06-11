@@ -3,6 +3,7 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { AppIcon, AppIconName } from '../AppIcon';
 import { colors } from '../../theme';
+import { useRtlLayout } from '../../hooks/useRtlLayout';
 
 type Variant = 'chevron' | 'value' | 'danger';
 
@@ -19,6 +20,7 @@ type Props = ChevronProps | ValueProps;
 
 export function SettingsRow(props: Props) {
     const { iconName, label, testID } = props;
+    const isRtl = useRtlLayout();
     const isDanger = props.variant === 'danger';
     const iconColor = isDanger ? colors.error : colors.gray500;
     const textColor = isDanger ? 'text-red-600' : 'text-gray-900';
@@ -31,7 +33,11 @@ export function SettingsRow(props: Props) {
                 {props.variant === 'value' ? (
                     <Text className="text-sm text-gray-500 me-2">{props.valueText}</Text>
                 ) : null}
-                <AppIcon name="chevron-forward" size={18} color={colors.gray400} />
+                <AppIcon
+                    name={isRtl ? 'chevron-back' : 'chevron-forward'}
+                    size={18}
+                    color={colors.gray400}
+                />
             </View>
         </TouchableOpacity>
     );

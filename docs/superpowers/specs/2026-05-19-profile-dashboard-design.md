@@ -26,7 +26,7 @@ Redesign the Profile tab into a personal dashboard with balance summary, group s
 | Contact | WhatsApp → +972528616878 |
 | Terms & Privacy | In-app scrollable bottom sheet (i18n text) |
 | Rate app | Deep link to App Store / Play Store by platform |
-| Header | Center title "Kupay" (not "Profile"); settings icon in header |
+| Header | Center title "CoPay" (not "Profile"); settings icon in header |
 | Profile row | Single row: avatar + name + email + small edit icon button |
 
 ---
@@ -35,7 +35,7 @@ Redesign the Profile tab into a personal dashboard with balance summary, group s
 
 ### 3.1 Layout (top to bottom)
 
-1. **Header** — "Kupay" centered; ⚙️ settings icon (RTL-aware trailing side)
+1. **Header** — "CoPay" centered; ⚙️ settings icon (RTL-aware trailing side)
 2. **Profile row card** — Avatar, name, email (subtitle), small edit icon → `EditProfile`
 3. **Hero Balance Card** — Gradient (`primaryExtraLight` → white)
    - Two headline numbers: "You owe" / "You're owed" in user's `defaultCurrency`

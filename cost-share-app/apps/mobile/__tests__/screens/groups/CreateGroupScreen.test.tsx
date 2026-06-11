@@ -105,7 +105,10 @@ describe('CreateGroupScreen', () => {
             expect.objectContaining({ name: 'My Group' })
         );
         await waitFor(() =>
-            expect(mockReplace).toHaveBeenCalledWith('GroupDetail', { groupId: 'g1' })
+            expect(mockNavigate).toHaveBeenCalledWith('Main', {
+                screen: 'Groups',
+                params: { screen: 'GroupDetail', params: { groupId: 'g1' } },
+            })
         );
     });
 });

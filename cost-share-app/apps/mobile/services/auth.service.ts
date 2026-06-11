@@ -2,6 +2,8 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { queryClient } from '../lib/queryClient';
 import { clearStaleAuthSession } from '../lib/authSessionLifecycle';
@@ -38,7 +40,7 @@ function toAuthError(err: unknown): AuthError {
   return { code: 'generic', message };
 }
 
-const NATIVE_SCHEME = 'com.kupay.mobile';
+const NATIVE_SCHEME = 'com.copay.mobile';
 const AUTH_CALLBACK_PATH = 'auth/callback';
 
 /**
@@ -158,32 +160,37 @@ export function isAuthCallbackUrl(url: string): boolean {
   return hasAuthCallbackParams(url);
 }
 
-const googleOAuthOptions = (oauthRedirect: string) => ({
-  redirectTo: oauthRedirect,
-  queryParams: { prompt: 'select_account' },
-});
+type BrowserOAuthProvider = 'google' | 'apple';
 
-async function signInWithGoogleBrowser(): Promise<{ error: AuthError | null }> {
+function browserOAuthOptions(provider: BrowserOAuthProvider, oauthRedirect: string) {
+  if (provider === 'apple') {
+    // Request name + email so a first Android sign-in can populate the profile.
+    return { redirectTo: oauthRedirect, scopes: 'name email' };
+  }
+  return { redirectTo: oauthRedirect, queryParams: { prompt: 'select_account' } };
+}
+
+// Shared browser OAuth flow for providers without a usable native SDK on the
+// current platform: Google everywhere, and Apple on Android/web (iOS Apple uses
+// the native sheet — see signInWithApple).
+async function signInWithProviderBrowser(
+  provider: BrowserOAuthProvider,
+): Promise<{ error: AuthError | null }> {
   const oauthRedirect = getAuthRedirectUri();
+  const options = browserOAuthOptions(provider, oauthRedirect);
 
   if (__DEV__) {
-    console.info('[Auth] OAuth redirectTo =', oauthRedirect);
+    console.info(`[Auth] ${provider} OAuth redirectTo =`, oauthRedirect);
   }
 
   if (Platform.OS === 'web') {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: googleOAuthOptions(oauthRedirect),
-    });
+    const { error } = await supabase.auth.signInWithOAuth({ provider, options });
     return { error: error ? toAuthError(error) : null };
   }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      ...googleOAuthOptions(oauthRedirect),
-      skipBrowserRedirect: true,
-    },
+    provider,
+    options: { ...options, skipBrowserRedirect: true },
   });
 
   if (error || !data.url) {
@@ -229,7 +236,74 @@ export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
     console.info('[Auth] Google OAuth in partial Chrome bottom sheet (~80%)');
   }
 
-  return signInWithGoogleBrowser();
+  return signInWithProviderBrowser('google');
+}
+
+function isAppleCancel(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err
+    && (err as { code?: string }).code === 'ERR_REQUEST_CANCELED';
+}
+
+async function signInWithAppleNative(): Promise<{ error: AuthError | null }> {
+  try {
+    const rawNonce = Crypto.randomUUID();
+    const hashedNonce = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      rawNonce,
+    );
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashedNonce,
+    });
+
+    if (!credential.identityToken) {
+      return { error: toAuthError(new Error('No Apple identity token returned')) };
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'apple',
+      token: credential.identityToken,
+      nonce: rawNonce,
+    });
+    if (error) return { error: toAuthError(error) };
+
+    const allowed = await isAuthSessionAllowed();
+    if (!allowed) {
+      return { error: { code: 'account_deleted', message: 'account deleted' } satisfies AuthError };
+    }
+
+    // Apple returns fullName only on the FIRST authorization; persist it so the profile
+    // shows a real name instead of the email the DB trigger defaults to.
+    const fullName = [credential.fullName?.givenName, credential.fullName?.familyName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    const userId = data.user?.id;
+    if (fullName && userId) {
+      try {
+        await supabase.from('profiles').update({ name: fullName }).eq('id', userId);
+      } catch {
+        // best-effort; never block sign-in on a name update
+      }
+    }
+
+    return { error: null };
+  } catch (err) {
+    if (isAppleCancel(err)) return { error: null };
+    return { error: toAuthError(err) };
+  }
+}
+
+export async function signInWithApple(): Promise<{ error: AuthError | null }> {
+  // iOS uses the App Store-preferred native Apple sheet. Android/web have no native
+  // Apple SDK, so they sign in through the same browser OAuth flow Google uses.
+  if (Platform.OS === 'ios') {
+    return signInWithAppleNative();
+  }
+  return signInWithProviderBrowser('apple');
 }
 
 /** Clears cached app state, wipes the local Supabase session, and drops the Zustand session. */

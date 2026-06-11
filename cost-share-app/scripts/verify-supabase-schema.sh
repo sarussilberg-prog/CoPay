@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCHEMA_SQL="$ROOT_DIR/supabase/schema.sql"
-PROBE_FILE="$(mktemp "${TMPDIR:-/tmp}/kupay-schema-probe.XXXXXX")"
+PROBE_FILE="$(mktemp "${TMPDIR:-/tmp}/copay-schema-probe.XXXXXX")"
 trap 'rm -f "$PROBE_FILE"' EXIT
 
 load_env_file() {

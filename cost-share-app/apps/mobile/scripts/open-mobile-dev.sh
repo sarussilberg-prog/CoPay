@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Open Kupay dev clients on booted iOS simulator and running Android emulator (Metro must be up).
+# Open CoPay dev clients on booted iOS simulator and running Android emulator (Metro must be up).
 
 set -euo pipefail
 

@@ -1,6 +1,6 @@
 # Implementation Plan — Add / Edit Expense v2
 
-A step-by-step plan for porting the v2 design (see [README.md](README.md)) into the Kupay mobile codebase.
+A step-by-step plan for porting the v2 design (see [README.md](README.md)) into the CoPay mobile codebase.
 
 **Target files:**
 - Replace: [cost-share-app/apps/mobile/screens/expenses/AddExpenseScreen.tsx](../../cost-share-app/apps/mobile/screens/expenses/AddExpenseScreen.tsx)
