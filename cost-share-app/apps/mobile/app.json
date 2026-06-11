@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.copay.mobile",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "usesAppleSignIn": true,
       "associatedDomains": [
         "applinks:kupa.pro"
@@ -130,7 +130,7 @@
       [
         "@sentry/react-native/expo",
         {
-          "organization": "copay-hb",
+          "organization": "kupay-hb",
           "project": "copay-mobile-prod"
         }
       ],
