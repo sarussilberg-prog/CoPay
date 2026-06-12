@@ -87,3 +87,14 @@ Deno.test('returns duplicate when delivery already recorded', async () => {
     const deps = fakeDeps({ recordPending: () => Promise.resolve('duplicate') });
     assertEquals(await processActivityEvent(baseRecord(), deps), 'duplicate');
 });
+
+Deno.test('returns failed and calls markFailed when sendExpo throws', async () => {
+    const failed: string[] = [];
+    const deps = fakeDeps({
+        sendExpo: () => Promise.reject(new Error('network')),
+        markFailed: (_id, msg) => { failed.push(msg); return Promise.resolve(); },
+    });
+    const out = await processActivityEvent(baseRecord(), deps);
+    assertEquals(out, 'failed');
+    assertEquals(failed, ['network']);
+});

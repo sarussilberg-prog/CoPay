@@ -49,7 +49,7 @@ export function renderNotification(kind: ActivityKind, lang: Lang, p: RenderPara
                     : joinDot([`New payment from ${p.actorName}`, money]),
             };
         case 'message_posted':
-            return { title: `${p.actorName} · ${p.groupName}`, body: (p.body ?? '').trim() };
+            return { title: joinDot([p.actorName, p.groupName]), body: (p.body ?? '').trim() };
         case 'friend_request_received':
             return he
                 ? { title: 'בקשת חברות חדשה', body: `${p.actorName} רוצה להתחבר איתך` }

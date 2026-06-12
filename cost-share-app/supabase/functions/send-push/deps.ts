@@ -13,9 +13,11 @@ export function makeSupabaseDeps(opts: { url: string; serviceRole: string }): Se
                 activity_event_id: eventId, recipient_user_id: recipientId, status: 'pending', attempts: 0,
             });
             if (!error) return 'new';
+            if (error.code !== '23505') throw error; // surface non-conflict failures, don't swallow
             const { data } = await sb.from('push_deliveries')
                 .select('status').eq('activity_event_id', eventId).maybeSingle();
-            return data?.status === 'sent' ? 'duplicate' : 'new';
+            // Once a delivery is in-flight ('pending') or done ('sent'), block a duplicate send.
+            return data?.status === 'sent' || data?.status === 'pending' ? 'duplicate' : 'new';
         },
         async markSkipped(eventId, reason) {
             await sb.from('push_deliveries')
@@ -75,7 +77,7 @@ export function makeSupabaseDeps(opts: { url: string; serviceRole: string }): Se
             const { count } = await sb.from('activity_events')
                 .select('id', { count: 'exact', head: true })
                 .eq('user_id', userId).gt('created_at', seen).neq('actor_user_id', userId);
-            return count ?? 0;
+            return count ?? 0; // null also means query error — degrade to 0 rather than crash
         },
         async disableToken(token, reason) {
             await sb.from('device_tokens')
