@@ -139,6 +139,12 @@ export function SettingsScreen() {
                         onPress={() => setShowCurrency(true)}
                         testID="settings-currency-row"
                     />
+                    <SettingsRow
+                        iconName="notifications-outline"
+                        label={t('notifications.title')}
+                        variant="chevron"
+                        onPress={() => navigation.navigate('NotificationSettings')}
+                    />
                 </SettingsSection>
 
                 {currentUser?.isAdmin ? (

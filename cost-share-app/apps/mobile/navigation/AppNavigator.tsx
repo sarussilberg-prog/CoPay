@@ -73,6 +73,7 @@ import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import { FriendsScreen } from '../screens/profile/FriendsScreen';
 import { FindFriendsScreen } from '../screens/profile/FindFriendsScreen';
+import { NotificationSettingsScreen } from '../screens/profile/NotificationSettingsScreen';
 import { AdminPortalScreen } from '../screens/admin/AdminPortalScreen';
 import { AdminOnboardingPreviewScreen } from '../screens/admin/AdminOnboardingPreviewScreen';
 import { AdminDeletedUsersScreen } from '../screens/admin/AdminDeletedUsersScreen';
@@ -356,6 +357,11 @@ export function AppNavigator() {
                 name="Settings"
                 component={SettingsScreen}
                 options={{ title: t('settings.title') }}
+            />
+            <RootStack.Screen
+                name="NotificationSettings"
+                component={NotificationSettingsScreen}
+                options={{ title: t('notifications.title') }}
             />
             <RootStack.Screen
                 name="AdminPortal"
