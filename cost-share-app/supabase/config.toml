@@ -16,3 +16,8 @@ enabled = true
 # the underlying tables — the function uses the anon key.
 [functions.invite-landing]
 verify_jwt = false
+
+# send-push is invoked by the activity_events pg_net trigger (no JWT; validated via
+# the x-webhook-secret header against the PUSH_WEBHOOK_SECRET function secret).
+[functions.send-push]
+verify_jwt = false
