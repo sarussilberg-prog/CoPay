@@ -59,6 +59,8 @@ import { useAppStore } from '../../store';
 import { colors } from '../../theme';
 import type { GroupDetailFocusFeedItem } from '../../lib/groupDetailFocus';
 import { setBadgeCount } from '../../lib/pushNotifications';
+import { usePushPermissionPrompt } from '../../hooks/usePushPermissionPrompt';
+import { EnableNotificationsBanner } from '../../components/notifications/EnableNotificationsBanner';
 
 function unique<T>(values: T[]): T[] {
     return Array.from(new Set(values));
@@ -145,6 +147,8 @@ export function ActivityFeedScreen() {
     // stays put after mark_activity_seen advances the live watermark to NOW.
     const [freezeWatermark, setFreezeWatermark] = useState<Date | null>(null);
     const canLoadMoreRef = useRef(false);
+    const { status, showBanner, promptSoftAsk } = usePushPermissionPrompt();
+    const [dismissed, setDismissed] = useState(false);
 
     const activities: ActivityEvent[] = useMemo(
         () => data?.pages.flatMap(page => page.items) ?? [],
@@ -601,6 +605,14 @@ export function ActivityFeedScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+
+            {!dismissed && (status === 'undetermined' || showBanner) && (
+                <EnableNotificationsBanner
+                    mode={status === 'undetermined' ? 'soft-ask' : 'open-settings'}
+                    onEnable={() => void promptSoftAsk()}
+                    onDismiss={() => setDismissed(true)}
+                />
+            )}
 
             <FlatList
                 data={displayedItems}
