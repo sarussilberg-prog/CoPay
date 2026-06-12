@@ -22,6 +22,7 @@ import {
   isInvalidRefreshTokenError,
   setupSupabaseAuthAutoRefresh,
 } from './lib/authSessionLifecycle';
+import { syncPushRegistrationOnSignIn, clearPushRegistrationOnSignOut } from './lib/pushRegistrationLifecycle';
 import { configureNativeGoogleSignIn } from './lib/googleSignInNative';
 import { supabase } from './lib/supabase';
 import { assertProfileActiveWithTimeout } from './lib/auth';
@@ -84,6 +85,10 @@ function App() {
   useEffect(() => {
     applySentryUser(currentUser ?? null);
   }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUserId) void syncPushRegistrationOnSignIn();
+  }, [currentUserId]);
 
   useEffect(() => {
     applySentryLanguage(language);
@@ -188,6 +193,7 @@ function App() {
 
           if (event === 'SIGNED_OUT') {
             useAppStore.getState().setSession(null);
+            void clearPushRegistrationOnSignOut();
             return;
           }
 
@@ -196,6 +202,7 @@ function App() {
           if (event === 'SIGNED_IN') {
             setTimeout(() => {
               void acceptSession(nextSession, 'fresh');
+              void syncPushRegistrationOnSignIn();
             }, 0);
             return;
           }
