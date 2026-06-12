@@ -3,6 +3,7 @@
 -- (set per-environment; see docs/SSOT/PUSH_NOTIFICATIONS_SETUP.md).
 
 CREATE SCHEMA IF NOT EXISTS app_private;
+REVOKE USAGE ON SCHEMA app_private FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION app_private.push_send_on_activity_event() RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -41,5 +42,5 @@ DROP TRIGGER IF EXISTS trg_push_send_on_activity_event ON activity_events;
 CREATE TRIGGER trg_push_send_on_activity_event
     AFTER INSERT ON activity_events
     FOR EACH ROW
-    WHEN (NEW.actor_user_id IS DISTINCT FROM NEW.user_id)
+    WHEN (NEW.actor_user_id IS NOT NULL AND NEW.actor_user_id IS DISTINCT FROM NEW.user_id)
     EXECUTE FUNCTION app_private.push_send_on_activity_event();
