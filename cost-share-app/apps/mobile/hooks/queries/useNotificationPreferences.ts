@@ -3,12 +3,12 @@ import { fetchNotificationPreferences, saveNotificationPreferences } from '../..
 import { useAppStore } from '../../store';
 import type { NotificationPreferences } from '@cost-share/shared';
 
-const KEY = ['notificationPreferences'] as const;
+const key = (userId: string) => ['notificationPreferences', userId] as const;
 
 export function useNotificationPreferences() {
     const userId = useAppStore((s) => s.currentUser?.id);
     return useQuery({
-        queryKey: KEY,
+        queryKey: key(userId as string),
         queryFn: () => fetchNotificationPreferences(userId as string),
         enabled: Boolean(userId),
         staleTime: 60_000,
@@ -17,17 +17,18 @@ export function useNotificationPreferences() {
 
 export function useSaveNotificationPreferences() {
     const qc = useQueryClient();
+    const userId = useAppStore((s) => s.currentUser?.id);
     return useMutation({
         mutationFn: (prefs: NotificationPreferences) => saveNotificationPreferences(prefs),
         onMutate: async (prefs) => {
-            await qc.cancelQueries({ queryKey: KEY });
-            const previous = qc.getQueryData<NotificationPreferences>(KEY);
-            qc.setQueryData(KEY, prefs); // optimistic
+            await qc.cancelQueries({ queryKey: key(userId as string) });
+            const previous = qc.getQueryData<NotificationPreferences>(key(userId as string));
+            qc.setQueryData(key(userId as string), prefs); // optimistic
             return { previous };
         },
         onError: (_e, _prefs, ctx) => {
-            if (ctx?.previous) qc.setQueryData(KEY, ctx.previous); // rollback
+            if (ctx?.previous) qc.setQueryData(key(userId as string), ctx.previous); // rollback
         },
-        onSettled: () => { void qc.invalidateQueries({ queryKey: KEY }); },
+        onSettled: () => { void qc.invalidateQueries({ queryKey: key(userId as string) }); },
     });
 }
