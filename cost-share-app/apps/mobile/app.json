@@ -32,7 +32,9 @@
           "PayBox"
         ],
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "appleTeamId": "K3M6R85KA6"
     },
@@ -145,7 +147,9 @@
       "./plugins/withFastStackTransitions"
     ],
     "extra": {
-      "eas": {}
+      "eas": {
+        "projectId": "920bd760-9307-4aab-8126-bd38f86f45cd"
+      }
     },
     "owner": "saussilberg"
   }
