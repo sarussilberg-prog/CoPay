@@ -145,7 +145,8 @@
           "project": "copay-mobile-prod"
         }
       ],
-      "./plugins/withFastStackTransitions"
+      "./plugins/withFastStackTransitions",
+      "./plugins/withReleaseNodeEnv"
     ],
     "extra": {
       "eas": {
