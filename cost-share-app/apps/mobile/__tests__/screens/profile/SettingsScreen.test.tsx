@@ -33,6 +33,12 @@ jest.mock('../../../lib/openMailto', () => ({
     DEFAULT_SUPPORT_EMAIL: 'sarussilberg@gmail.com',
 }));
 
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+    ...jest.requireActual('@react-navigation/native'),
+    useNavigation: () => ({ navigate: mockNavigate }),
+}));
+
 // LegalDocumentSheet depends on react-query (QueryClientProvider) which is not
 // wired up in these unit tests. Replace it with a no-op stub — the legal sheet
 // itself is covered by its own component tests.
@@ -86,10 +92,10 @@ describe('SettingsScreen (grouped, no notifications)', () => {
         expect(getByText('settings.account')).toBeTruthy();
     });
 
-    it('opens support contact when Contact us is pressed', async () => {
+    it('navigates to ContactUs when Contact us is pressed', () => {
         const { getByTestId } = render(<SettingsScreen />);
         fireEvent.press(getByTestId('settings-contact-row'));
-        await waitFor(() => expect(mockOpenSupportContact).toHaveBeenCalled());
+        expect(mockNavigate).toHaveBeenCalledWith('ContactUs');
     });
 
     it('renders version footer', () => {
